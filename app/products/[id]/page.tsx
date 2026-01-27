@@ -128,13 +128,9 @@ export default function ProductDetail() {
               <p className="text-gray-600 leading-relaxed">{product.description}</p>
             </div>
 
-            {/* Product Details */}
+                       {/* Product Details */}
             <div className="mb-8 border-t border-b py-6">
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-gray-600 text-sm">Product ID</p>
-                  <p className="font-semibold text-gray-900">#{product.id}</p>
-                </div>
                 <div>
                   <p className="text-gray-600 text-sm">Category</p>
                   <p className="font-semibold text-gray-900 capitalize">{product.category}</p>
@@ -225,13 +221,6 @@ export default function ProductDetail() {
                 </div>
               </>
             )}
-
-            {/* Additional Info */}
-            <div className="space-y-3 text-sm text-gray-600">
-              <p>✓ Free shipping on orders over $50</p>
-              <p>✓ 30-day money back guarantee</p>
-              <p>✓ Secure checkout with SSL encryption</p>
-            </div>
           </div>
         </div>
       </section>
