@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useWishlistStore } from '../store/useWishlistStore';
 import Header from '../components/layout/Header';
 import CartDrawer from '../components/cart/CartDrawer';
@@ -10,6 +10,14 @@ import { useSearchParams } from 'next/navigation';
 import { useProductStore } from '../store/useProductStore';
 
 export default function Home() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <HomeContent />
+    </Suspense>
+  );
+}
+
+function HomeContent() {
   const { products } = useProductStore();
   const searchParams = useSearchParams();
   const catParam = searchParams.get('category');
