@@ -2,103 +2,38 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useWishlistStore } from '../../store/useWishlistStore';
+import { useCartStore } from '../../store/useCartStore';
+import Header from '../../components/layout/Header';
+import CartDrawer from '../../components/cart/CartDrawer';
 
-const PRODUCTS = [
-  { id: 5, name: 'Front Pocket Jumper', price: 2884, image: 'product-05.jpg', category: 'men' },
-  { id: 6, name: 'Vintage Inspired Classic', price: 7736, image: 'product-06.jpg', category: 'shoes' },
-  { id: 7, name: 'Shirt in Stretch Cotton', price: 4371, image: 'product-07.jpg', category: 'women' },
-  { id: 8, name: 'Pieces Metallic Printed', price: 1574, image: 'product-08.jpg', category: 'bag' },
-  { id: 9, name: 'Converse All Star Hi Plimsolls', price: 6225, image: 'product-09.jpg', category: 'shoes' },
-  { id: 10, name: 'Femme T-Shirt In Stripe', price: 2146, image: 'product-10.jpg', category: 'women' },
-  { id: 11, name: 'Herschel supply', price: 5242, image: 'product-11.jpg', category: 'bag' },
-  { id: 12, name: 'Mini Silver Mesh Watch', price: 7209, image: 'product-12.jpg', category: 'watches' },
-];
-
-interface WishlistProduct {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  category: string;
-}
+import { useProductStore } from '../../store/useProductStore';
 
 export default function Wishlist() {
-  const [wishlistItems, setWishlistItems] = useState<WishlistProduct[]>([]);
+  const { products } = useProductStore();
+  const [mounted, setMounted] = useState(false);
+  const wishlistIds = useWishlistStore((state) => state.items);
+  const toggleWishlist = useWishlistStore((state) => state.toggleItem);
+  const addToCartStore = useCartStore((state) => state.addItem);
 
   useEffect(() => {
-    const saved = localStorage.getItem('wishlist');
-    if (saved) {
-      const wishlistIds = JSON.parse(saved);
-      const items = wishlistIds.map((id: number) => PRODUCTS.find(p => p.id === id)).filter(Boolean);
-      setWishlistItems(items as WishlistProduct[]);
-    }
+    setMounted(true);
   }, []);
 
-  const removeFromWishlist = (id: number) => {
-    const saved = localStorage.getItem('wishlist');
-    if (saved) {
-      const wishlistIds = JSON.parse(saved);
-      const updated = wishlistIds.filter((itemId: number) => itemId !== id);
-      localStorage.setItem('wishlist', JSON.stringify(updated));
-      setWishlistItems(wishlistItems.filter(item => item.id !== id));
-    }
-  };
+  const getProductDetails = (id: number) => products.find(p => p.id === id);
 
-  const addToCart = (product: WishlistProduct) => {
-    const saved = localStorage.getItem('cart');
-    const cart = saved ? JSON.parse(saved) : [];
-    
-    const existingItem = cart.find((item: any) => item.id === product.id);
-    
-    if (existingItem) {
-      existingItem.quantity += 1;
-    } else {
-      cart.push({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        quantity: 1
-      });
-    }
-    
-    localStorage.setItem('cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('cartUpdated'));
-  };
+  if (!mounted) return null;
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-kumar-one)' }}>KVT exports</Link>
-          
-          <nav className="hidden md:flex gap-8">
-            <Link href="/" className="text-gray-700 hover:text-red-500 transition">Home</Link>
-            <Link href="#" className="text-gray-700 hover:text-red-500 transition">About</Link>
-            <Link href="#" className="text-gray-700 hover:text-red-500 transition">Contact</Link>
-          </nav>
-
-          <div className="flex items-center gap-4">
-            <Link href="/wishlist" className="text-gray-700 hover:text-gray-900">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21s-6.75-4.35-9-9.09C1.17 9.23 2.2 6.33 4.62 4.92a5.13 5.13 0 015.89.62L12 6.95l1.49-1.41a5.13 5.13 0 015.89-.62c2.42 1.41 3.45 4.31 1.62 7 0 0-1.62 3.24-9 9.08z" />
-              </svg>
-            </Link>
-            <Link href="/cart" className="text-gray-700 hover:text-gray-900">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header />
+      <CartDrawer getProductDetails={getProductDetails} />
 
       {/* Wishlist Content */}
       <section className="max-w-7xl mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-8">My Wishlist</h1>
 
-        {wishlistItems.length === 0 ? (
+        {wishlistIds.length === 0 ? (
           <div className="text-center py-20">
             <svg className="w-24 h-24 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21s-6.75-4.35-9-9.09C1.17 9.23 2.2 6.33 4.62 4.92a5.13 5.13 0 015.89.62L12 6.95l1.49-1.41a5.13 5.13 0 015.89-.62c2.42 1.41 3.45 4.31 1.62 7 0 0-1.62 3.24-9 9.08z" />
@@ -111,14 +46,17 @@ export default function Wishlist() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {wishlistItems.map((item) => (
+            {wishlistIds.map((id) => {
+              const item = getProductDetails(id);
+              if (!item) return null;
+              return (
               <div key={item.id} className="group rounded-lg border border-gray-200 bg-white overflow-hidden hover:shadow-md hover:-translate-y-1 transition relative">
                 <Link href={`/products/${item.id}`}>
-                  <div className="bg-gray-100 h-72 flex items-center justify-center overflow-hidden">
+                  <div className="bg-white h-72 flex items-center justify-center overflow-hidden p-4 border-b">
                     <img
-                      src={`https://themewagon.github.io/cozastore/images/${item.image}`}
+                      src={item.image}
                       alt={item.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-contain"
                     />
                   </div>
                 </Link>
@@ -128,7 +66,7 @@ export default function Wishlist() {
                       <h3 className="text-base font-medium text-[#6b7280] hover:text-red-600">{item.name}</h3>
                     </Link>
                     <button 
-                      onClick={() => removeFromWishlist(item.id)}
+                      onClick={() => toggleWishlist(item.id)}
                       className="text-red-600 hover:text-red-800 transition"
                     >
                       <svg className="w-6 h-6" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
@@ -138,14 +76,14 @@ export default function Wishlist() {
                   </div>
                   <p className="mt-2 text-base font-semibold text-[#6b7280]">₹{item.price.toFixed(2)}</p>
                   <button
-                    onClick={() => addToCart(item)}
+                    onClick={() => addToCartStore(item.id)}
                     className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white py-2 rounded transition font-medium"
                   >
                     Add to Cart
                   </button>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )}
       </section>
