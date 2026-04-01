@@ -1,26 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-
-const PRODUCTS = [
-  { id: 5, name: 'Front Pocket Jumper', price: 2884, image: 'product-05.jpg', category: 'men', description: 'Cozy front pocket jumper ideal for cold weather. Made with soft, breathable material for maximum comfort.', rating: 4.6, reviews: 22 },
-  { id: 6, name: 'Vintage Inspired Classic', price: 7736, image: 'product-06.jpg', category: 'shoes', description: 'Elegant vintage inspired shoes with classic design. Comfortable to wear all day long.', rating: 4.7, reviews: 28 },
-  { id: 7, name: 'Shirt in Stretch Cotton', price: 4371, image: 'product-07.jpg', category: 'women', description: 'Breathable shirt made from high-quality stretch cotton. Perfect for active lifestyle and everyday wear.', rating: 4.5, reviews: 19 },
-  { id: 8, name: 'Pieces Metallic Printed', price: 1574, image: 'product-08.jpg', category: 'bag', description: 'Trendy bag with eye-catching metallic prints. Spacious enough for your daily essentials.', rating: 4.4, reviews: 15 },
-  { id: 9, name: 'Converse All Star Hi Plimsolls', price: 6225, image: 'product-09.jpg', category: 'shoes', description: 'Iconic high-top sneakers loved by millions worldwide. Durable and stylish for casual or sporty looks.', rating: 4.8, reviews: 50 },
-  { id: 10, name: 'Femme T-Shirt In Stripe', price: 2146, image: 'product-10.jpg', category: 'women', description: 'Classic striped t-shirt for women. Versatile piece that works with any outfit.', rating: 4.3, reviews: 16 },
-  { id: 11, name: 'Herschel supply', price: 5242, image: 'product-11.jpg', category: 'bag', description: 'Durable bag perfect for travel or daily use. High-quality materials ensure long-lasting performance.', rating: 4.6, reviews: 26 },
-  { id: 12, name: 'Mini Silver Mesh Watch', price: 7209, image: 'product-12.jpg', category: 'watches', description: 'Elegant silver mesh watch with minimalist design. Water-resistant and perfect for any occasion.', rating: 4.7, reviews: 31 },
-];
+import { useCartStore } from '../../../store/useCartStore';
+import Header from '../../../components/layout/Header';
+import CartDrawer from '../../../components/cart/CartDrawer';
+import ProductGallery from '../../../components/product/ProductGallery';
+import VariantSelector from '../../../components/product/VariantSelector';
+import ProductReviewForm from '../../../components/product/ProductReviewForm';
+import { useProductStore } from '../../../store/useProductStore';
 
 export default function ProductDetail() {
   const params = useParams();
   const productId = parseInt(params.id as string);
-  const product = PRODUCTS.find(p => p.id === productId);
+  const { products } = useProductStore();
+  const product = products.find(p => p.id === productId);
   const [quantity, setQuantity] = useState(1);
   const [cartMessage, setCartMessage] = useState('');
+  
+  // Variants State
+  const [selectedSize, setSelectedSize] = useState(product?.sizes?.[0] || '');
+  const [selectedColor, setSelectedColor] = useState(product?.colors?.[0]?.name || '');
+
+  // Update selection if product changes (e.g., navigating between products)
+  useEffect(() => {
+    if (product) {
+      if (product.sizes?.length) setSelectedSize(product.sizes[0]);
+      if (product.colors?.length) setSelectedColor(product.colors[0].name);
+    }
+  }, [product]);
 
   if (!product) {
     return (
@@ -38,132 +47,86 @@ export default function ProductDetail() {
     );
   }
 
+  const addToCart = useCartStore((state) => state.addItem);
+
   const handleAddToCart = () => {
-    const saved = localStorage.getItem('cart');
-    const cart = saved ? JSON.parse(saved) : [];
-    
-    const existingItem = cart.find((item: any) => item.id === product.id);
-    
-    if (existingItem) {
-      existingItem.quantity += quantity;
-    } else {
-      cart.push({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        quantity: quantity
-      });
-    }
-    
-    localStorage.setItem('cart', JSON.stringify(cart));
-    window.dispatchEvent(new Event('cartUpdated'));
+    addToCart(product.id, quantity);
     
     setCartMessage(`${quantity} ${product.name} added to cart!`);
     setTimeout(() => setCartMessage(''), 3000);
   };
 
-  const relatedProducts = PRODUCTS.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
+  const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="border-b border-gray-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-kumar-one)' }}>KVT exports</Link>
-          
-          <nav className="hidden md:flex gap-8">
-            <Link href="/" className="text-gray-700 hover:text-red-500 transition">Home</Link>
-            <Link href="#" className="text-gray-700 hover:text-red-500 transition">About</Link>
-            <Link href="#" className="text-gray-700 hover:text-red-500 transition">Contact</Link>
-          </nav>
-
-          <Link href="/" className="text-gray-700 hover:text-gray-900">Back</Link>
-        </div>
-      </header>
+      <Header />
+      <CartDrawer getProductDetails={(id) => products.find(p => p.id === id)} />
 
       {/* Product Detail */}
-      <section className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Product Image */}
-          <div className="bg-gray-100 h-[600px] flex items-center justify-center overflow-hidden">
-            <img
-              src={`https://themewagon.github.io/cozastore/images/${product.image}`}
-              alt={product.name}
-              className="w-full h-full object-cover"
+      <section className="max-w-7xl mx-auto px-4 py-16">
+        <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
+          {/* Product Image Gallery */}
+          <div className="lg:w-[55%] w-full">
+            <ProductGallery 
+              images={[
+                product.image,
+                product.image,
+                product.image,
+                product.image
+              ]} 
             />
           </div>
 
           {/* Product Info */}
-          <div>
-            <div className="mb-6">
-              <h1 className="text-4xl font-bold text-gray-900 mb-3">{product.name}</h1>
-              
-              {/* Rating */}
-              <div className="flex items-center mb-4">
-                <div className="flex text-yellow-400">
-                  {[...Array(5)].map((_, i) => (
-                    <span key={i}>
-                      {i < Math.floor(product.rating) ? '★' : '☆'}
-                    </span>
-                  ))}
-                </div>
-                <span className="ml-2 text-gray-600">({product.reviews} reviews)</span>
+          <div className="lg:w-[45%] w-full flex flex-col py-4">
+            <h1 className="text-4xl font-bold text-gray-900 mb-3">{product.name}</h1>
+            
+            {/* Rating */}
+            <div className="flex items-center mb-6">
+              <div className="flex text-yellow-400">
+                {[...Array(5)].map((_, i) => (
+                  <span key={i} className="text-xl">
+                    {i < Math.floor(product.rating) ? '★' : '☆'}
+                  </span>
+                ))}
               </div>
-
-              {/* Price */}
-              <div className="text-3xl font-bold text-red-600 mb-4">₹{product.price.toFixed(2)}</div>
-
-              {/* Category Badge */}
-              <div className="mb-4">
-                <span className="bg-gray-900 text-white px-4 py-1 rounded capitalize text-sm">
-                  {product.category}
-                </span>
-              </div>
+              <span className="ml-2 text-gray-500 text-sm">({product.reviews} customer reviews)</span>
             </div>
 
-            {/* Description */}
-            <div className="mb-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Product Description</h3>
-              <p className="text-gray-600 leading-relaxed">{product.description}</p>
-            </div>
+            {/* Price */}
+            <div className="text-3xl font-bold text-gray-900 mb-8">₹{product.price.toFixed(2)}</div>
 
-                       {/* Product Details */}
-            <div className="mb-8 border-t border-b py-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-gray-600 text-sm">Category</p>
-                  <p className="font-semibold text-gray-900 capitalize">{product.category}</p>
-                </div>
-                <div>
-                  <p className="text-gray-600 text-sm">Rating</p>
-                  <p className="font-semibold text-gray-900">{product.rating}/5</p>
-                </div>
-                <div>
-                  <p className="text-gray-600 text-sm">Stock Status</p>
-                  <p className="font-semibold text-green-600">In Stock</p>
-                </div>
-              </div>
-            </div>
+            {/* Variants */}
+            <VariantSelector 
+              sizes={product.sizes}
+              colors={product.colors}
+              selectedSize={selectedSize}
+              setSelectedSize={setSelectedSize}
+              selectedColor={selectedColor}
+              setSelectedColor={setSelectedColor}
+            />
 
             {/* Quantity and Add to Cart */}
-            <div className="flex gap-4 mb-8">
-              <div className="flex items-center border border-gray-300 rounded">
+            <div className="flex flex-col sm:flex-row gap-4 mb-10 pt-4 border-t border-gray-100">
+              <div className="flex items-center border-2 border-gray-200 rounded-md bg-white">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100"
+                  className="px-5 py-3 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition"
                 >
                   −
                 </button>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={quantity}
                   onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-16 text-center border-l border-r border-gray-300 outline-none py-2 text-gray-900"
+                  className="w-16 text-center border-x-2 border-gray-200 outline-none py-3 text-gray-900 font-semibold"
                 />
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="px-4 py-2 text-gray-600 hover:bg-gray-100"
+                  className="px-5 py-3 text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition"
                 >
                   +
                 </button>
@@ -171,10 +134,38 @@ export default function ProductDetail() {
 
               <button
                 onClick={handleAddToCart}
-                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded transition"
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-md transition shadow-lg shadow-red-200"
               >
                 ADD TO CART
               </button>
+            </div>
+
+            {/* Description */}
+            <div className="mb-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Product Description</h3>
+              <p className="text-gray-600 leading-relaxed">{product.description}</p>
+            </div>
+
+            {/* Product Details Specs */}
+            <div className="border-t border-gray-100 py-6">
+              <div className="grid grid-cols-2 gap-y-6">
+                <div>
+                  <p className="text-gray-500 text-sm mb-1">Sold By</p>
+                  <Link href={`/vendor/${product.vendorId}`} className="font-bold text-red-600 hover:underline">
+                    {product.vendorId === 'v1' ? 'Artisan Threadsco' : product.vendorId === 'v2' ? 'Urban Sole' : 'Verified Vendor'}
+                  </Link>
+                </div>
+                <div>
+                  <p className="text-gray-500 text-sm mb-1">Category</p>
+                  <p className="font-medium text-gray-900 capitalize">{product.category}</p>
+                </div>
+                <div>
+                  <p className="text-gray-500 text-sm mb-1">Availability</p>
+                  <p className={`font-medium ${(product.stock === 0) ? 'text-red-600' : 'text-green-600'}`}>
+                    {(product.stock === 0) ? 'Out of Stock' : (product.stock ? `${product.stock} Units In Stock` : 'In Stock')}
+                  </p>
+                </div>
+              </div>
             </div>
 
             {cartMessage && (
@@ -192,9 +183,9 @@ export default function ProductDetail() {
                     
                     <div className="flex gap-6 mb-8">
                       <img
-                        src={`https://themewagon.github.io/cozastore/images/${product.image}`}
+                        src={product.image}
                         alt={product.name}
-                        className="w-32 h-32 object-cover bg-gray-100"
+                        className="w-32 h-32 object-contain bg-white border border-gray-100"
                       />
                       <div className="flex-1">
                         <h3 className="text-gray-900 font-medium text-xl mb-2">{product.name}</h3>
@@ -236,11 +227,11 @@ export default function ProductDetail() {
                 href={`/products/${p.id}`}
                 className="group rounded-lg border border-gray-200 bg-white overflow-hidden hover:shadow-md hover:-translate-y-1 transition"
               >
-                <div className="bg-gray-100 h-72 flex items-center justify-center overflow-hidden">
+                <div className="bg-white h-72 flex items-center justify-center overflow-hidden p-4">
                   <img
-                    src={`https://themewagon.github.io/cozastore/images/${p.image}`}
+                    src={p.image}
                     alt={p.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 </div>
                 <div className="p-4 bg-white">
@@ -252,13 +243,18 @@ export default function ProductDetail() {
                       </svg>
                     </span>
                   </div>
-                  <p className="mt-2 text-base font-semibold text-[#6b7280]">${p.price.toFixed(2)}</p>
+                  <p className="mt-2 text-base font-semibold text-[#6b7280]">₹{p.price.toFixed(2)}</p>
                 </div>
               </Link>
             ))}
           </div>
         </section>
       )}
+
+      {/* Customer Feedback section */}
+      <section className="max-w-7xl mx-auto px-4 py-12 border-t">
+        <ProductReviewForm productId={product.id} />
+      </section>
 
       {/* Footer */}
       <footer className="bg-[#222222] text-white mt-20">
