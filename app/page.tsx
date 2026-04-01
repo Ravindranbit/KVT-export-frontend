@@ -1,224 +1,148 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-const PRODUCTS = [
-  { id: 5, name: 'Front Pocket Jumper', price: 2884, image: 'product-05.jpg', category: 'men' },
-  { id: 6, name: 'Vintage Inspired Classic', price: 7736, image: 'product-06.jpg', category: 'shoes' },
-  { id: 7, name: 'Shirt in Stretch Cotton', price: 4371, image: 'product-07.jpg', category: 'women' },
-  { id: 8, name: 'Pieces Metallic Printed', price: 1574, image: 'product-08.jpg', category: 'bag' },
-  { id: 9, name: 'Converse All Star Hi Plimsolls', price: 6225, image: 'product-09.jpg', category: 'shoes' },
-  { id: 10, name: 'Femme T-Shirt In Stripe', price: 2146, image: 'product-10.jpg', category: 'women' },
-  { id: 11, name: 'Herschel supply', price: 5242, image: 'product-11.jpg', category: 'bag' },
-  { id: 12, name: 'Mini Silver Mesh Watch', price: 7209, image: 'product-12.jpg', category: 'watches' },
-];
+import { useState, useEffect } from 'react';
+import { useWishlistStore } from '../store/useWishlistStore';
+import Header from '../components/layout/Header';
+import CartDrawer from '../components/cart/CartDrawer';
+import BannerCarousel from '../components/home/BannerCarousel';
+import { useSearchParams } from 'next/navigation';
+import { useProductStore } from '../store/useProductStore';
 
 export default function Home() {
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [cart, setCart] = useState(0);
-  const [cartItems, setCartItems] = useState<any[]>([]);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [wishlist, setWishlist] = useState<number[]>([]);
+  const { products } = useProductStore();
+  const searchParams = useSearchParams();
+  const catParam = searchParams.get('category');
+  
+  const [selectedCategory, setSelectedCategory] = useState(catParam || 'all');
+  const [showFilters, setShowFilters] = useState(false);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000]);
+  const [visibleCount, setVisibleCount] = useState(8);
 
   useEffect(() => {
-    const updateCartCount = () => {
-      const saved = localStorage.getItem('cart');
-      if (saved) {
-        const items = JSON.parse(saved);
-        setCartItems(items);
-        const count = items.reduce((sum: number, item: any) => sum + item.quantity, 0);
-        setCart(count);
-      }
-    };
-    
-    // Load wishlist from localStorage
-    const savedWishlist = localStorage.getItem('wishlist');
-    if (savedWishlist) {
-      setWishlist(JSON.parse(savedWishlist));
+    if (catParam) {
+      setSelectedCategory(catParam);
     }
-    
-    updateCartCount();
-    window.addEventListener('storage', updateCartCount);
-    window.addEventListener('cartUpdated', updateCartCount);
-    
-    return () => {
-      window.removeEventListener('storage', updateCartCount);
-      window.removeEventListener('cartUpdated', updateCartCount);
-    };
-  }, []);
+  }, [catParam]);
+  
+  const wishlist = useWishlistStore((state) => state.items);
+  const toggleWishlist = useWishlistStore((state) => state.toggleItem);
 
-  const filteredProducts = selectedCategory === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.category === selectedCategory);
-
-  const addToCart = () => {
-    setCart(cart + 1);
-  };
-
-  const toggleWishlist = (productId: number) => {
-    let updatedWishlist;
-    if (wishlist.includes(productId)) {
-      updatedWishlist = wishlist.filter(id => id !== productId);
-    } else {
-      updatedWishlist = [...wishlist, productId];
-    }
-    setWishlist(updatedWishlist);
-    localStorage.setItem('wishlist', JSON.stringify(updatedWishlist));
-  };
+  const filteredProducts = products.filter(p => {
+    const categoryMatch = selectedCategory === 'all' || p.category === selectedCategory;
+    const priceMatch = p.price >= priceRange[0] && p.price <= priceRange[1];
+    return categoryMatch && priceMatch;
+  });
 
   const getProductDetails = (productId: number) => {
-    return PRODUCTS.find(p => p.id === productId);
+    return products.find(p => p.id === productId);
   };
-
-  const cartTotal = cartItems.reduce((sum: number, item: any) => {
-    const product = getProductDetails(item.id);
-    return sum + (product?.price || 0) * item.quantity;
-  }, 0);
 
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="border-b border-gray-200 bg-white">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-kumar-one)' }}>KVT exports</div>
+      <Header />
+      <CartDrawer getProductDetails={getProductDetails} />
 
-          <nav className="hidden md:flex gap-8 flex-1 justify-center">
-            <Link href="/" className="text-gray-700 hover:text-red-500 transition">Home</Link>
-            <Link href="#" className="text-gray-700 hover:text-red-500 transition">About</Link>
-            <Link href="#" className="text-gray-700 hover:text-red-500 transition">Contact</Link>
-          </nav>
 
-          <div className="flex items-center gap-4 ml-auto">
-            {/* Wishlist Icon */}
-            <Link href="/wishlist" className="relative text-gray-900 hover:text-gray-700">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21s-6.75-4.35-9-9.09C1.17 9.23 2.2 6.33 4.62 4.92a5.13 5.13 0 015.89.62L12 6.95l1.49-1.41a5.13 5.13 0 015.89-.62c2.42 1.41 3.45 4.31 1.62 7 0 0-1.62 3.24-9 9.08z" />
-              </svg>
-              {wishlist.length > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{wishlist.length}</span>}
-            </Link>
-
-            {/* Cart Icon */}
-            <button onClick={() => setIsCartOpen(!isCartOpen)} className="relative text-gray-900">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-              {cart > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">{cart}</span>}
-            </button>
-
-            <Link href="/signin" className="px-6 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition">Sign In</Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Cart Sidebar */}
-      {isCartOpen && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setIsCartOpen(false)}></div>
-          <div className="fixed right-0 top-0 h-full w-96 bg-white shadow-lg z-50 flex flex-col overflow-y-auto">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900">YOUR CART</h2>
-              <button onClick={() => setIsCartOpen(false)} className="text-gray-400 hover:text-gray-900 text-2xl">
-                ✕
-              </button>
-            </div>
-
-            {/* Cart Items */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {cartItems.length === 0 ? (
-                <p className="text-gray-400 text-center py-8">Your cart is empty</p>
-              ) : (
-                cartItems.map((item: any) => {
-                  const product = getProductDetails(item.id);
-                  return (
-                    <div key={item.id} className="flex gap-4 border-b border-gray-200 pb-4">
-                      <img
-                        src={`https://themewagon.github.io/cozastore/images/${product?.image}`}
-                        alt={product?.name}
-                        className="w-16 h-16 object-cover rounded"
-                      />
-                      <div className="flex-1">
-                        <h3 className="font-medium text-sm text-gray-900">{product?.name}</h3>
-                        <p className="text-sm text-gray-700">{item.quantity}x ${product?.price.toFixed(2)}</p>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-            </div>
-
-            {/* Total and Buttons */}
-            {cartItems.length > 0 && (
-              <div className="border-t border-gray-200 p-6 space-y-4">
-                <div className="flex justify-between items-center text-lg font-bold text-gray-900">
-                  <span>Total:</span>
-                  <span>₹{cartTotal.toFixed(2)}</span>
-                </div>
-                <div className="flex gap-3">
-                  <Link
-                    href="/cart"
-                    onClick={() => setIsCartOpen(false)}
-                    className="flex-1 bg-red-600 text-white py-2.5 rounded-full font-semibold text-center hover:bg-red-700 transition"
-                  >
-                    VIEW CART
-                  </Link>
-                  <Link
-                    href="/checkout"
-                    onClick={() => setIsCartOpen(false)}
-                    className="flex-1 bg-red-600 text-white py-2.5 rounded-full font-semibold text-center hover:bg-red-700 transition"
-                  >
-                    CHECK OUT
-                  </Link>
-                </div>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-
-      {/* Search Bar */}
-      <section className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-center mb-6">
-          <div className="w-full max-w-4xl bg-white rounded-full border border-gray-300 shadow-lg flex items-center overflow-hidden">
-            <div className="flex-1 px-6 py-4">
-              <input
-                type="text"
-                placeholder="Search products"
-                className="w-full bg-transparent focus:outline-none text-gray-900 placeholder-gray-500 text-sm"
-              />
-            </div>
-
-            <button className="bg-red-500 hover:bg-red-600 text-white px-8 py-4 font-semibold rounded-full m-1 transition">
-              Search
-            </button>
-          </div>
-        </div>
-      </section>
+      {/* Amazon/Flipkart-Style Offer Banner Carousel */}
+      <BannerCarousel />
 
       {/* Categories Filter */}
-      <section className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">PRODUCT OVERVIEW</h2>
-          <button className="flex items-center gap-2 px-6 py-2 bg-gray-900 text-white rounded hover:bg-gray-800 transition">
+      <section className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-4">
+          <div className="flex overflow-x-auto [&::-webkit-scrollbar]:hidden w-full md:w-auto flex-1 gap-2 pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 scroll-smooth">
+            {['all', 'electronics', 'fashion', 'home', 'sports', 'beauty', 'books', 'toys'].map((cat) => (
+              <button 
+                key={cat}
+                onClick={() => setSelectedCategory(cat)} 
+                className={`relative whitespace-nowrap px-6 py-3 rounded-xl text-sm font-medium transition-all duration-300 cursor-pointer ${
+                  selectedCategory === cat 
+                    ? 'text-white bg-gray-900 shadow-md shadow-gray-200 dark:shadow-none dark:bg-white dark:text-gray-900' 
+                    : 'text-gray-600 bg-gray-50 hover:bg-gray-100 hover:text-black border border-transparent hover:border-gray-900 dark:bg-gray-800/50 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-300'
+                }`}
+              >
+                {cat === 'all' ? 'All Categories' : cat.charAt(0).toUpperCase() + cat.slice(1)}
+              </button>
+            ))}
+          </div>
+          
+          <button 
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex-shrink-0 flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all duration-300 border cursor-pointer ${
+              showFilters 
+                ? 'bg-gray-900 text-white border-gray-900 dark:bg-white dark:text-gray-900 dark:border-white' 
+                : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-900 hover:text-white hover:border-gray-900 dark:bg-[#0a0a0a] dark:border-gray-800 dark:text-gray-300 dark:hover:bg-white dark:hover:text-gray-900'
+            }`}
+          >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
             </svg>
-            Filter
+            {showFilters ? 'Hide Filters' : 'Filters'}
           </button>
         </div>
 
+        {/* Filter Details Panel (Advanced Search) */}
+        {showFilters && (
+          <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-gray-800 p-8 rounded-2xl mb-12 flex flex-col md:flex-row gap-12 transition-all duration-300">
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-6 text-sm uppercase tracking-wider">Price Range</h3>
+              <div className="space-y-6">
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="10000" 
+                  step="100"
+                  value={priceRange[1]} 
+                  onChange={(e) => setPriceRange([0, parseInt(e.target.value)])}
+                  className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                  style={{ background: `linear-gradient(to right, #ef4444 0%, #ef4444 ${(priceRange[1] / 10000) * 100}%, #e5e7eb ${(priceRange[1] / 10000) * 100}%, #e5e7eb 100%)`, accentColor: '#ef4444' }}
+                />
+                <div className="flex justify-between items-center text-gray-600 dark:text-gray-400 font-medium text-sm gap-4">
+                  <span className="bg-gray-50 flex-1 text-center dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700">₹0</span>
+                  <span className="text-gray-400">-</span>
+                  <span className="bg-gray-50 flex-1 text-center dark:bg-gray-800 px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white font-bold">₹{priceRange[1]}</span>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex-1">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-6 text-sm uppercase tracking-wider">Sort By</h3>
+              <div className="flex flex-wrap gap-3">
+                {['Recommended', 'Price: Low to High', 'Price: High to Low', 'Newest Arrivals'].map(sort => (
+                   <button key={sort} className="px-5 py-2.5 rounded-xl border border-gray-200 dark:border-gray-800 text-sm font-medium text-gray-600 dark:text-gray-400 hover:border-gray-900 dark:hover:text-white dark:hover:border-gray-600 transition-colors bg-white dark:bg-[#0a0a0a]">
+                     {sort}
+                   </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex-1">
+              <h3 className="font-bold text-gray-900 mb-6 text-lg tracking-tight">Tags</h3>
+              <div className="flex flex-wrap gap-2">
+                {['Fashion', 'Lifestyle', 'Denim', 'Streetstyle', 'Minimalist'].map(tag => (
+                  <span key={tag} className="px-3 py-1 bg-white border border-gray-200 text-gray-500 text-sm rounded-full cursor-pointer hover:border-red-600 hover:text-red-600 transition-colors">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Products Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {filteredProducts.map((product) => (
+        <div id="products-section" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {filteredProducts.slice(0, visibleCount).map((product) => (
             <div
               key={product.id}
               className="group rounded-lg border border-gray-200 bg-white overflow-hidden hover:shadow-md hover:-translate-y-1 transition relative"
             >
               <Link href={`/products/${product.id}`}>
-                <div className="bg-gray-100 h-72 flex items-center justify-center overflow-hidden">
+                <div className="bg-white dark:bg-gray-800 h-64 flex items-center justify-center overflow-hidden p-4">
                   <img
-                    src={`https://themewagon.github.io/cozastore/images/${product.image}`}
+                    src={product.image}
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 </div>
               </Link>
@@ -250,11 +174,16 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="text-center mt-12">
-          <button className="bg-gray-200 text-gray-900 px-12 py-3 rounded-full hover:bg-black hover:text-white transition font-medium text-sm">
-            LOAD MORE
-          </button>
-        </div>
+        {visibleCount < filteredProducts.length && (
+          <div className="mt-16 text-center pb-10">
+            <button 
+              onClick={() => setVisibleCount(prev => prev + 8)}
+              className="bg-gray-100 hover:bg-gray-900 hover:text-white text-gray-900 border border-gray-200 hover:border-gray-900 px-10 py-4 rounded-full font-bold transition-all shadow-sm hover:shadow-lg active:scale-95 cursor-pointer"
+            >
+              Load More
+            </button>
+          </div>
+        )}
       </section>
 
       {/* Footer */}
@@ -265,10 +194,10 @@ export default function Home() {
             <div>
               <h4 className="font-bold mb-5 text-sm tracking-wide">CATEGORIES</h4>
               <ul className="space-y-3 text-gray-300 text-sm">
-                <li><a href="#" className="hover:text-white transition">Women</a></li>
-                <li><a href="#" className="hover:text-white transition">Men</a></li>
-                <li><a href="#" className="hover:text-white transition">Shoes</a></li>
-                <li><a href="#" className="hover:text-white transition">Watches</a></li>
+                <li><Link href="/?category=electronics" className="hover:text-white transition">Electronics</Link></li>
+                <li><Link href="/?category=fashion" className="hover:text-white transition">Fashion</Link></li>
+                <li><Link href="/?category=home" className="hover:text-white transition">Home</Link></li>
+                <li><Link href="/?category=beauty" className="hover:text-white transition">Beauty</Link></li>
               </ul>
             </div>
 
