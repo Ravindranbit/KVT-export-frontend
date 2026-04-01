@@ -141,6 +141,7 @@ export default function SignUp() {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
+                autoComplete="off"
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-600 text-gray-900 placeholder-gray-500 text-sm"
                 placeholder="Create a password"
                 required
@@ -157,6 +158,7 @@ export default function SignUp() {
                 name="confirmPassword"
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                autoComplete="off"
                 className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 text-gray-900 placeholder-gray-500 text-sm transition ${
                   errors.confirmPassword ? 'border-red-500 focus:ring-red-600' : 'border-gray-300 focus:ring-red-600'
                 }`}

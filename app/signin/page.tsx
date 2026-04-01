@@ -2,8 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useRouter } from 'next/navigation';
 
 export default function SignIn() {
+  const router = useRouter();
+  const { setUser } = useAuthStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -28,8 +32,16 @@ export default function SignIn() {
     if (emailError) {
       return;
     }
-    // Add authentication logic here
-    console.log('Sign in:', { email, password });
+    
+    // Simulate Buyer Logic
+    setUser({
+      id: 'u1',
+      name: email.split('@')[0],
+      email: email,
+      role: 'buyer'
+    });
+    
+    router.push('/');
   };
 
   return (
@@ -74,6 +86,7 @@ export default function SignIn() {
                 id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="off"
                 className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-600 text-gray-900 placeholder-gray-500 text-sm"
                 placeholder="Enter your password"
                 required
