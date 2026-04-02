@@ -170,40 +170,54 @@ export default function ProductDetail() {
 
             {cartMessage && (
               <>
-                <div className="fixed inset-0 z-40 flex items-center justify-center">
-                  <div className="bg-white rounded-lg p-8 max-w-xl w-full mx-4 z-50 shadow-xl relative">
+                {/* Backdrop with blur */}
+                <div 
+                  className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+                  onClick={() => setCartMessage('')}
+                />
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+                  <div className="bg-white rounded-2xl p-8 max-w-xl w-full shadow-2xl relative animate-[fadeIn_0.2s_ease-out]">
                     <button
                       onClick={() => setCartMessage('')}
-                      className="absolute top-6 right-6 text-gray-400 hover:text-gray-600 text-3xl"
+                      className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
                     >
-                      ×
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
                     </button>
                     
-                    <p className="text-green-500 font-semibold text-lg mb-8">Successfully added to your cart.</p>
+                    <div className="flex items-center gap-2 mb-6">
+                      <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <p className="text-emerald-600 font-bold text-lg">Added to cart</p>
+                    </div>
                     
-                    <div className="flex gap-6 mb-8">
+                    <div className="flex gap-5 mb-8 p-4 bg-gray-50 rounded-xl">
                       <img
                         src={product.image}
                         alt={product.name}
-                        className="w-32 h-32 object-contain bg-white border border-gray-100"
+                        className="w-24 h-24 object-cover rounded-lg bg-white"
                       />
                       <div className="flex-1">
-                        <h3 className="text-gray-900 font-medium text-xl mb-2">{product.name}</h3>
-                        <p className="text-red-600 font-semibold text-lg mb-2">₹{product.price.toFixed(2)}</p>
-                        <p className="text-gray-600 text-base">QTY: {quantity}</p>
+                        <h3 className="text-gray-900 font-bold text-base mb-1">{product.name}</h3>
+                        <p className="text-gray-900 font-extrabold text-lg">₹{product.price.toFixed(2)}</p>
+                        <p className="text-gray-400 text-sm font-medium mt-1">Qty: {quantity}</p>
                       </div>
                     </div>
                     
-                    <div className="flex gap-4">
+                    <div className="flex gap-3">
+                      {/* Secondary — outline/dark */}
                       <button
                         onClick={() => setCartMessage('')}
-                        className="flex-1 bg-red-600 hover:bg-red-700 text-white py-4 rounded font-semibold text-base transition"
+                        className="flex-1 border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white py-3.5 rounded-lg font-bold text-sm transition-all duration-200"
                       >
                         Continue Shopping
                       </button>
+                      {/* Primary — solid red */}
                       <button
                         onClick={() => window.location.href = '/cart'}
-                        className="flex-1 bg-red-600 hover:bg-red-700 text-white py-4 rounded font-semibold text-base transition"
+                        className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3.5 rounded-lg font-bold text-sm transition-all duration-200 shadow-md shadow-red-200"
                       >
                         Proceed to Checkout
                       </button>
@@ -225,25 +239,20 @@ export default function ProductDetail() {
               <Link
                 key={p.id}
                 href={`/products/${p.id}`}
-                className="group rounded-lg border border-gray-200 bg-white overflow-hidden hover:shadow-md hover:-translate-y-1 transition"
+                className="group rounded-xl border border-gray-100 bg-white overflow-hidden hover:shadow-xl hover:shadow-gray-200/60 hover:-translate-y-1.5 transition-all duration-300"
               >
-                <div className="bg-white h-72 flex items-center justify-center overflow-hidden p-4">
-                  <img
-                    src={p.image}
-                    alt={p.name}
-                    className="w-full h-full object-contain"
-                  />
+                <div className="bg-gray-50 overflow-hidden">
+                  <div className="aspect-square w-full overflow-hidden">
+                    <img
+                      src={p.image}
+                      alt={p.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                  </div>
                 </div>
                 <div className="p-4 bg-white">
-                  <div className="flex items-start justify-between">
-                    <h3 className="text-base font-medium text-[#6b7280]">{p.name}</h3>
-                    <span className="text-gray-400">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.6} d="M12 21s-6.75-4.35-9-9.09C1.17 9.23 2.2 6.33 4.62 4.92a5.13 5.13 0 015.89.62L12 6.95l1.49-1.41a5.13 5.13 0 015.89-.62c2.42 1.41 3.45 4.31 1.62 7 0 0-1.62 3.24-9 9.08z" />
-                      </svg>
-                    </span>
-                  </div>
-                  <p className="mt-2 text-base font-semibold text-[#6b7280]">₹{p.price.toFixed(2)}</p>
+                  <h3 className="text-sm font-semibold text-gray-700 group-hover:text-red-600 transition-colors line-clamp-1">{p.name}</h3>
+                  <p className="mt-2 text-lg font-bold text-gray-900">₹{p.price.toFixed(2)}</p>
                 </div>
               </Link>
             ))}
