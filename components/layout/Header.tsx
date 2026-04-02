@@ -49,7 +49,7 @@ export default function Header() {
   };
 
   return (
-    <header className="border-b border-gray-200 bg-white sticky top-0 z-40 transition-all shadow-sm">
+    <header className="border-b border-gray-200 bg-white sticky top-0 z-40 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
       {/* Desktop Header */}
       <div className="w-full px-4 md:px-8 py-3 flex items-center gap-4 md:gap-6">
         {/* Mobile Hamburger */}
@@ -67,7 +67,10 @@ export default function Header() {
         </button>
 
         {/* Logo */}
-        <Link href="/" className="text-xl md:text-2xl font-bold text-gray-900 flex-shrink-0" style={{ fontFamily: 'var(--font-kumar-one)' }}>KVT exports</Link>
+        <Link href="/" className="flex items-baseline gap-0.5 flex-shrink-0" style={{ fontFamily: 'var(--font-kumar-one)' }}>
+          <span className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">KVT</span>
+          <span className="text-xl md:text-2xl font-bold text-gray-400 tracking-tight">exports</span>
+        </Link>
 
         {/* Desktop Mega Menu */}
         <MegaMenu />
@@ -84,7 +87,7 @@ export default function Header() {
               onChange={e => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
               placeholder="Search products..."
-              className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 focus:bg-white transition-all"
+              className="w-full pl-11 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-none text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-gray-900 focus:border-gray-900 focus:bg-white focus:shadow-lg focus:shadow-gray-900/5 transition-all duration-200"
             />
           </div>
 
@@ -119,39 +122,55 @@ export default function Header() {
           </button>
 
           {/* Wishlist Icon */}
-          <Link href="/wishlist" className="relative text-gray-900 hover:text-red-500 transition">
-            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <Link href="/wishlist" className="relative text-gray-600 hover:text-red-500 p-2 rounded-full hover:bg-gray-100 transition-all duration-200">
+            <svg className="w-5 h-5 md:w-[22px] md:h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21s-6.75-4.35-9-9.09C1.17 9.23 2.2 6.33 4.62 4.92a5.13 5.13 0 015.89.62L12 6.95l1.49-1.41a5.13 5.13 0 015.89-.62c2.42 1.41 3.45 4.31 1.62 7 0 0-1.62 3.24-9 9.08z" />
             </svg>
-            {mounted && wishlist.length > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 md:w-5 md:h-5 flex items-center justify-center font-bold">{wishlist.length}</span>}
+            {mounted && wishlist.length > 0 && <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 md:w-[18px] md:h-[18px] flex items-center justify-center font-bold ring-2 ring-white">{wishlist.length}</span>}
           </Link>
 
           {/* Cart Icon */}
-          <button onClick={() => setIsCartOpen(!isCartOpen)} className="relative text-gray-900 hover:text-red-500 transition">
-            <svg className="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button onClick={() => setIsCartOpen(!isCartOpen)} className="relative text-gray-600 hover:text-red-500 p-2 rounded-full hover:bg-gray-100 transition-all duration-200">
+            <svg className="w-5 h-5 md:w-[22px] md:h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            {mounted && cart > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 md:w-5 md:h-5 flex items-center justify-center font-bold">{cart}</span>}
+            {mounted && cart > 0 && <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 md:w-[18px] md:h-[18px] flex items-center justify-center font-bold ring-2 ring-white">{cart}</span>}
           </button>
 
           {/* Desktop Only: Become Seller / Vendor Dashboard */}
-          {user && user.role === 'seller' ? (
-            <Link href="/vendor/dashboard" className="hidden md:inline-flex px-4 py-2 text-sm font-bold text-gray-900 hover:text-red-600 transition tracking-wide">Vendor Dashboard</Link>
-          ) : (
-            <Link href="/become-seller" className="hidden md:inline-flex px-4 py-2 text-sm font-bold text-gray-900 hover:text-red-600 transition tracking-wide">Become a Seller</Link>
-          )}
+          <div className="hidden md:flex items-center gap-3 ml-1 pl-3 border-l border-gray-200">
+            {user && user.role === 'seller' ? (
+              <Link href="/vendor/dashboard" className="px-4 py-2 text-sm font-bold text-gray-900 hover:text-red-600 transition-colors duration-200 tracking-wide">Vendor Dashboard</Link>
+            ) : (
+              <Link href="/become-seller" className="px-4 py-2 text-sm font-bold text-gray-900 hover:text-red-600 transition-colors duration-200 tracking-wide">Become a Seller</Link>
+            )}
 
-          {/* Profile / Sign In */}
-          {user ? (
-            <Link 
-              href="/dashboard"
-              className="w-7 h-7 md:w-8 md:h-8 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold text-[10px] md:text-xs ring-2 ring-gray-100 uppercase hover:scale-105 transition-transform cursor-pointer"
-            >
-              {user.name.substring(0, 1)}
-            </Link>
-          ) : (
-            <Link href="/signin" className="px-3 py-1.5 md:px-6 md:py-2 bg-red-600 text-white rounded hover:bg-red-700 transition font-bold tracking-tight text-xs md:text-sm shadow-md shadow-red-500/20">Sign In</Link>
-          )}
+            {/* Profile / Sign In */}
+            {user ? (
+              <Link 
+                href="/dashboard"
+                className="w-8 h-8 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold text-xs ring-2 ring-gray-100 uppercase hover:scale-110 transition-transform duration-200 cursor-pointer"
+              >
+                {user.name.substring(0, 1)}
+              </Link>
+            ) : (
+              <Link href="/signin" className="px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-200 font-bold tracking-tight text-sm shadow-md shadow-red-500/20 hover:shadow-lg hover:-translate-y-0.5">Sign In</Link>
+            )}
+          </div>
+
+          {/* Mobile Profile */}
+          <div className="md:hidden">
+            {user ? (
+              <Link 
+                href="/dashboard"
+                className="w-7 h-7 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold text-[10px] ring-2 ring-gray-100 uppercase"
+              >
+                {user.name.substring(0, 1)}
+              </Link>
+            ) : (
+              <Link href="/signin" className="px-3 py-1.5 bg-red-600 text-white rounded hover:bg-red-700 transition font-bold text-xs shadow-md shadow-red-500/20">Sign In</Link>
+            )}
+          </div>
         </div>
       </div>
 
@@ -196,13 +215,13 @@ export default function Header() {
         <div className="md:hidden border-t border-gray-100 bg-white">
           <nav className="px-4 py-4 space-y-1">
             {['Electronics', 'Fashion', 'Home', 'Sports & Beauty'].map(cat => (
-              <Link key={cat} href={`/?category=${cat.split(' ')[0].toLowerCase()}`} onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-700 font-medium hover:bg-gray-50 rounded-xl transition">
+              <Link key={cat} href={`/?category=${cat.split(' ')[0].toLowerCase()}`} onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-900 font-bold hover:bg-gray-50 rounded-xl transition-all duration-200">
                 {cat}
               </Link>
             ))}
             <div className="border-t border-gray-100 my-2"></div>
-            <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-700 font-medium hover:bg-gray-50 rounded-xl transition">About</Link>
-            <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-700 font-medium hover:bg-gray-50 rounded-xl transition">Contact</Link>
+            <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-500 font-medium hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">About</Link>
+            <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-500 font-medium hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">Contact</Link>
             {user && user.role === 'seller' ? (
               <Link href="/vendor/dashboard" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-700 font-medium hover:bg-gray-50 rounded-xl transition">Vendor Dashboard</Link>
             ) : (
