@@ -93,25 +93,24 @@ export default function BannerCarousel() {
       {BANNERS.map((b, i) => (
         <div
           key={b.id}
-          className={`absolute inset-0 bg-gradient-to-r ${b.bg} transition-all duration-700 ease-in-out`}
+          className={`absolute inset-0 bg-gradient-to-br ${b.bg} transition-all duration-700 ease-in-out`}
           style={{ opacity: i === current ? 1 : 0, zIndex: i === current ? 1 : 0 }}
         >
+          {/* Glow effect */}
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[500px] rounded-full opacity-20 blur-[120px]" style={{ backgroundColor: b.accent }} />
+            <div className="absolute bottom-0 right-0 w-[300px] h-[300px] rounded-full opacity-10 blur-[80px]" style={{ backgroundColor: b.accent }} />
+          </div>
           <div className="max-w-7xl mx-auto h-full flex items-center px-10 gap-10">
             {/* Left Content */}
             <div className="flex-1 text-white">
-              <span
-                className="inline-block text-xs font-bold px-3 py-1.5 rounded-full mb-4"
-                style={{ backgroundColor: `${b.accent}25`, color: b.accent, border: `1px solid ${b.accent}40` }}
-              >
-                {b.tag}
-              </span>
-              <h2 className="text-5xl font-extrabold leading-tight mb-1 tracking-tight">{b.title}</h2>
-              <p className="text-xl font-bold mb-3" style={{ color: b.accent }}>{b.subtitle}</p>
-              <p className="text-gray-300 text-sm font-medium mb-6 max-w-sm leading-relaxed">{b.desc}</p>
+              <h2 className="text-5xl font-extrabold leading-[1.15] mb-2 tracking-tight">{b.title}</h2>
+              <p className="text-xl font-bold mb-4" style={{ color: b.accent }}>{b.subtitle}</p>
+              <p className="text-gray-300 text-sm font-medium mb-8 max-w-sm leading-relaxed">{b.desc}</p>
               <div className="flex items-center gap-4">
                 <Link
                   href={b.href}
-                  className="text-white font-extrabold px-8 py-3 rounded-lg text-sm transition-all hover:opacity-90 hover:-translate-y-0.5 shadow-lg"
+                  className="text-white font-extrabold px-8 py-3.5 rounded-lg text-sm transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 shadow-lg active:scale-95 hover:shadow-xl"
                   style={{ backgroundColor: b.accent }}
                 >
                   {b.cta} →
@@ -123,16 +122,9 @@ export default function BannerCarousel() {
               </div>
             </div>
 
-            {/* Right — Product Image + Badge */}
-            <div className="relative w-[300px] shrink-0 flex-col items-center justify-center hidden md:flex">
-              {/* Discount Badge */}
-              <div
-                className="absolute -top-3 -right-3 z-10 w-16 h-16 rounded-full flex items-center justify-center text-white text-xs font-extrabold shadow-xl"
-                style={{ backgroundColor: b.badgeBg }}
-              >
-                {b.badge}
-              </div>
-              <div className="w-[270px] h-[340px] rounded-2xl overflow-hidden shadow-2xl border-4 border-white/10">
+            {/* Right — Product Image */}
+            <div className="relative w-[420px] shrink-0 flex-col items-center justify-center hidden md:flex">
+              <div className="w-[380px] h-[340px] rounded-2xl overflow-hidden shadow-2xl border-4 border-white/10">
                 <img src={b.image} alt={b.subtitle} className="w-full h-full object-cover object-top" />
               </div>
             </div>
@@ -143,9 +135,9 @@ export default function BannerCarousel() {
       {/* Left Arrow */}
       <button
         onClick={prev}
-        className="absolute left-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 bg-black/30 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-white/15 hover:bg-white/30 text-white rounded-full flex items-center justify-center transition-all duration-200 backdrop-blur-md border border-white/10 hover:scale-110 active:scale-95"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" />
         </svg>
       </button>
@@ -153,9 +145,9 @@ export default function BannerCarousel() {
       {/* Right Arrow */}
       <button
         onClick={next}
-        className="absolute right-3 top-1/2 -translate-y-1/2 z-20 w-9 h-9 bg-black/30 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-all backdrop-blur-sm"
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 bg-white/15 hover:bg-white/30 text-white rounded-full flex items-center justify-center transition-all duration-200 backdrop-blur-md border border-white/10 hover:scale-110 active:scale-95"
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
         </svg>
       </button>
