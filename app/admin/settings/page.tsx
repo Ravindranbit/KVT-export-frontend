@@ -266,7 +266,10 @@ export default function AdminSettings() {
 
               <div className={`p-6 border-2 rounded-[28px] transition-all duration-500 relative overflow-hidden group ${!form.storeEnabled ? 'border-[#e60000] bg-red-50/30 shadow-lg' : 'border-gray-100 bg-gray-50/30 hover:border-gray-200 hover:bg-white'}`}>
                 {!form.storeEnabled && <div className="absolute top-0 right-0 p-3"><span className="text-[9px] font-black text-red-600 bg-white px-3 py-1 rounded-full shadow-sm animate-pulse tracking-widest border border-red-100">SYSTEM OFFLINE</span></div>}
-                <label className="flex items-center justify-between cursor-pointer relative z-10">
+                <label 
+                  onClick={() => setForm({ ...form, storeEnabled: !form.storeEnabled })}
+                  className="flex items-center justify-between cursor-pointer relative z-10 select-none"
+                >
                   <div className="flex items-center gap-5">
                     <div className={`p-3 rounded-2xl transition-all duration-500 ${!form.storeEnabled ? 'bg-[#e60000] text-white shadow-xl shadow-red-500/40 rotate-12' : 'bg-white text-gray-400 group-hover:text-gray-600 shadow-sm border border-gray-100'}`}>
                       <AlertCircle size={22} />
@@ -279,14 +282,19 @@ export default function AdminSettings() {
                       <span className="block text-[11px] font-bold text-gray-500 mt-1 opacity-70">Toggle public availability of the storefront portal.</span>
                     </div>
                   </div>
-                  <div className="flex items-center">
-                    <div className={`w-12 h-6 rounded-full transition-colors duration-500 ${!form.storeEnabled ? 'bg-red-600' : 'bg-gray-200'}`}>
+                  <div className="flex items-center group/toggle">
+                    <div className={`relative w-14 h-7 rounded-full transition-all duration-500 overflow-hidden ${!form.storeEnabled ? 'bg-red-600' : 'bg-gray-200'}`}>
                       <motion.div
-                        animate={{ x: !form.storeEnabled ? 26 : 4 }}
-                        className="w-4 h-4 bg-white rounded-full mt-1 shadow-sm"
+                        animate={{ x: !form.storeEnabled ? 30 : 4 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                        className="absolute top-1 w-5 h-5 bg-white rounded-full shadow-lg z-10"
                       />
+                      <div className="absolute inset-0 flex items-center justify-between px-2 text-[8px] font-black uppercase text-white/40">
+                         <span className="ml-5">OFF</span>
+                         <span className="mr-5">ON</span>
+                      </div>
                     </div>
-                    <span className={`ml-3 text-[10px] font-black ${!form.storeEnabled ? 'text-red-700' : 'text-gray-400'} uppercase tracking-widest`}>
+                    <span className={`ml-3 text-[10px] font-black ${!form.storeEnabled ? 'text-red-700' : 'text-gray-400'} uppercase tracking-widest min-w-[100px]`}>
                       {form.storeEnabled ? 'Portal Live' : 'Maintenance Active'}
                     </span>
                   </div>
