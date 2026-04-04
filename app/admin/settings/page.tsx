@@ -37,7 +37,6 @@ const TABS = [
   { id: 'contact', label: 'Contact', icon: MapPin },
   { id: 'pricing', label: 'Pricing & Shipping', icon: Tag },
   { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'security', label: 'Security', icon: Shield },
 ];
 
 export default function AdminSettings() {
@@ -443,72 +442,6 @@ export default function AdminSettings() {
                     </InputField>
                     <div className="pt-2">
                       <ModernSwitch label="Vendor Sentinel" description="Monitor new business applications" checked={form.adminAlerts} onChange={(v: boolean) => setForm({ ...form, adminAlerts: v })} icon={Shield} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {activeTab === 'security' && (
-            <motion.div
-              key="security"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="space-y-12"
-            >
-              <SectionHeader title="Cyber Perimeter" subtitle="Hardening the administrative frontier against unauthorized traversal" />
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-                <div className="space-y-10">
-                  <div className="flex items-center gap-4 border-b border-gray-100 pb-6">
-                    <div className="p-2 bg-[#e60000]/10 rounded-lg text-[#e60000]"><Lock size={20} /></div>
-                    <h4 className="text-base font-black text-gray-950 uppercase tracking-widest leading-none">Authentication Firewall</h4>
-                  </div>
-
-                  <div className="space-y-8">
-                    <div className="space-y-3">
-                      <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest ml-1">Crypographic Strength Policy</label>
-                      <select value={form.passwordRules} onChange={(e) => setForm({ ...form, passwordRules: e.target.value })} className="w-full bg-gray-50 border border-gray-200 rounded-[24px] px-8 py-5 text-sm font-black outline-none focus:bg-white focus:border-[#e60000] focus:ring-8 focus:ring-[#e60000]/5 transition-all appearance-none cursor-pointer">
-                        <option value="basic">Legacy Standard (Entropy: Low)</option>
-                        <option value="strong">Corporate Grade (Entropy: Med)</option>
-                        <option value="strict">Advanced Defense (Entropy: High)</option>
-                      </select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-8">
-                      <InputField label="Session Expiry (H)" type="number" value={form.sessionTimeout} onChange={(e: any) => setForm({ ...form, sessionTimeout: parseInt(e.target.value) })} />
-                      <InputField label="Brute Force Ceiling" type="number" value={form.loginAttemptLimit} onChange={(e: any) => setForm({ ...form, loginAttemptLimit: parseInt(e.target.value) })} />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-6">
-                    <ModernSwitch label="Multi-Factor (MFA)" description="Hardware/Software token verification" checked={form.require2FA} onChange={(v: boolean) => setForm({ ...form, require2FA: v })} icon={Shield} />
-                    <ModernSwitch label="Enforced Verification" description="Identity confirmation via secure links" checked={form.emailVerificationRequired} onChange={(v: boolean) => setForm({ ...form, emailVerificationRequired: v })} icon={Eye} />
-                  </div>
-                </div>
-
-                <div className="space-y-10">
-                  <div className="flex items-center gap-4 border-b border-gray-100 pb-6">
-                    <div className="p-2 bg-[#e60000]/10 rounded-lg text-[#e60000]"><Database size={20} /></div>
-                    <h4 className="text-base font-black text-gray-950 uppercase tracking-widest leading-none">Network Integrity</h4>
-                  </div>
-
-                  <div className="space-y-8">
-                    <div className="space-y-3">
-                      <label className="text-[11px] font-black text-gray-600 uppercase tracking-widest ml-1">CIDR Administrative Allowlist</label>
-                      <textarea
-                        value={form.ipWhitelist}
-                        onChange={(e) => setForm({ ...form, ipWhitelist: e.target.value })}
-                        rows={5}
-                        placeholder="213.190.x.x, 104.28.x.x..."
-                        className="w-full bg-gray-50 border border-gray-200 rounded-[32px] px-8 py-8 text-sm font-mono font-bold focus:bg-white focus:border-[#e60000] focus:ring-8 focus:ring-[#e60000]/5 transition-all outline-none resize-none shadow-inner"
-                      />
-                    </div>
-                    <div className="space-y-6">
-                      <ModernSwitch label="Automated CAPTCHA" description="Challenge-response for bot mitigation" checked={form.captchaEnabled} onChange={(v: boolean) => setForm({ ...form, captchaEnabled: v })} icon={AlertCircle} />
-                      <div className={`p-1.5 rounded-[28px] transition-all duration-500 ${form.auditLogsEnabled ? 'bg-red-50 ring-2 ring-red-100 shadow-xl' : 'bg-transparent'}`}>
-                        <ModernSwitch label="High-Fidelity Audit" description="Log every mutation and access attempt" checked={form.auditLogsEnabled} onChange={(v: boolean) => setForm({ ...form, auditLogsEnabled: v })} icon={AlertCircle} />
-                      </div>
                     </div>
                   </div>
                 </div>
