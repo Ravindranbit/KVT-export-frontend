@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useAdminStore } from '../../store/useAdminStore';
 import { useRouter } from 'next/navigation';
 
 export default function SignIn() {
   const router = useRouter();
   const { setUser } = useAuthStore();
+  const { admins } = useAdminStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -33,7 +35,23 @@ export default function SignIn() {
       return;
     }
     
-    // Simulate Buyer Logic
+    // Check if user is an admin
+    const foundAdmin = admins.find(a => a.email === email);
+    if (foundAdmin && (password === 'admin123')) {
+      setUser({
+        id: foundAdmin.id,
+        name: foundAdmin.name,
+        email: foundAdmin.email,
+        role: 'admin',
+        phone: foundAdmin.phone,
+        joinedDate: foundAdmin.joinedDate,
+        permissions: foundAdmin.permissions,
+      });
+      router.push('/admin');
+      return;
+    }
+    
+    // Default: Simulate Buyer Logic
     setUser({
       id: 'u1',
       name: email.split('@')[0],
