@@ -26,7 +26,9 @@ export interface User {
 
 interface AuthState {
   user: User | null;
+  hasHydrated: boolean;
   setUser: (user: User | null) => void;
+  setHasHydrated: (state: boolean) => void;
   logout: () => void;
   updateProfile: (updates: Partial<User>) => void;
 }
@@ -35,7 +37,9 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
+      hasHydrated: false,
       setUser: (user) => set({ user }),
+      setHasHydrated: (state) => set({ hasHydrated: state }),
       logout: () => set({ user: null }),
       updateProfile: (updates) => set((state) => ({
         user: state.user ? { ...state.user, ...updates } : null,
@@ -43,6 +47,9 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

@@ -44,7 +44,7 @@ function NavItem({ item, isActive }: { item: { label: string; href: string; icon
 }
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuthStore();
+  const { user, hasHydrated, logout } = useAuthStore();
   const { orders, vendors } = useAdminStore();
   const { products } = useProductStore();
   const router = useRouter();
@@ -55,13 +55,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
-    if (pathname === '/admin/login') return;
+    if (!hasHydrated || pathname === '/admin/login') return;
     if (!user || user.role !== 'admin') {
       router.push('/admin/login');
     }
-  }, [user, router, pathname]);
+  }, [user, hasHydrated, router, pathname]);
 
   if (pathname === '/admin/login') return <>{children}</>;
+  if (!hasHydrated) return <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Restoring system state...</div>;
   if (!user || user.role !== 'admin') return <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Redirecting...</div>;
 
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
