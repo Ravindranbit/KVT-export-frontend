@@ -11,14 +11,15 @@ export default function AdminProducts() {
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
 
-  const [form, setForm] = useState({ name: '', price: '', category: 'fashion', description: '', image: '', vendorId: 'v1', stock: '100', sku: '', brand: '' });
+  const [form, setForm] = useState({ name: '', price: '', category: 'fashion', description: '', image: '', vendorId: 'admin', stock: '100', sku: '', brand: '' });
 
   const categories = ['all', ...new Set(products.map(p => p.category))];
 
   const filtered = products.filter(p => {
+    const isByAdmin = p.vendorId === 'admin';
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toString().includes(search);
     const matchCat = filterCategory === 'all' || p.category === filterCategory;
-    return matchSearch && matchCat;
+    return isByAdmin && matchSearch && matchCat;
   });
 
   const handleAdd = () => {
@@ -38,7 +39,7 @@ export default function AdminProducts() {
     };
     addProduct(newProduct);
     setShowAddModal(false);
-    setForm({ name: '', price: '', category: 'fashion', description: '', image: '', vendorId: 'v1', stock: '100', sku: '', brand: '' });
+    setForm({ name: '', price: '', category: 'fashion', description: '', image: '', vendorId: 'admin', stock: '100', sku: '', brand: '' });
   };
 
   const handleDelete = (id: number) => {

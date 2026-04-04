@@ -2,8 +2,12 @@
 
 import { useState } from 'react';
 import { useAdminStore } from '../../../store/useAdminStore';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { ShoppingBag, ChevronRight } from 'lucide-react';
 
 export default function AdminVendors() {
+  const router = useRouter();
   const { vendors, updateVendorStatus, updateVendorCommission } = useAdminStore();
   const [filterStatus, setFilterStatus] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
@@ -55,98 +59,95 @@ export default function AdminVendors() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.map((v) => (
-          <div key={v.id} className="bg-white border border-gray-200 rounded-3xl p-0 overflow-hidden hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-500 group hover:-translate-y-1 shadow-sm">
-            {/* Card Header with Status Overlay */}
-    <div className="relative h-20 bg-gray-50/80 flex items-center px-5 border-b border-gray-100">
-      <div className="absolute top-3 right-4">
-        <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-white shadow-sm border border-gray-100 flex items-center gap-1.5 ${statusColors[v.status]}`}>
-          <span className={`w-1.5 h-1.5 rounded-full bg-current ${v.status === 'pending' ? 'animate-pulse' : ''}`} />
-          {v.status}
-        </span>
-      </div>
-      <div className="flex items-center gap-3">
-        <div className="w-12 h-12 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-lg font-black text-gray-400 shadow-sm group-hover:rotate-3 transition-transform duration-500">
-          {v.storeName.charAt(0)}
-        </div>
-        <div>
-          <h3 className="font-black text-gray-900 text-[15px] leading-tight tracking-tight">{v.storeName}</h3>
-          <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">{v.name}</p>
-        </div>
-      </div>
-    </div>
+          <div 
+            key={v.id} 
+            className="bg-white border border-gray-200 rounded-3xl p-0 overflow-hidden hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-500 group hover:-translate-y-1 shadow-sm relative flex flex-col"
+          >
+            {/* Card Content Area - Linked */}
+            <Link href={`/admin/vendors/${v.id}`} className="block flex-1 group/content">
+              {/* Card Header with Status Overlay */}
+              <div className="relative h-20 bg-gray-50/80 flex items-center px-5 border-b border-gray-100 group-hover/content:bg-gray-100/50 transition-colors">
+                <div className="absolute top-3 right-4">
+                  <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-white shadow-sm border border-gray-100 flex items-center gap-1.5 ${statusColors[v.status]}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full bg-current ${v.status === 'pending' ? 'animate-pulse' : ''}`} />
+                    {v.status}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-lg font-black text-gray-400 shadow-sm group-hover:rotate-3 transition-transform duration-500">
+                    {v.storeName.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 className="font-black text-gray-900 text-[15px] leading-tight tracking-tight">{v.storeName}</h3>
+                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">{v.name}</p>
+                  </div>
+                </div>
+              </div>
 
-    <div className="p-5">
-      <p className="text-[13px] text-gray-500 mb-4 leading-relaxed line-clamp-1 italic font-medium">
-        "{v.storeDescription}"
-      </p>
+              <div className="p-5">
+                <div className="flex items-start justify-between mb-4">
+                  <p className="text-[13px] text-gray-500 leading-relaxed line-clamp-1 italic font-medium">
+                    "{v.storeDescription}"
+                  </p>
+                  <ChevronRight size={14} className="text-gray-300 group-hover:translate-x-1 group-hover:text-red-500 transition-all" />
+                </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-3 gap-0 border border-gray-100 rounded-xl overflow-hidden mb-4 shadow-sm">
-        <div className="p-2.5 text-center border-r border-gray-100 bg-[#fafafa]">
-          <p className="text-[15px] font-black text-gray-900">{v.productsCount}</p>
-          <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Products</p>
-        </div>
-        <div className="p-2.5 text-center border-r border-gray-100 bg-white">
-          <p className="text-[15px] font-black text-gray-900">₹{(v.totalRevenue / 1000).toFixed(0)}k</p>
-          <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Revenue</p>
-        </div>
-        <div className="p-2.5 text-center bg-[#fafafa]">
-          <p className="text-[15px] font-black text-blue-600">{v.commission}%</p>
-          <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest">Fee Rate</p>
-        </div>
-      </div>
+                {/* Stats Grid */}
+                <div className="grid grid-cols-3 gap-0 border border-gray-100 rounded-xl overflow-hidden mb-1 shadow-sm">
+                  <div className="p-2.5 text-center border-r border-gray-100 bg-[#fafafa]">
+                    <p className="text-[15px] font-black text-gray-900">{v.productsCount}</p>
+                    <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest text-center">Products</p>
+                  </div>
+                  <div className="p-2.5 text-center border-r border-gray-100 bg-white">
+                    <p className="text-[15px] font-black text-gray-900">₹{(v.totalRevenue / 1000).toFixed(0)}k</p>
+                    <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest text-center">Revenue</p>
+                  </div>
+                  <div className="p-2.5 text-center bg-[#fafafa]">
+                    <p className="text-[15px] font-black text-blue-600">{v.commission}%</p>
+                    <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest text-center">Fee Rate</p>
+                  </div>
+                </div>
+              </div>
+            </Link>
 
-      {/* Contact Details */}
-      <div className="bg-gray-50/50 rounded-xl p-3 space-y-1.5 mb-5">
-        <div className="flex items-center gap-3 text-xs text-gray-600 font-bold truncate">
-          <svg className="w-3.5 h-3.5 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-          {v.email}
-        </div>
-        <div className="flex items-center gap-3 text-[10px] text-gray-400 font-black uppercase tracking-widest pt-1.5 border-t border-gray-100/50">
-          <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-          Est. {v.joinedDate}
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="flex gap-2.5">
-        {v.status === 'pending' && (
-          <div className="flex gap-2 w-full mt-1">
-            <button 
-              onClick={() => updateVendorStatus(v.id, 'approved')} 
-              className="flex-1 text-[12px] font-bold capitalize tracking-wide text-white bg-[#3b8c41] py-2.5 rounded-xl hover:bg-[#2e6e33] transition-all active:scale-95"
-            >
-              Approve
-            </button>
-            <button 
-              onClick={() => updateVendorStatus(v.id, 'suspended')} 
-              className="flex-1 text-[12px] font-bold capitalize tracking-wide text-white bg-[#e60000] py-2.5 rounded-xl hover:bg-[#cc0000] transition-all active:scale-95"
-            >
-              Reject
-            </button>
-          </div>
-        )}
-        {(v.status === 'approved' || v.status === 'suspended') && (
-          <div className="flex gap-2 w-full mt-1">
-            <button 
-              onClick={() => setEditCommission({ id: v.id, value: v.commission })} 
-              className="flex-1 text-[12px] font-bold capitalize tracking-wide text-white bg-[#1976d2] py-2.5 rounded-xl hover:bg-[#1565c0] transition-all active:scale-95"
-            >
-              Commission
-            </button>
-            <button 
-              onClick={() => updateVendorStatus(v.id, v.status === 'suspended' ? 'approved' : 'suspended')} 
-              className={`flex-1 text-[12px] font-bold capitalize tracking-wide py-2.5 rounded-xl transition-all active:scale-95 ${
-                v.status === 'suspended' 
-                  ? 'text-white bg-[#3b8c41] hover:bg-[#2e6e33]' 
-                  : 'text-white bg-[#e60000] hover:bg-[#cc0000]'
-              }`}
-            >
-              {v.status === 'suspended' ? 'Activate' : 'Suspend'}
-            </button>
-          </div>
-        )}
-      </div>
+            {/* Action Buttons - Outside the Link to avoid nesting but inside the same card */}
+            <div className="px-5 pb-5 pt-0">
+                {v.status === 'pending' && (
+                  <div className="flex gap-2 w-full">
+                    <button 
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateVendorStatus(v.id, 'approved'); }} 
+                      className="flex-1 text-[12px] font-bold capitalize tracking-wide text-white bg-[#3b8c41] py-2.5 rounded-xl hover:bg-[#2e6e33] transition-all active:scale-95 shadow-md shadow-green-500/10"
+                    >
+                      Approve
+                    </button>
+                    <button 
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateVendorStatus(v.id, 'suspended'); }} 
+                      className="flex-1 text-[12px] font-bold capitalize tracking-wide text-white bg-[#e60000] py-2.5 rounded-xl hover:bg-[#cc0000] transition-all active:scale-95 shadow-md shadow-red-500/10"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
+                {(v.status === 'approved' || v.status === 'suspended') && (
+                  <div className="flex gap-2 w-full">
+                    <button 
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditCommission({ id: v.id, value: v.commission }); }} 
+                      className="flex-1 text-[12px] font-bold capitalize tracking-wide text-white bg-[#1976d2] py-2.5 rounded-xl hover:bg-[#1565c0] transition-all active:scale-95 shadow-md shadow-blue-500/10"
+                    >
+                      Commission
+                    </button>
+                    <button 
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateVendorStatus(v.id, v.status === 'suspended' ? 'approved' : 'suspended'); }} 
+                      className={`flex-1 text-[12px] font-bold capitalize tracking-wide py-2.5 rounded-xl transition-all active:scale-95 shadow-md ${
+                        v.status === 'suspended' 
+                          ? 'text-white bg-[#3b8c41] hover:bg-[#2e6e33] shadow-green-500/10' 
+                          : 'text-white bg-[#e60000] hover:bg-[#cc0000] shadow-red-500/10'
+                      }`}
+                    >
+                      {v.status === 'suspended' ? 'Activate' : 'Suspend'}
+                    </button>
+                  </div>
+                )}
             </div>
           </div>
         ))}
