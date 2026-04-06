@@ -406,7 +406,7 @@ export default function AdminSettings() {
                 className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-full border border-green-100"
               >
                 <CheckCircle size={16} />
-                <span className="text-[10px] font-black uppercase tracking-widest">Protocol Synchronized</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">chnages saved successfully</span>
               </motion.div>
             )}
           </AnimatePresence>

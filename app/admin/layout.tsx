@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useAdminStore } from '../../store/useAdminStore';
 import { useProductStore } from '../../store/useProductStore';
-import { ChevronRight, Shield, Settings, Database, Lock } from 'lucide-react';
+import { ChevronRight, Shield, Settings, Database, Lock, User } from 'lucide-react';
 import Link from 'next/link';
 
 const NAV_ITEMS = [
@@ -51,8 +51,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showSearch, setShowSearch] = useState(false);
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -68,12 +66,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pendingVendors = vendors.filter(v => v.status === 'pending').length;
   const notifCount = pendingOrders + pendingVendors;
   const pageTitle = pathname === '/admin' ? 'Dashboard' : pathname.split('/').pop()?.replace(/-/g, ' ') || '';
-
-  // Search results
-  const searchResults = searchQuery.length > 1 ? {
-    products: products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 3),
-    orders: orders.filter(o => o.id.toLowerCase().includes(searchQuery.toLowerCase()) || o.customerName.toLowerCase().includes(searchQuery.toLowerCase())).slice(0, 3),
-  } : null;
 
   const isItemActive = (href: string) => pathname === href || (href !== '/admin' && pathname.startsWith(href));
 
@@ -174,53 +166,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
 
           <div className="flex items-center gap-3">
-            {/* Global Search */}
-            <div className="relative hidden md:block">
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-              <input
-                type="text"
-                placeholder="Search products, orders, users..."
-                value={searchQuery}
-                onChange={(e) => { setSearchQuery(e.target.value); setShowSearch(true); }}
-                onFocus={() => setShowSearch(true)}
-                onBlur={() => setTimeout(() => setShowSearch(false), 200)}
-                className="pl-9 pr-4 py-2 bg-gray-50/50 border border-gray-200 rounded-xl text-sm text-gray-700 outline-none focus:bg-white focus:ring-4 focus:ring-red-500/10 focus:border-red-500/50 w-72 placeholder:text-gray-400 transition-all duration-300 shadow-sm focus:shadow-md"
-              />
-              {/* Search Dropdown */}
-              {showSearch && searchResults && (searchResults.products.length > 0 || searchResults.orders.length > 0) && (
-                <div className="absolute top-full mt-1 left-0 w-80 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
-                  {searchResults.products.length > 0 && (
-                    <div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-4 py-2 bg-gray-50">Products</p>
-                      {searchResults.products.map(p => (
-                        <Link key={p.id} href={`/admin/products`} className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition-colors">
-                          <img src={p.image} alt="" className="w-7 h-7 rounded object-cover" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>
-                            <p className="text-xs text-gray-400">₹{p.price.toLocaleString()}</p>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                  {searchResults.orders.length > 0 && (
-                    <div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-4 py-2 bg-gray-50 border-t border-gray-100">Orders</p>
-                      {searchResults.orders.map(o => (
-                        <Link key={o.id} href={`/admin/orders`} className="flex items-center justify-between px-4 py-2.5 hover:bg-gray-50 transition-colors">
-                          <div>
-                            <p className="text-sm font-bold text-gray-900">{o.id}</p>
-                            <p className="text-xs text-gray-400">{o.customerName}</p>
-                          </div>
-                          <span className="text-xs font-bold text-gray-500">₹{o.total.toLocaleString()}</span>
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
             {/* Notification Bell */}
             <div className="relative">
               <button onClick={() => setShowNotif(!showNotif)} className="relative w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all">
@@ -280,8 +225,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <p className="text-sm font-black text-gray-900 tracking-tight leading-none">{user.name}</p>
                   <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-wider">{user.role}</p>
                 </div>
-                <div className="w-10 h-10 bg-gray-900 rounded-[14px] flex items-center justify-center text-white font-black text-sm ring-4 ring-gray-100 group-hover:ring-red-50/50 transition-all shadow-md">
-                  {user.name.charAt(0)}
+                <div className="w-10 h-10 bg-gray-900 rounded-[14px] flex items-center justify-center text-white ring-4 ring-gray-100 group-hover:ring-red-50/50 transition-all shadow-md">
+                  <User size={18} />
                 </div>
               </div>
               

@@ -18,12 +18,14 @@ import {
   ExternalLink,
   ShoppingBag,
   EyeOff,
+  Eye,
   Bell
 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function VendorDetails() {
   const [notifiedProducts, setNotifiedProducts] = useState<number[]>([]);
+  const [hiddenProducts, setHiddenProducts] = useState<number[]>([]);
   const params = useParams();
   const router = useRouter();
   const { vendors } = useAdminStore();
@@ -101,14 +103,7 @@ export default function VendorDetails() {
              </div>
           </div>
           
-          <div className="flex flex-col sm:flex-row lg:flex-col gap-3">
-             <button className="px-6 py-2.5 bg-gray-900 hover:bg-black text-white rounded-xl text-sm font-medium transition-colors border border-transparent flex items-center justify-center gap-2">
-               <ExternalLink size={16} /> Live Storefront
-             </button>
-             <button className="px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-medium transition-colors border border-gray-200 flex items-center justify-center gap-2">
-               Contact Partner
-             </button>
-          </div>
+
         </div>
       </div>
 
@@ -160,9 +155,11 @@ export default function VendorDetails() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {vendorProducts.map((p) => (
+                {vendorProducts.map((p) => {
+                  const isHidden = hiddenProducts.includes(p.id);
+                  return (
                   <tr key={p.id} className="hover:bg-gray-50/50 transition-colors group">
-                    <td className="px-6 py-4">
+                    <td className={`px-6 py-4 transition-opacity ${isHidden ? 'opacity-30' : ''}`}>
                       <div className="flex items-center gap-4">
                         <img src={p.image} className="w-12 h-12 rounded-lg object-cover bg-gray-50 border border-gray-200 object-top" alt={p.name} />
                         <div>
@@ -171,15 +168,15 @@ export default function VendorDetails() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className={`px-6 py-4 transition-opacity ${isHidden ? 'opacity-30' : ''}`}>
                       <span className="text-sm text-gray-600 capitalize">
                         {p.category}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className={`px-6 py-4 transition-opacity ${isHidden ? 'opacity-30' : ''}`}>
                       <p className="text-sm font-medium text-gray-900">₹{p.price.toLocaleString()}</p>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className={`px-6 py-4 transition-opacity ${isHidden ? 'opacity-30' : ''}`}>
                        <div className="flex items-center gap-1.5 text-sm">
                           <span className="text-yellow-500">★</span>
                           <span className="font-medium text-gray-900">{p.rating}</span>
@@ -188,9 +185,18 @@ export default function VendorDetails() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
-                          <EyeOff size={14} />
-                          <span>Hide</span>
+                        <button
+                          onClick={() => setHiddenProducts(prev =>
+                            isHidden ? prev.filter(id => id !== p.id) : [...prev, p.id]
+                          )}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase tracking-wider rounded-lg border transition-all shadow-sm ${
+                            isHidden
+                              ? 'text-white bg-blue-600 border-blue-600 hover:bg-blue-700'
+                              : 'text-gray-700 bg-white border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          {isHidden ? <Eye size={14} /> : <EyeOff size={14} />}
+                          <span>{isHidden ? 'Unhide' : 'Hide'}</span>
                         </button>
                         <button 
                           onClick={() => {
@@ -210,7 +216,8 @@ export default function VendorDetails() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
             {vendorProducts.length === 0 && (

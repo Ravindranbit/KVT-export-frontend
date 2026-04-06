@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAdminStore } from '../../../store/useAdminStore';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ShoppingBag, ChevronRight } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 
 export default function AdminVendors() {
   const router = useRouter();
@@ -84,7 +84,7 @@ export default function AdminVendors() {
                   <p className="text-[13px] text-gray-500 leading-relaxed line-clamp-1 italic font-medium">
                     "{v.storeDescription}"
                   </p>
-                  <ChevronRight size={14} className="text-gray-300 group-hover:translate-x-1 group-hover:text-red-500 transition-all" />
+
                 </div>
 
                 {/* Stats Grid */}

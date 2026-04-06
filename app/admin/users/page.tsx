@@ -40,7 +40,6 @@ export default function AdminUsers() {
 
   const statusColors: Record<string, string> = {
     active: 'text-[#3b8c41]',
-    suspended: 'text-[#cca300]',
     banned: 'text-[#e60000]',
   };
 
@@ -166,9 +165,9 @@ export default function AdminUsers() {
                     </span>
                   </td>
                   <td className="px-4 py-4">
-                    <span className={`flex items-center gap-1.5 text-sm font-black tracking-wide capitalize ${statusColors[u.status]}`}>
+                    <span className={`flex items-center gap-1.5 text-sm font-black tracking-wide capitalize ${statusColors[u.status === 'suspended' ? 'active' : u.status] || 'text-gray-500'}`}>
                       <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                      {u.status}
+                      {u.status === 'suspended' ? 'active' : u.status}
                     </span>
                   </td>
                   <td className="px-4 py-4 text-xs font-medium text-gray-500">{u.joinedDate}</td>
@@ -183,26 +182,11 @@ export default function AdminUsers() {
                           Edit Permissions
                         </button>
                       )}
-                      {!isAdmin && u.status === 'active' && (
-                        <button 
-                          onClick={() => updateUserStatus(u.id, 'suspended')} 
-                          className="w-[85px] py-2 text-[10px] font-black uppercase tracking-wider text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-all shadow-sm"
-                        >
-                          Suspend
-                        </button>
-                      )}
-                      {!isAdmin && u.status === 'suspended' && (
-                        <button 
-                          onClick={() => updateUserStatus(u.id, 'active')} 
-                          className="w-[85px] py-2 text-[10px] font-black uppercase tracking-wider text-white bg-green-600 rounded-lg hover:bg-green-700 transition-all shadow-sm"
-                        >
-                          Activate
-                        </button>
-                      )}
+
                       {!isAdmin && u.status !== 'banned' && (
                         <button 
                           onClick={() => updateUserStatus(u.id, 'banned')} 
-                          className="w-[85px] py-2 text-[10px] font-black uppercase tracking-wider text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-all border border-gray-200"
+                          className="w-[85px] py-2 text-[10px] font-black uppercase tracking-wider text-gray-600 bg-white rounded-lg hover:bg-gray-50 transition-all border border-gray-200 shadow-sm"
                         >
                           Ban
                         </button>
