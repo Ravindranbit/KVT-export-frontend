@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAdminStore, Vendor } from '../../../../store/useAdminStore';
 import { useProductStore, Product } from '../../../../store/useProductStore';
@@ -22,6 +23,7 @@ import {
 import Link from 'next/link';
 
 export default function VendorDetails() {
+  const [notifiedProducts, setNotifiedProducts] = useState<number[]>([]);
   const params = useParams();
   const router = useRouter();
   const { vendors } = useAdminStore();
@@ -79,12 +81,6 @@ export default function VendorDetails() {
              <div>
                <div className="flex items-center gap-3 mb-1">
                  <h1 className="text-2xl font-bold text-gray-900">{vendor.storeName}</h1>
-                 <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
-                   vendor.status === 'approved' ? 'text-emerald-700 bg-emerald-50 border-emerald-100' : 
-                   vendor.status === 'pending' ? 'text-amber-700 bg-amber-50 border-amber-100' : 'text-red-700 bg-red-50 border-red-100'
-                 }`}>
-                   {vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
-                 </span>
                </div>
                <p className="text-sm text-gray-500 max-w-xl leading-relaxed">{vendor.storeDescription}</p>
                
@@ -196,9 +192,20 @@ export default function VendorDetails() {
                           <EyeOff size={14} />
                           <span>Hide</span>
                         </button>
-                        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                        <button 
+                          onClick={() => {
+                            if (!notifiedProducts.includes(p.id)) {
+                              setNotifiedProducts(prev => [...prev, p.id]);
+                            }
+                          }}
+                          className={
+                            notifiedProducts.includes(p.id)
+                              ? "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-red-600 border border-red-600 rounded-lg shadow-sm"
+                              : "inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-all shadow-sm"
+                          }
+                        >
                           <Bell size={14} />
-                          <span>Notify Store</span>
+                          <span>{notifiedProducts.includes(p.id) ? 'Notified' : 'Notify Store'}</span>
                         </button>
                       </div>
                     </td>

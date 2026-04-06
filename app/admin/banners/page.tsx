@@ -2,10 +2,14 @@
 
 import { useState } from 'react';
 import { useAdminStore } from '../../../store/useAdminStore';
+import { useProductStore } from '../../../store/useProductStore';
+import { ChevronDown } from 'lucide-react';
 
 export default function AdminBanners() {
+  const { products } = useProductStore();
   const { banners, addBanner, updateBanner, deleteBanner } = useAdminStore();
   const [showAdd, setShowAdd] = useState(false);
+  const [showProductSelect, setShowProductSelect] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const defaultForm = { title: '', subtitle: '', desc: '', cta: '', href: '', accent: '#ff6b6b', image: '', tag: '' };
@@ -19,12 +23,19 @@ export default function AdminBanners() {
   );
 
   const handleSave = () => {
+    let finalImage = form.image;
+    if (!finalImage && form.href) {
+      const linkedProd = products.find(p => `/product/${p.id}` === form.href);
+      if (linkedProd) finalImage = linkedProd.image;
+    }
+    const finalForm = { ...form, image: finalImage };
+
     if (editingId) {
-      updateBanner(editingId, form);
+      updateBanner(editingId, finalForm);
     } else {
       addBanner({
         id: `b_${Date.now()}`,
-        ...form,
+        ...finalForm,
         active: true,
       });
     }
@@ -94,13 +105,6 @@ export default function AdminBanners() {
               <div className="flex-1">
                 <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed mb-4 italic font-medium">"{b.desc || 'No description provided.'}"</p>
                 
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-2 bg-gray-50 px-2.5 py-1.5 rounded-lg border border-gray-100">
-                    <span className="text-[9px] uppercase font-bold text-gray-400">Accent</span>
-                    <div className="w-3.5 h-3.5 rounded-full border border-gray-200 shadow-inner" style={{ backgroundColor: b.accent }} />
-                    <span className="text-[10px] font-mono font-bold text-gray-500">{b.accent}</span>
-                  </div>
-                </div>
               </div>
 
               <div className="flex gap-2.5 mt-auto items-center">
@@ -129,8 +133,40 @@ export default function AdminBanners() {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            
             <div className="p-8 overflow-y-auto space-y-6 flex-1">
+              
+              {/* Live Preview */}
+              <div className="mb-8">
+                <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Live Preview</label>
+                <div className="w-full h-44 relative overflow-hidden flex-shrink-0 group rounded-[20px] shadow-sm border border-gray-200" style={{ background: `linear-gradient(135deg, #0f172a, #1e293b)` }}>
+                  <div className="absolute inset-0 opacity-20 blur-[50px] transition-opacity group-hover:opacity-40" style={{ backgroundColor: form.accent || '#ff6b6b' }} />
+
+                  <div className="relative p-5 h-full flex flex-col justify-center z-10 w-[70%]">
+                    <p className="text-white text-lg font-extrabold leading-tight shadow-sm drop-shadow-md">{form.title || 'Enter a spectacular title'}</p>
+                    <p className="text-[11px] font-black uppercase tracking-wider mt-1.5 drop-shadow-sm" style={{ color: form.accent || '#ff6b6b' }}>{form.subtitle || 'And a catchy subtitle'}</p>
+                    <div className="mt-4">
+                      <span className="inline-flex items-center px-4 py-1.5 rounded-lg text-[10px] font-extrabold text-white shadow-lg border border-white/20 transition-transform group-hover:-translate-y-0.5" style={{ backgroundColor: form.accent || '#ff6b6b' }}>
+                        {form.cta || 'Shop Now'} →
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {(() => {
+                    const linkedProd = form.href ? products.find(p => `/product/${p.id}` === form.href) : null;
+                    const previewImage = form.image || (linkedProd ? linkedProd.image : null);
+                    
+                    if (previewImage) {
+                      return (
+                        <div className="absolute -right-4 -bottom-4 w-32 h-36 z-10 rotate-[-5deg] group-hover:rotate-0 group-hover:scale-105 transition-all duration-500 drop-shadow-2xl">
+                          <img src={previewImage} alt="" className="w-full h-full object-cover rounded-xl border-4 border-white/10 p-1 bg-white/50 backdrop-blur-sm" />
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Title *</label>
@@ -141,34 +177,68 @@ export default function AdminBanners() {
                   <input value={form.subtitle} onChange={(e) => setForm({...form, subtitle: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" placeholder="Electronics & Gadgets" />
                 </div>
               </div>
-              
-              <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Description</label>
-                <textarea value={form.desc} onChange={(e) => setForm({...form, desc: e.target.value})} rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors resize-none" placeholder="Add a compelling description..." />
-              </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">CTA Text</label>
                   <input value={form.cta} onChange={(e) => setForm({...form, cta: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" placeholder="Shop Now" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">CTA Link</label>
-                  <input value={form.href} onChange={(e) => setForm({...form, href: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" placeholder="/?category=electronics" />
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Accent Color</label>
-                  <div className="flex items-center gap-3">
-                    <input type="color" value={form.accent} onChange={(e) => setForm({...form, accent: e.target.value})} className="w-12 h-12 rounded-xl border border-gray-200 cursor-pointer p-1 bg-white" />
-                    <input value={form.accent} onChange={(e) => setForm({...form, accent: e.target.value})} className="flex-1 border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" />
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Linked Product</label>
+                  <div className="relative">
+                    <div 
+                      onClick={() => setShowProductSelect(!showProductSelect)}
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-white flex items-center justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors min-h-[48px]"
+                    >
+                      {form.href ? (
+                        (() => {
+                           const linkedProd = products.find(p => `/product/${p.id}` === form.href);
+                           if (linkedProd) {
+                             return (
+                               <div className="flex items-center gap-3">
+                                 <img src={linkedProd.image} className="w-6 h-6 rounded-md object-cover bg-gray-50 border border-gray-100" />
+                                 <span className="text-sm font-medium text-gray-900 truncate max-w-[120px]">{linkedProd.name}</span>
+                               </div>
+                             );
+                           }
+                           return <span className="text-sm font-medium text-gray-900 truncate">{form.href}</span>;
+                        })()
+                      ) : (
+                        <span className="text-sm text-gray-400">Select a product...</span>
+                      )}
+                      <ChevronDown size={16} className={`text-gray-400 transition-transform ${showProductSelect ? 'rotate-180' : ''}`} />
+                    </div>
+
+                    {showProductSelect && (
+                       <div className="absolute top-full right-0 left-0 mt-2 bg-white border border-gray-100 shadow-2xl rounded-2xl max-h-64 overflow-y-auto z-50 p-2">
+                         <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider px-3 pb-2 pt-1 border-b border-gray-50 mb-2">Products</div>
+                         {products.map(p => (
+                            <div 
+                              key={p.id} 
+                              onClick={() => { setForm({...form, href: `/product/${p.id}`}); setShowProductSelect(false); }} 
+                              className="p-2.5 rounded-xl hover:bg-gray-50 flex items-center gap-3 cursor-pointer transition-colors"
+                            >
+                               <img src={p.image} className="w-10 h-10 rounded-lg object-cover border border-gray-100 bg-gray-50" />
+                               <div>
+                                 <p className="text-sm font-bold text-gray-900 line-clamp-1">{p.name}</p>
+                                 <p className="text-xs text-gray-500 font-medium mt-0.5">₹{p.price.toLocaleString()}</p>
+                               </div>
+                            </div>
+                         ))}
+                         {products.length === 0 && (
+                            <div className="p-4 text-center text-sm text-gray-500">No products available</div>
+                         )}
+                       </div>
+                    )}
                   </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Tag / Badge</label>
-                  <input value={form.tag} onChange={(e) => setForm({...form, tag: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" placeholder="⚡ Best Deals" />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Accent Color</label>
+                <div className="flex items-center gap-3">
+                  <input type="color" value={form.accent} onChange={(e) => setForm({...form, accent: e.target.value})} className="w-12 h-12 rounded-xl border border-gray-200 cursor-pointer p-1 bg-white" />
+                  <input value={form.accent} onChange={(e) => setForm({...form, accent: e.target.value})} className="flex-1 border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" />
                 </div>
               </div>
 

@@ -35,7 +35,6 @@ import {
 const TABS = [
   { id: 'general', label: 'General', icon: Globe },
   { id: 'contact', label: 'Contact', icon: MapPin },
-  { id: 'pricing', label: 'Pricing & Shipping', icon: Tag },
   { id: 'notifications', label: 'Notifications', icon: Bell },
 ];
 
@@ -213,7 +212,7 @@ export default function AdminSettings() {
 
                 <div className="grid grid-cols-1 gap-6">
                   {[
-                    { label: 'Corporate Logo', icon: <ImageIcon size={22} />, desc: 'SVG or High-Res PNG', fieldLabel: 'Master Brand Identity' },
+                    { label: ' Logo', icon: <ImageIcon size={22} />, desc: 'SVG or High-Res PNG', fieldLabel: 'Master Brand Identity' },
                     { label: 'System Favicon', icon: <UploadCloud size={22} />, desc: 'ICO, PNG or SVG', fieldLabel: 'Browser Interface Icon' }
                   ].map((u, i) => (
                     <div key={i} className="space-y-2">
@@ -349,68 +348,6 @@ export default function AdminSettings() {
                       </div>
                     </div>
                     <InputField label="Map Embed Source Code" value={form.googleMapsLink} onChange={(e: any) => setForm({ ...form, googleMapsLink: e.target.value })} placeholder="https://www.google.com/maps/embed?..." />
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {activeTab === 'pricing' && (
-            <motion.div
-              key="pricing"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="space-y-12"
-            >
-              <SectionHeader title="Logistics & Finance" subtitle="Universal pricing rules, taxation policy, and shipping protocols" />
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
-                <div className="space-y-8">
-                  <div className="flex items-center gap-4 border-b border-gray-100 pb-6">
-                    <div className="p-2 bg-[#e60000]/10 rounded-lg text-[#e60000]"><DollarSign size={20} /></div>
-                    <h4 className="text-base font-black text-gray-900 uppercase tracking-widest leading-none">Monetary Interface</h4>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6">
-                    <InputField label="Display Format" value={form.currencyFormat} onChange={(e: any) => setForm({ ...form, currencyFormat: e.target.value })} placeholder="₹ {amount}" />
-                    <InputField label="Taxation Logic" value={form.taxType} onChange={(e: any) => setForm({ ...form, taxType: e.target.value as 'inclusive' | 'exclusive' })} type="select">
-                      <option value="exclusive">Exclusionary (Add at Pay)</option>
-                      <option value="inclusive">Inclusionary (Net Price)</option>
-                    </InputField>
-                    <InputField label="Global Levy (%)" type="number" value={form.taxRate} onChange={(e: any) => setForm({ ...form, taxRate: parseInt(e.target.value) })} />
-                    <InputField label="Base Currency" value={form.defaultCurrency} onChange={(e: any) => setForm({ ...form, defaultCurrency: e.target.value })} type="select">
-                      <option value="INR">INR (₹)</option>
-                      <option value="USD">USD ($)</option>
-                      <option value="EUR">EUR (€)</option>
-                      <option value="GBP">GBP (£)</option>
-                      <option value="AED">AED (د.إ)</option>
-                    </InputField>
-                  </div>
-
-                  <div className="pt-2">
-                    <ModernSwitch
-                      label="Granular Regional Taxation"
-                      description="Dynamic tax calculation based on geo-location"
-                      checked={form.multipleTaxRates}
-                      onChange={(v: boolean) => setForm({ ...form, multipleTaxRates: v })}
-                      icon={CreditCard}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-8">
-                  <div className="flex items-center gap-4 border-b border-gray-100 pb-6">
-                    <div className="p-2 bg-[#e60000]/10 rounded-lg text-[#e60000]"><Truck size={20} /></div>
-                    <h4 className="text-base font-black text-gray-900 uppercase tracking-widest leading-none">Fulfillment Logistics</h4>
-                  </div>
-
-                  <div className="space-y-6">
-                    <InputField label="Shipment Corridors" value={form.shippingZones} onChange={(e: any) => setForm({ ...form, shippingZones: e.target.value })} placeholder="e.g. GCC, EU, Southeast Asia" />
-                    <div className="grid grid-cols-2 gap-6">
-                      <InputField label="COD Surcharge" type="number" value={form.codCharges} onChange={(e: any) => setForm({ ...form, codCharges: parseInt(e.target.value) })} />
-                      <InputField label="Free Shipping Floor" type="number" value={form.freeShippingThreshold} onChange={(e: any) => setForm({ ...form, freeShippingThreshold: parseInt(e.target.value) })} />
-                    </div>
-                    <InputField label="Standard Transit SLA" value={form.deliveryTimeEstimate} onChange={(e: any) => setForm({ ...form, deliveryTimeEstimate: e.target.value })} placeholder="3-5 Standard Business Days" icon={Clock} />
                   </div>
                 </div>
               </div>
