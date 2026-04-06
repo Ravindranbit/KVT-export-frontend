@@ -152,15 +152,7 @@ export default function AdminOrders() {
                   <span className={`w-2 h-2 rounded-full bg-current ${(orderDetail.status === 'delivered' || orderDetail.status === 'cancelled') ? '' : 'animate-pulse'}`} />
                   {orderDetail.status}
                 </span>
-                <select
-                  value={orderDetail.status}
-                  onChange={(e) => updateOrderStatus(orderDetail.id, e.target.value as any)}
-                  className="text-[10px] font-black uppercase border-[2px] border-gray-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50/50 cursor-pointer hover:border-blue-400 transition-all shadow-sm w-[110px]"
-                >
-                  {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map(s => (
-                    <option key={s} value={s} className="uppercase font-bold">{s}</option>
-                  ))}
-                </select>
+
               </div>
             </div>
             <div className="p-6 space-y-5">
