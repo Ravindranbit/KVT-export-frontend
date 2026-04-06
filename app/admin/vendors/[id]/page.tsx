@@ -66,51 +66,50 @@ export default function VendorDetails() {
       </button>
 
       {/* Header Profile */}
-      <div className="bg-white border border-gray-200 rounded-[32px] p-8 lg:p-12 shadow-sm relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-5">
-           <Building2 size={240} />
+      <div className="bg-white border border-gray-200 rounded-3xl p-8 lg:p-10 shadow-sm relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
+           <Building2 size={180} />
         </div>
         
         <div className="relative flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-          <div className="flex items-start gap-8">
-             <div className="w-24 h-24 bg-gray-900 rounded-[28px] flex items-center justify-center text-4xl font-black text-white shadow-xl rotate-3">
+          <div className="flex items-start gap-6">
+             <div className="w-20 h-20 bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl flex items-center justify-center text-3xl font-bold text-white shadow-md">
                {vendor.storeName.charAt(0)}
              </div>
              <div>
-               <div className="flex items-center gap-3">
-                 <h1 className="text-3xl font-black text-gray-950 tracking-tighter">{vendor.storeName}</h1>
-                 <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-gray-100 shadow-sm ${
-                   vendor.status === 'approved' ? 'text-green-600 bg-green-50' : 
-                   vendor.status === 'pending' ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50'
+               <div className="flex items-center gap-3 mb-1">
+                 <h1 className="text-2xl font-bold text-gray-900">{vendor.storeName}</h1>
+                 <span className={`px-2.5 py-1 rounded-full text-xs font-medium border ${
+                   vendor.status === 'approved' ? 'text-emerald-700 bg-emerald-50 border-emerald-100' : 
+                   vendor.status === 'pending' ? 'text-amber-700 bg-amber-50 border-amber-100' : 'text-red-700 bg-red-50 border-red-100'
                  }`}>
-                   {vendor.status}
+                   {vendor.status.charAt(0).toUpperCase() + vendor.status.slice(1)}
                  </span>
                </div>
-               <p className="text-base text-gray-500 font-medium mt-2 max-w-xl leading-relaxed italic">"{vendor.storeDescription}"</p>
+               <p className="text-sm text-gray-500 max-w-xl leading-relaxed">{vendor.storeDescription}</p>
                
-               <div className="flex flex-wrap items-center gap-6 mt-6">
-                 <div className="flex items-center gap-2.5 text-sm font-bold text-gray-600">
-                   <Mail size={16} className="text-gray-300" />
+               <div className="flex flex-wrap items-center gap-6 mt-5">
+                 <div className="flex items-center gap-2 text-sm text-gray-600">
+                   <Mail size={16} className="text-gray-400" />
                    {vendor.email}
                  </div>
-                 <div className="flex items-center gap-2.5 text-sm font-bold text-gray-600">
-                   <Phone size={16} className="text-gray-300" />
+                 <div className="flex items-center gap-2 text-sm text-gray-600">
+                   <Phone size={16} className="text-gray-400" />
                    {vendor.phone}
                  </div>
-                 <div className="flex items-center gap-2.5 text-sm font-bold text-gray-600">
-                   <Calendar size={16} className="text-gray-300" />
+                 <div className="flex items-center gap-2 text-sm text-gray-600">
+                   <Calendar size={16} className="text-gray-400" />
                    Joined {vendor.joinedDate}
                  </div>
                </div>
              </div>
           </div>
           
-          <div className="flex flex-col gap-3">
-             <button className="px-8 py-3.5 bg-gray-900 hover:bg-black text-white rounded-2xl text-sm font-black transition-all shadow-lg flex items-center justify-center gap-3 group">
-               <ExternalLink size={18} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-               Live Storefront
+          <div className="flex flex-col sm:flex-row lg:flex-col gap-3">
+             <button className="px-6 py-2.5 bg-gray-900 hover:bg-black text-white rounded-xl text-sm font-medium transition-colors border border-transparent flex items-center justify-center gap-2">
+               <ExternalLink size={16} /> Live Storefront
              </button>
-             <button className="px-8 py-3.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-900 rounded-2xl text-sm font-black transition-all shadow-sm flex items-center justify-center gap-3">
+             <button className="px-6 py-2.5 bg-white hover:bg-gray-50 text-gray-700 rounded-xl text-sm font-medium transition-colors border border-gray-200 flex items-center justify-center gap-2">
                Contact Partner
              </button>
           </div>
@@ -122,101 +121,99 @@ export default function VendorDetails() {
         {stats.map((s, i) => {
           const Icon = s.icon;
           return (
-            <motion.div
+            <div
               key={i}
-              whileHover={{ y: -4 }}
-              className="bg-white border border-gray-100 p-8 rounded-[28px] shadow-sm hover:shadow-xl transition-all group"
+              className="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm flex items-center gap-4 hover:border-gray-300 transition-colors"
             >
-              <div className={`w-12 h-12 ${s.bg} ${s.color} rounded-2xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform`}>
+              <div className={`w-12 h-12 ${s.bg} ${s.color} rounded-xl flex items-center justify-center shrink-0`}>
                 <Icon size={24} />
               </div>
-              <p className="text-[11px] font-black text-gray-400 uppercase tracking-widest">{s.label}</p>
-              <h3 className="text-3xl font-black text-gray-900 mt-2 tracking-tighter leading-none">{s.value}</h3>
-            </motion.div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">{s.label}</p>
+                <h3 className="text-2xl font-bold text-gray-900 mt-0.5">{s.value}</h3>
+              </div>
+            </div>
           );
         })}
       </div>
 
       {/* Product Inventory Operations */}
-      <div className="space-y-6">
-        <div className="flex items-center justify-between px-2">
-          <div className="flex items-center gap-4">
-             <div className="p-2.5 bg-[#e60000]/10 rounded-xl text-[#e60000]">
-               <ShoppingBag size={20} />
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-3">
+             <div className="p-2 bg-gray-100 rounded-lg text-gray-700">
+               <Package size={20} />
              </div>
              <div>
-               <h2 className="text-xl font-black text-gray-900 tracking-tighter">Partner Inventory</h2>
-               <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mt-1">Management Console for {vendor.storeName}</p>
+               <h2 className="text-lg font-bold text-gray-900">Partner Inventory</h2>
+               <p className="text-sm text-gray-500">Managing products for {vendor.storeName}</p>
              </div>
           </div>
-
         </div>
 
-        <div className="bg-white border border-gray-100 rounded-[32px] overflow-hidden shadow-sm">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="text-left text-[10px] font-black text-gray-400 uppercase tracking-widest p-6">SKU / Product Info</th>
-                <th className="text-center text-[10px] font-black text-gray-400 uppercase tracking-widest p-6 text-center">Category</th>
-                <th className="text-center text-[10px] font-black text-gray-400 uppercase tracking-widest p-6 text-center">Price</th>
-                <th className="text-center text-[10px] font-black text-gray-400 uppercase tracking-widest p-6 text-center">Reviews</th>
-                <th className="text-right text-[10px] font-black text-gray-400 uppercase tracking-widest p-6 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {vendorProducts.map((p) => (
-                <tr key={p.id} className="group hover:bg-gray-50/30 transition-colors">
-                  <td className="p-6">
-                    <div className="flex items-center gap-5">
-                      <img src={p.image} className="w-14 h-14 rounded-2xl object-cover bg-gray-50 border border-gray-100/50 shadow-sm" />
-                      <div>
-                        <p className="text-sm font-black text-gray-900 tracking-tight group-hover:text-red-600 transition-colors">{p.name}</p>
-                        <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100 inline-block">ID: #{p.id}</p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="p-6 text-center">
-                    <span className="text-[10px] font-black text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full uppercase tracking-widest">{p.category}</span>
-                  </td>
-                  <td className="p-6 text-center">
-                    <p className="text-sm font-black text-gray-900 tracking-tight">₹{p.price.toLocaleString()}</p>
-                  </td>
-                  <td className="p-6">
-                     <div className="flex flex-col items-center">
-                        <div className="flex items-center gap-1.5 bg-yellow-50 px-2.5 py-1 rounded-full border border-yellow-100">
-                          <span className="text-[11px] font-black text-yellow-700">{p.rating}</span>
-                          <p className="text-[8px] text-yellow-400">★</p>
-                        </div>
-                        <p className="text-[10px] text-gray-400 font-bold mt-1.5 truncate">{p.reviews} Feedbacks</p>
-                     </div>
-                  </td>
-                  <td className="p-6 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <button 
-                        className="inline-flex items-center gap-1.5 text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-gray-900 transition-all bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm p-2.5 px-3 rounded-xl"
-                      >
-                        <EyeOff size={14} />
-                        Hide
-                      </button>
-                      <button 
-                        className="inline-flex items-center gap-1.5 text-[10px] font-black text-blue-600 uppercase tracking-widest transition-all bg-blue-50 border border-blue-100 hover:bg-blue-100 hover:text-blue-700 p-2.5 px-3 rounded-xl"
-                      >
-                        <Bell size={14} />
-                        Notify Store
-                      </button>
-                    </div>
-                  </td>
+        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Reviews</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {vendorProducts.length === 0 && (
-            <div className="p-20 text-center flex flex-col items-center">
-               <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-200 mb-4 italic">∅</div>
-               <p className="text-sm font-bold text-gray-400">No Inventory Items Discovered</p>
-               <p className="text-[10px] text-gray-300 uppercase mt-1 tracking-widest">This partner has not published any stock metrics</p>
-            </div>
-          )}
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {vendorProducts.map((p) => (
+                  <tr key={p.id} className="hover:bg-gray-50/50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <img src={p.image} className="w-12 h-12 rounded-lg object-cover bg-gray-50 border border-gray-200 object-top" alt={p.name} />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 group-hover:text-red-600 transition-colors">{p.name}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">ID: {p.id}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-gray-600 capitalize">
+                        {p.category}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm font-medium text-gray-900">₹{p.price.toLocaleString()}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                       <div className="flex items-center gap-1.5 text-sm">
+                          <span className="text-yellow-500">★</span>
+                          <span className="font-medium text-gray-900">{p.rating}</span>
+                          <span className="text-gray-500">({p.reviews})</span>
+                       </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-sm">
+                          <EyeOff size={14} />
+                          <span>Hide</span>
+                        </button>
+                        <button className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 border border-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                          <Bell size={14} />
+                          <span>Notify Store</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {vendorProducts.length === 0 && (
+              <div className="p-12 text-center flex flex-col items-center">
+                 <Package size={48} className="text-gray-200 mb-3" />
+                 <h3 className="text-sm font-medium text-gray-900">No products found</h3>
+                 <p className="text-sm text-gray-500 mt-1">This vendor hasn't added any products yet.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
