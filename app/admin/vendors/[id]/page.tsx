@@ -201,7 +201,6 @@ export default function VendorDetails() {
                                 : 'text-gray-700 bg-white border-gray-200 hover:bg-gray-50'
                             }`}
                           >
-                            {isHidden ? <Eye size={14} /> : <EyeOff size={14} />}
                             <span>{isHidden ? 'Unhide' : 'Hide'}</span>
                           </button>
                         </div>
