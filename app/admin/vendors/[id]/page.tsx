@@ -147,14 +147,14 @@ export default function VendorDetails() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Product</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Category</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Price</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Reviews</th>
-                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Actions</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[35%]">Product</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[15%] text-center">Category</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[15%] text-center">Price</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[15%] text-center">Reviews</th>
+                    <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider w-[20%] text-center">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100">
+                <tbody className="divide-y divide-gray-100 font-medium">
                   {vendorProducts.map((p) => {
                     const isHidden = hiddenProducts.includes(p.id);
                     return (
@@ -163,28 +163,28 @@ export default function VendorDetails() {
                         <div className="flex items-center gap-4">
                           <img src={p.image} className="w-12 h-12 rounded-lg object-cover bg-gray-50 border border-gray-200 object-top" alt={p.name} />
                           <div>
-                            <p className="text-sm font-medium text-gray-900 group-hover:text-red-600 transition-colors">{p.name}</p>
-                            <p className="text-xs text-gray-500 mt-0.5">ID: {p.id}</p>
+                            <p className="text-sm font-bold text-gray-900 group-hover:text-red-600 transition-colors">{p.name}</p>
+                            <p className="text-[11px] text-gray-400 mt-0.5 font-bold uppercase tracking-tight">ID: {p.id}</p>
                           </div>
                         </div>
                       </td>
-                      <td className={`px-6 py-4 transition-opacity ${isHidden ? 'opacity-30' : ''}`}>
-                        <span className="text-sm text-gray-600 capitalize">
+                      <td className={`px-6 py-4 text-center transition-opacity ${isHidden ? 'opacity-30' : ''}`}>
+                        <span className="text-xs font-bold text-gray-600 bg-gray-100 px-3 py-1 rounded-full capitalize shadow-sm">
                           {p.category}
                         </span>
                       </td>
-                      <td className={`px-6 py-4 transition-opacity ${isHidden ? 'opacity-30' : ''}`}>
-                        <p className="text-sm font-medium text-gray-900">₹{p.price.toLocaleString()}</p>
+                      <td className={`px-6 py-4 text-center transition-opacity ${isHidden ? 'opacity-30' : ''}`}>
+                        <p className="text-sm font-black text-gray-900">₹{p.price.toLocaleString()}</p>
                       </td>
-                      <td className={`px-6 py-4 transition-opacity ${isHidden ? 'opacity-30' : ''}`}>
-                         <div className="flex items-center gap-1.5 text-sm">
-                            <span className="text-yellow-500">★</span>
-                            <span className="font-medium text-gray-900">{p.rating}</span>
-                            <span className="text-gray-500">({p.reviews})</span>
+                      <td className={`px-6 py-4 text-center transition-opacity ${isHidden ? 'opacity-30' : ''}`}>
+                         <div className="flex items-center justify-center gap-1.5 text-xs">
+                            <span className="text-yellow-500 text-sm">★</span>
+                            <span className="font-black text-gray-900">{p.rating}</span>
+                            <span className="text-gray-400 font-bold">({p.reviews})</span>
                          </div>
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center gap-2">
                           <button
                             onClick={() => {
                               if (isHidden) {
