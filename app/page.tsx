@@ -84,7 +84,7 @@ function HomeContent() {
       {/* Categories Filter */}
       <section className="max-w-7xl mx-auto px-4 pt-12 pb-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-4">
-          <div className="flex overflow-x-auto [&::-webkit-scrollbar]:hidden w-full md:w-auto flex-1 gap-2 pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 scroll-smooth">
+          <div className="flex overflow-x-auto [&::-webkit-scrollbar]:hidden w-full md:w-auto flex-1 min-w-0 gap-2 pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 scroll-smooth">
             {['all', 'electronics', 'fashion', 'home', 'sports', 'beauty', 'books', 'toys'].map((cat) => (
               <button 
                 key={cat}
@@ -242,9 +242,9 @@ function HomeContent() {
           {sortedProducts.slice(0, visibleCount).map((product) => (
             <div
               key={product.id}
-              className="group rounded-xl border border-gray-100 bg-white overflow-hidden hover:shadow-xl hover:shadow-gray-200/60 hover:-translate-y-1.5 transition-all duration-300 relative"
+              className="group rounded-xl border border-gray-100 bg-white overflow-hidden hover:shadow-xl hover:shadow-gray-200/60 hover:-translate-y-1.5 transition-all duration-300 relative block"
             >
-              <Link href={`/products/${product.id}`}>
+              <Link href={`/products/${product.id}`} className="block after:absolute after:inset-0 after:z-0">
                 <div className="bg-gray-50 overflow-hidden">
                   <div className="aspect-square w-full overflow-hidden">
                     <img
@@ -263,14 +263,14 @@ function HomeContent() {
                   e.stopPropagation();
                   addToCart(product.id);
                 }}
-                className="absolute bottom-[130px] left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs font-bold px-6 py-2.5 rounded-full opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-lg hover:bg-black whitespace-nowrap z-10"
+                className="absolute bottom-[130px] left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs font-bold px-6 py-2.5 rounded-full opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-lg hover:bg-black whitespace-nowrap z-20 cursor-pointer"
               >
                 + Add to cart
               </button>
 
-              <div className="p-4 bg-white">
-                <div className="flex items-start justify-between gap-2">
-                  <Link href={`/products/${product.id}`} className="flex-1 min-w-0">
+              <div className="p-4 bg-white relative z-10 pointer-events-none">
+                <div className="flex items-start justify-between gap-2 pointer-events-auto">
+                  <Link href={`/products/${product.id}`} className="flex-1 min-w-0 relative z-20">
                     <h3 className="text-sm font-semibold text-gray-700 hover:text-red-600 transition-colors duration-200 line-clamp-1">{product.name}</h3>
                   </Link>
                   <button 
@@ -279,7 +279,7 @@ function HomeContent() {
                       e.stopPropagation();
                       toggleWishlist(product.id);
                     }}
-                    className={`flex-shrink-0 transition-all duration-200 hover:scale-110 ${
+                    className={`flex-shrink-0 transition-all duration-200 hover:scale-110 cursor-pointer relative z-20 ${
                       wishlist.includes(product.id) ? 'text-red-600' : 'text-gray-300 hover:text-red-500'
                     }`}
                   >
@@ -289,15 +289,17 @@ function HomeContent() {
                   </button>
                 </div>
                 {/* Star Rating - dynamic */}
-                <div className="flex items-center gap-1 mt-1.5">
+                <div className="flex items-center gap-1 mt-1.5 pointer-events-auto">
                   {[1,2,3,4,5].map(s => (
                     <svg key={s} className={`w-3.5 h-3.5 fill-current ${s <= Math.round(product.rating || 4) ? 'text-yellow-400' : 'text-gray-200'}`} viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
                   ))}
                   <span className="text-[10px] text-gray-400 font-medium ml-0.5">({product.reviews || 0})</span>
                 </div>
-                <Link href={`/products/${product.id}`}>
-                  <p className="mt-2 text-lg font-bold text-gray-900">₹{product.price.toFixed(2)}</p>
-                </Link>
+                <div className="pointer-events-auto">
+                  <Link href={`/products/${product.id}`} className="inline-block mt-2 relative z-20">
+                    <p className="text-lg font-bold text-gray-900">₹{product.price.toFixed(2)}</p>
+                  </Link>
+                </div>
               </div>
             </div>
           ))}

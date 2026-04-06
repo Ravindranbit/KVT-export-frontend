@@ -74,12 +74,7 @@ export default function AdminBanners() {
             <div className="w-full h-44 relative overflow-hidden flex-shrink-0 group" style={{ background: `linear-gradient(135deg, #0f172a, #1e293b)` }}>
               <div className="absolute inset-0 opacity-20 blur-[50px] transition-opacity group-hover:opacity-40" style={{ backgroundColor: b.accent }} />
               
-              <div className="absolute top-4 right-4 z-20">
-                 <span className={`flex items-center gap-1.5 px-3 py-1 rounded-md shadow-md text-[10px] font-black uppercase tracking-wider text-white ${b.active ? 'bg-[#3b8c41]' : 'bg-[#e60000]'}`}>
-                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                    {b.active ? 'Active' : 'Inactive'}
-                  </span>
-              </div>
+
 
               <div className="relative p-5 h-full flex flex-col justify-center z-10 w-[70%]">
                 <p className="text-white text-lg font-extrabold leading-tight shadow-sm drop-shadow-md">{b.title}</p>

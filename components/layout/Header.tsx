@@ -76,7 +76,7 @@ export default function Header() {
         <MegaMenu />
 
         {/* Desktop Search Bar */}
-        <div className="relative flex-1 mx-4 hidden md:block" ref={searchRef}>
+        <div className="relative flex-1 min-w-0 mx-4 hidden md:block" ref={searchRef}>
           <div className="relative">
             <svg className="w-4 h-4 absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -148,7 +148,7 @@ export default function Header() {
             {/* Profile / Sign In */}
             {user ? (
               <Link 
-                href="/dashboard"
+                href={user.role === 'admin' ? '/admin' : '/dashboard'}
                 className="w-8 h-8 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold text-xs ring-2 ring-gray-100 uppercase hover:scale-110 transition-transform duration-200 cursor-pointer"
               >
                 {user.name.substring(0, 1)}
@@ -162,7 +162,7 @@ export default function Header() {
           <div className="md:hidden">
             {user ? (
               <Link 
-                href="/dashboard"
+                href={user.role === 'admin' ? '/admin' : '/dashboard'}
                 className="w-7 h-7 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold text-[10px] ring-2 ring-gray-100 uppercase"
               >
                 {user.name.substring(0, 1)}

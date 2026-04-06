@@ -154,7 +154,7 @@ export default function MegaMenu() {
           onMouseEnter={() => handleMouseEnter(cat.name)}
           onMouseLeave={handleMouseLeave}
         >
-          <button className="flex items-center gap-1 text-gray-700 font-medium hover:text-red-500 transition py-4 outline-none">
+          <button className="flex items-center gap-1 text-gray-700 font-medium whitespace-nowrap hover:text-red-500 transition py-4 outline-none">
             {cat.name}
             <svg className="w-4 h-4 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -213,8 +213,8 @@ export default function MegaMenu() {
         </div>
       ))}
 
-      <Link href="/about" className="text-gray-700 font-medium hover:text-red-500 transition py-4">About</Link>
-      <Link href="/contact" className="text-gray-700 font-medium hover:text-red-500 transition py-4">Contact</Link>
+      <Link href="/about" className="text-gray-700 font-medium whitespace-nowrap hover:text-red-500 transition py-4">About</Link>
+      <Link href="/contact" className="text-gray-700 font-medium whitespace-nowrap hover:text-red-500 transition py-4">Contact</Link>
     </nav>
   );
 }

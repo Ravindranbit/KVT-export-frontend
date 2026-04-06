@@ -15,7 +15,9 @@ import {
   Settings,
   ChevronRight,
   ExternalLink,
-  ShoppingBag
+  ShoppingBag,
+  EyeOff,
+  Bell
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -147,9 +149,7 @@ export default function VendorDetails() {
                <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest mt-1">Management Console for {vendor.storeName}</p>
              </div>
           </div>
-          <Link href="/admin/products" className="text-xs font-black text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 px-5 py-2.5 rounded-full transition-all border border-red-100">
-             Master Database View
-          </Link>
+
         </div>
 
         <div className="bg-white border border-gray-100 rounded-[32px] overflow-hidden shadow-sm">
@@ -191,13 +191,20 @@ export default function VendorDetails() {
                      </div>
                   </td>
                   <td className="p-6 text-right">
-                    <Link 
-                      href={`/admin/products`} 
-                      className="inline-flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-red-600 transition-all border border-transparent hover:border-red-100 hover:bg-red-50 p-2.5 px-4 rounded-xl"
-                    >
-                      Audit
-                      <ChevronRight size={14} />
-                    </Link>
+                    <div className="flex items-center justify-end gap-2">
+                      <button 
+                        className="inline-flex items-center gap-1.5 text-[10px] font-black text-gray-500 uppercase tracking-widest hover:text-gray-900 transition-all bg-white border border-gray-200 hover:border-gray-300 hover:shadow-sm p-2.5 px-3 rounded-xl"
+                      >
+                        <EyeOff size={14} />
+                        Hide
+                      </button>
+                      <button 
+                        className="inline-flex items-center gap-1.5 text-[10px] font-black text-blue-600 uppercase tracking-widest transition-all bg-blue-50 border border-blue-100 hover:bg-blue-100 hover:text-blue-700 p-2.5 px-3 rounded-xl"
+                      >
+                        <Bell size={14} />
+                        Notify Store
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

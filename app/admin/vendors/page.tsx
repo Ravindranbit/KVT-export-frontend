@@ -63,16 +63,11 @@ export default function AdminVendors() {
             key={v.id} 
             className="bg-white border border-gray-200 rounded-3xl p-0 overflow-hidden hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-500 group hover:-translate-y-1 shadow-sm relative flex flex-col"
           >
-            {/* Card Content Area - Linked */}
-            <Link href={`/admin/vendors/${v.id}`} className="block flex-1 group/content">
+            {/* Card Content Area */}
+            <div className="block flex-1 group/content">
               {/* Card Header with Status Overlay */}
               <div className="relative h-20 bg-gray-50/80 flex items-center px-5 border-b border-gray-100 group-hover/content:bg-gray-100/50 transition-colors">
-                <div className="absolute top-3 right-4">
-                  <span className={`px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-wider bg-white shadow-sm border border-gray-100 flex items-center gap-1.5 ${statusColors[v.status]}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full bg-current ${v.status === 'pending' ? 'animate-pulse' : ''}`} />
-                    {v.status}
-                  </span>
-                </div>
+
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-lg font-black text-gray-400 shadow-sm group-hover:rotate-3 transition-transform duration-500">
                     {v.storeName.charAt(0)}
@@ -108,7 +103,7 @@ export default function AdminVendors() {
                   </div>
                 </div>
               </div>
-            </Link>
+            </div>
 
             {/* Action Buttons - Outside the Link to avoid nesting but inside the same card */}
             <div className="px-5 pb-5 pt-0">
@@ -131,10 +126,10 @@ export default function AdminVendors() {
                 {(v.status === 'approved' || v.status === 'suspended') && (
                   <div className="flex gap-2 w-full">
                     <button 
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); setEditCommission({ id: v.id, value: v.commission }); }} 
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/admin/vendors/${v.id}`); }} 
                       className="flex-1 text-[12px] font-bold capitalize tracking-wide text-white bg-[#1976d2] py-2.5 rounded-xl hover:bg-[#1565c0] transition-all active:scale-95 shadow-md shadow-blue-500/10"
                     >
-                      Commission
+                      Open Store
                     </button>
                     <button 
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateVendorStatus(v.id, v.status === 'suspended' ? 'approved' : 'suspended'); }} 
