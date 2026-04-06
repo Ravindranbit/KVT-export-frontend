@@ -26,6 +26,8 @@ export const metadata: Metadata = {
   },
 };
 
+import ThemeSync from "../components/ThemeSync";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -36,6 +38,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${kumarOne.variable} antialiased`}
       >
+        <ThemeSync />
         {children}
       </body>
     </html>

@@ -114,7 +114,7 @@ export default function AdminUsers() {
           <h2 className="text-xl font-black text-gray-900">User Management</h2>
           <p className="text-sm text-gray-500">{allPeople.length} total users · {admins.length} admin{admins.length > 1 ? 's' : ''}</p>
         </div>
-        <button onClick={handleOpenAddModal} className="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition-all shadow-sm">
+        <button onClick={handleOpenAddModal} className="bg-primary hover:opacity-90 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-primary/10 border-none">
           + Create Admin
         </button>
       </div>
@@ -123,7 +123,7 @@ export default function AdminUsers() {
       <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-          <input type="text" placeholder="Search by name or email..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
+          <input type="text" placeholder="Search by name or email..." value={search} onChange={(e) => setSearch(e.target.value)} className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
         </div>
         <div className="flex gap-2">
           {['all', 'admin', 'seller', 'buyer'].map(r => (
@@ -155,7 +155,7 @@ export default function AdminUsers() {
                 <tr key={u.id} className="hover:bg-gray-50/80 transition-all group">
                    <td className="px-6 py-4">
                      <div className="flex flex-col">
-                       <p className="text-sm font-bold text-gray-900 group-hover:text-red-600 transition-colors uppercase tracking-tight">{u.name}</p>
+                       <p className="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors uppercase tracking-tight">{u.name}</p>
                        <p className="text-[11px] text-gray-400 font-medium tracking-tight mt-0.5">{u.email}</p>
                      </div>
                    </td>
@@ -235,25 +235,25 @@ export default function AdminUsers() {
             <div className="p-8 space-y-8">
               {/* Account Details */}
               <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-red-600 uppercase tracking-[0.2em]">Account Info</h4>
+                <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Account Info</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Full Name *</label>
-                    <input value={adminForm.name} readOnly={!!editingAdminId} onChange={(e) => setAdminForm({...adminForm, name: e.target.value})} className={`w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/10 focus:border-red-500 transition-all font-medium ${editingAdminId ? 'bg-gray-50 text-gray-400' : ''}`} placeholder="e.g. John Wick" />
+                    <input value={adminForm.name} readOnly={!!editingAdminId} onChange={(e) => setAdminForm({...adminForm, name: e.target.value})} className={`w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all font-medium ${editingAdminId ? 'bg-gray-50 text-gray-400' : ''}`} placeholder="e.g. John Wick" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Email Address *</label>
-                    <input type="email" value={adminForm.email} readOnly={!!editingAdminId} onChange={(e) => setAdminForm({...adminForm, email: e.target.value})} className={`w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/10 focus:border-red-500 transition-all font-medium ${editingAdminId ? 'bg-gray-50 text-gray-400' : ''}`} placeholder="admin@kvtexports.com" />
+                    <input type="email" value={adminForm.email} readOnly={!!editingAdminId} onChange={(e) => setAdminForm({...adminForm, email: e.target.value})} className={`w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all font-medium ${editingAdminId ? 'bg-gray-50 text-gray-400' : ''}`} placeholder="admin@kvtexports.com" />
                   </div>
                   {!editingAdminId && (
                     <>
                       <div>
                         <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Password *</label>
-                        <input type="password" value={adminForm.password} onChange={(e) => setAdminForm({...adminForm, password: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/10 focus:border-red-500 transition-all font-medium" placeholder="••••••••" />
+                        <input type="password" value={adminForm.password} onChange={(e) => setAdminForm({...adminForm, password: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all font-medium" placeholder="••••••••" />
                       </div>
                       <div>
                         <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Phone Number</label>
-                        <input value={adminForm.phone} onChange={(e) => setAdminForm({...adminForm, phone: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500/10 focus:border-red-500 transition-all font-medium" placeholder="+91 00000 00000" />
+                        <input value={adminForm.phone} onChange={(e) => setAdminForm({...adminForm, phone: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all font-medium" placeholder="+91 00000 00000" />
                       </div>
                     </>
                   )}
@@ -262,7 +262,7 @@ export default function AdminUsers() {
 
               {/* Permissions Grid */}
               <div className="space-y-4">
-                <h4 className="text-[10px] font-black text-red-600 uppercase tracking-[0.2em]">Feature Permissions</h4>
+                <h4 className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Feature Permissions</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                   {(Object.keys(adminForm.permissions) as Array<keyof typeof adminForm.permissions>).map((key) => (
                     <div
@@ -277,7 +277,7 @@ export default function AdminUsers() {
                       
                       {/* Modern Switch */}
                       <div className={`relative w-11 h-6 rounded-full transition-all duration-200 ease-in-out ${
-                        adminForm.permissions[key] ? 'bg-red-600 shadow-inner' : 'bg-gray-200'
+                        adminForm.permissions[key] ? 'bg-primary shadow-inner' : 'bg-gray-200'
                       }`}>
                         <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-md transition-transform duration-200 ease-in-out ${
                           adminForm.permissions[key] ? 'translate-x-5' : 'translate-x-0'
@@ -299,7 +299,7 @@ export default function AdminUsers() {
               <button 
                 onClick={handleAddAdmin} 
                 disabled={!adminForm.name || !adminForm.email || !adminForm.password} 
-                className="px-8 py-3 bg-red-600 text-white hover:bg-red-700 rounded-xl text-sm font-black uppercase tracking-wider disabled:opacity-50 transition-all shadow-lg shadow-red-600/20 active:scale-95"
+                className="px-8 py-3 bg-primary text-white hover:opacity-90 rounded-xl text-sm font-black uppercase tracking-wider disabled:opacity-50 transition-all shadow-lg shadow-primary/20 active:scale-95 border-none"
               >
                 Create Admin
               </button>

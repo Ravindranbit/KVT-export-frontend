@@ -69,11 +69,11 @@ export default function AdminBanners() {
               placeholder="Search banners..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:border-[#e60000]"
+              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:border-primary transition-all"
             />
             <svg className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
           </div>
-          <button onClick={() => setShowAdd(true)} className="bg-[#e60000] hover:bg-[#cc0000] text-white font-bold px-6 py-2.5 rounded-lg text-sm transition-all shadow-sm">+ Add Banner</button>
+          <button onClick={() => setShowAdd(true)} className="bg-primary hover:opacity-90 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-primary/10 border-none">+ Add Banner</button>
         </div>
       </div>
 
@@ -170,25 +170,25 @@ export default function AdminBanners() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Title *</label>
-                  <input value={form.title} onChange={(e) => setForm({...form, title: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" placeholder="Up to 60% Off" />
+                  <input value={form.title} onChange={(e) => setForm({...form, title: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" placeholder="Up to 60% Off" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Subtitle *</label>
-                  <input value={form.subtitle} onChange={(e) => setForm({...form, subtitle: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" placeholder="Electronics & Gadgets" />
+                  <input value={form.subtitle} onChange={(e) => setForm({...form, subtitle: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" placeholder="Electronics & Gadgets" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">CTA Text</label>
-                  <input value={form.cta} onChange={(e) => setForm({...form, cta: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" placeholder="Shop Now" />
+                  <input value={form.cta} onChange={(e) => setForm({...form, cta: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" placeholder="Shop Now" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Linked Product</label>
                   <div className="relative">
                     <div 
                       onClick={() => setShowProductSelect(!showProductSelect)}
-                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-white flex items-center justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors min-h-[48px]"
+                      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-white flex items-center justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors min-h-[48px]"
                     >
                       {form.href ? (
                         (() => {
@@ -238,13 +238,13 @@ export default function AdminBanners() {
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Accent Color</label>
                 <div className="flex items-center gap-3">
                   <input type="color" value={form.accent} onChange={(e) => setForm({...form, accent: e.target.value})} className="w-12 h-12 rounded-xl border border-gray-200 cursor-pointer p-1 bg-white" />
-                  <input value={form.accent} onChange={(e) => setForm({...form, accent: e.target.value})} className="flex-1 border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" />
+                  <input value={form.accent} onChange={(e) => setForm({...form, accent: e.target.value})} className="flex-1 border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Upload Image Background</label>
-                <div className="relative group p-4 border-2 border-dashed border-gray-300 hover:border-[#e60000] rounded-2xl bg-gray-50 hover:bg-[#e60000]/5 transition-colors flex items-center gap-6">
+                <div className="relative group p-4 border-2 border-dashed border-gray-300 hover:border-primary rounded-2xl bg-gray-50 hover:bg-primary/5 transition-colors flex items-center gap-6">
                   {form.image ? (
                     <img src={form.image} alt="" className="w-16 h-16 rounded-xl object-cover shadow-md bg-white shrink-0 border border-gray-200" />
                   ) : (
@@ -259,7 +259,7 @@ export default function AdminBanners() {
                     }
                   }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                   <div>
-                    <p className="text-sm font-bold text-gray-700 group-hover:text-[#e60000] transition-colors">Click to upload or drag and drop</p>
+                    <p className="text-sm font-bold text-gray-700 group-hover:text-primary transition-colors">Click to upload or drag and drop</p>
                     <p className="text-xs text-gray-500 mt-1">SVG, PNG, JPG or WEBP (max. 5MB)</p>
                   </div>
                 </div>
@@ -268,7 +268,7 @@ export default function AdminBanners() {
             
             <div className="px-8 py-5 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 shrink-0">
               <button onClick={closeModal} className="px-6 py-3 border border-gray-200 bg-white rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm">Cancel</button>
-              <button onClick={handleSave} disabled={!form.title || !form.subtitle} className="px-6 py-3 bg-[#e60000] text-white hover:bg-[#cc0000] rounded-xl text-sm font-bold disabled:opacity-50 transition-colors shadow-sm">{editingId ? 'Save Changes' : 'Publish Banner'}</button>
+              <button onClick={handleSave} disabled={!form.title || !form.subtitle} className="px-6 py-3 bg-primary text-white hover:opacity-90 rounded-xl text-sm font-bold disabled:opacity-50 transition-all shadow-lg shadow-primary/10 border-none">{editingId ? 'Save Changes' : 'Publish Banner'}</button>
             </div>
           </div>
         </div>

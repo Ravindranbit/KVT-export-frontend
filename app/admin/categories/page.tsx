@@ -64,92 +64,91 @@ export default function AdminCategories() {
 
   return (
     <div className="space-y-6">
-      {/* Search & Add Header */}
-      <div className="bg-white border border-gray-200 rounded-3xl p-6 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-6">
+      {/* Header Container */}
+      <div className="bg-white border border-gray-100 rounded-[28px] p-8 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
         <div>
-          <h2 className="text-xl font-black text-gray-900 tracking-tight">Categories</h2>
-          <p className="text-sm font-medium text-gray-400 mt-1">Manage and group {categories.length} product sections</p>
+          <h2 className="text-2xl font-black text-gray-900 tracking-tight leading-none">Categories</h2>
+          <p className="text-sm font-bold text-gray-400 mt-2.5 opacity-80">Manage and group {categories.length} product sections</p>
         </div>
+        
         <div className="flex items-center gap-4">
-          <div className="relative">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
+          <div className="relative group w-full lg:w-auto">
+             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary transition-colors" size={16} />
              <input
                 type="text"
                 placeholder="Search..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2.5 bg-gray-50 border-none rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 w-[200px] md:w-[300px] font-medium"
+                className="pl-11 pr-5 py-3 bg-[#f8fafc] border border-gray-100 rounded-2xl text-sm focus:outline-none focus:ring-4 focus:ring-primary/5 focus:bg-white focus:border-primary w-full lg:w-[320px] font-bold transition-all placeholder:text-gray-400 placeholder:font-medium"
              />
           </div>
           <button 
             onClick={() => setShowModal(true)} 
-            className="bg-red-600 hover:bg-red-700 text-white px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-red-600/10 active:scale-95"
+            className="bg-primary hover:opacity-90 text-white px-7 py-3 rounded-2xl text-[13px] font-black flex items-center gap-2.5 transition-all shadow-xl shadow-primary/20 active:scale-95 border-none shrink-0"
           >
             <Plus size={18} />
-            Add New
+            + Add New
           </button>
         </div>
       </div>
-
+ 
       {/* Categories Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredCategories.sort((a, b) => a.order - b.order).map((cat) => (
           <div 
             key={cat.id} 
-            className={`group bg-white border rounded-[28px] overflow-hidden transition-all duration-300 hover:shadow-2xl hover:shadow-gray-200/40 ${!cat.visible ? 'opacity-60 border-dashed border-gray-300' : 'border-gray-100 shadow-sm'}`}
+            className={`group bg-white border border-gray-100 rounded-[32px] p-6 shadow-sm hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-500 flex flex-col h-full ${!cat.visible ? 'opacity-70 grayscale-[20%]' : ''}`}
           >
-            {/* Header Area */}
-            <div className="p-6 pb-0 flex items-start justify-between">
-              <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-red-50 group-hover:text-red-500 transition-colors duration-500">
+            {/* Header: Layers & Trash */}
+            <div className="flex justify-between items-start mb-5">
+              <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:bg-primary/5 group-hover:text-primary transition-all duration-500">
                  <Layers size={22} />
               </div>
               <button 
                 onClick={() => deleteCategory(cat.id)}
-                className="p-2.5 rounded-xl text-red-500 hover:bg-red-50 transition-all active:scale-95"
+                className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all active:scale-95"
                 title="Delete Category"
               >
-                <Trash2 size={20} />
+                <Trash2 size={18} />
               </button>
             </div>
-
-            <div className="p-6">
-              <div>
-                <h3 className="font-black text-gray-900 text-lg leading-tight tracking-tight">{cat.name}</h3>
-                <div className="flex items-center gap-2 mt-2">
-                   <div className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-100 rounded-md text-[10px] font-black text-gray-500 uppercase tracking-widest">
-                     <Package size={10} />
-                     {cat.productCount} Items
-                   </div>
-                </div>
+ 
+            {/* Body */}
+            <div className="flex-1">
+              <h3 className="text-xl font-black text-gray-900 tracking-tight leading-none group-hover:text-primary transition-colors">{cat.name}</h3>
+              
+              <div className="mt-3.5 mb-4">
+                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg">
+                   <Package size={12} className="text-gray-400" />
+                   <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{cat.productCount} Items</span>
+                 </div>
               </div>
-
-              <div className="mt-5 mb-6">
-                 <p className="text-xs text-gray-500 leading-relaxed font-medium line-clamp-2">
-                   {cat.description || 'Quickly organize and manage products within this specific category group.'}
-                 </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 pt-5 border-t border-gray-50">
-                <button 
-                  onClick={() => openEdit(cat)}
-                  className="flex-1 py-3 rounded-2xl bg-[#1976d2] text-[11px] font-black uppercase tracking-widest text-white hover:bg-[#1565c0] transition-all shadow-lg shadow-blue-600/10 active:scale-95 flex items-center justify-center gap-2"
-                >
-                  <Edit2 size={12} />
-                  Edit
-                </button>
-                <button 
-                  onClick={() => updateCategory(cat.id, { visible: !cat.visible })}
-                  className={`flex-1 py-3 rounded-2xl text-[11px] font-black uppercase tracking-widest text-white transition-all active:scale-95 flex items-center justify-center gap-2 shadow-sm ${
-                    cat.visible 
-                      ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-100/50 outline-none border-none' 
-                      : 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-100/50 outline-none border-none'
-                  }`}
-                >
-                  {cat.visible ? <EyeOff size={12} /> : <Eye size={12} />}
-                  {cat.visible ? 'Hide' : 'Show'}
-                </button>
-              </div>
+ 
+              <p className="text-[12px] text-gray-500 font-bold leading-relaxed opacity-80 line-clamp-2">
+                {cat.description || 'Quickly organize and manage products within this specific category group.'}
+              </p>
+            </div>
+ 
+            {/* Actions: Reverted colors with reduced brightness filter */}
+            <div className="flex items-center gap-2.5 mt-8">
+              <button 
+                onClick={() => openEdit(cat)}
+                className="flex-1 py-3 bg-[#1976d2] hover:brightness-90 brightness-[0.95] text-[10px] font-black uppercase tracking-[0.15em] text-white rounded-[16px] transition-all shadow-lg shadow-blue-600/10 active:scale-95 flex items-center justify-center gap-2"
+              >
+                <Edit2 size={12} className="stroke-[3]" />
+                Edit
+              </button>
+              <button 
+                onClick={() => updateCategory(cat.id, { visible: !cat.visible })}
+                className={`flex-1 py-3 rounded-[16px] text-[10px] font-black uppercase tracking-[0.15em] transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg brightness-[0.95] hover:brightness-90 ${
+                  cat.visible 
+                    ? 'bg-[#ff6b2b] text-white shadow-orange-500/20' 
+                    : 'bg-gray-900 text-white shadow-gray-900/20'
+                }`}
+              >
+                {cat.visible ? <EyeOff size={13} className="stroke-[3]" /> : <Eye size={13} className="stroke-[3]" />}
+                {cat.visible ? 'Hide' : 'Show'}
+              </button>
             </div>
           </div>
         ))}
@@ -178,7 +177,7 @@ export default function AdminCategories() {
                 <input 
                   value={form.name} 
                   onChange={(e) => setForm({...form, name: e.target.value})} 
-                  className="w-full border border-gray-100 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-red-500/5 focus:border-red-600 transition-all bg-gray-50/50" 
+                  className="w-full border border-gray-100 rounded-2xl px-5 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all bg-gray-50/50" 
                   placeholder="e.g. Footwear" 
                 />
               </div>
@@ -189,7 +188,7 @@ export default function AdminCategories() {
                   value={form.description} 
                   onChange={(e) => setForm({...form, description: e.target.value})} 
                   rows={4} 
-                  className="w-full border border-gray-100 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-red-500/5 focus:border-red-600 transition-all font-medium bg-gray-50/50 resize-none" 
+                  className="w-full border border-gray-100 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-medium bg-gray-50/50 resize-none" 
                   placeholder="Additional context for this category..."
                 />
               </div>
@@ -205,7 +204,7 @@ export default function AdminCategories() {
               <button 
                 onClick={handleSave} 
                 disabled={!form.name} 
-                className="px-8 py-3 bg-red-600 text-white rounded-2xl text-sm hover:bg-red-700 transition-all shadow-lg shadow-red-600/10 disabled:opacity-50 disabled:shadow-none"
+                className="px-8 py-3 bg-primary text-white rounded-2xl text-sm hover:opacity-90 transition-all shadow-lg shadow-primary/10 disabled:opacity-50 disabled:shadow-none border-none"
               >
                 {editingId ? 'Save Changes' : 'Confirm Category'}
               </button>

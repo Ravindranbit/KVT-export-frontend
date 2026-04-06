@@ -110,7 +110,7 @@ export default function AdminDashboard() {
         <div className="lg:col-span-3 bg-white border border-gray-200 rounded-xl overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <h2 className="text-sm font-bold text-gray-900">Recent Orders</h2>
-            <Link href="/admin/orders" className="text-[11px] text-red-600 font-bold hover:text-red-700 transition-colors">View All →</Link>
+            <Link href="/admin/orders" className="text-[11px] text-primary font-bold hover:opacity-80 transition-colors">View All →</Link>
           </div>
           {recentOrders.length > 0 ? (
             <div className="divide-y divide-gray-50">
@@ -157,8 +157,8 @@ export default function AdminDashboard() {
                 { label: 'Approve Seller', href: '/admin/vendors', icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>) },
                 { label: 'Edit Banners', href: '/admin/banners', icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>) },
               ].map(item => (
-                <Link key={item.label} href={item.href} className="group bg-white border border-gray-100 shadow-sm hover:shadow-[0_8px_30px_rgb(230,0,0,0.12)] hover:border-[#e60000]/30 rounded-xl px-4 py-5 flex flex-col items-center justify-center transition-all duration-300 transform hover:-translate-y-1">
-                  <div className="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-[#e60000] flex items-center justify-center text-gray-500 group-hover:text-white transition-colors mb-3">
+                <Link key={item.label} href={item.href} className="group bg-white border border-gray-100 shadow-sm hover:shadow-[0_8px_30px_rgb(var(--primary-rgb),0.12)] hover:border-primary/30 rounded-xl px-4 py-5 flex flex-col items-center justify-center transition-all duration-300 transform hover:-translate-y-1">
+                  <div className="w-12 h-12 rounded-full bg-gray-50 group-hover:bg-primary flex items-center justify-center text-gray-500 group-hover:text-white transition-colors mb-3">
                     {item.icon}
                   </div>
                   <p className="text-[11px] uppercase tracking-wider font-bold text-gray-600 group-hover:text-gray-900 transition-colors">{item.label}</p>
@@ -171,7 +171,7 @@ export default function AdminDashboard() {
           <div className="bg-white border border-gray-200 rounded-xl p-5">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-sm font-bold text-gray-900">Top Products</h2>
-              <Link href="/admin/products" className="text-[11px] text-red-600 font-bold hover:text-red-700 transition-colors">View All →</Link>
+              <Link href="/admin/products" className="text-[11px] text-primary font-bold hover:opacity-80 transition-colors">View All →</Link>
             </div>
             {topProducts.length > 0 ? (
               <div className="space-y-2.5">

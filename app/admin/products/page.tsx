@@ -55,7 +55,7 @@ export default function AdminProducts() {
           <h2 className="text-xl font-black text-gray-900">Product Management</h2>
           <p className="text-sm text-gray-500">{products.length} total products</p>
         </div>
-        <button onClick={() => setShowAddModal(true)} className="bg-red-600 hover:bg-red-700 text-white font-bold px-6 py-2.5 rounded-lg text-sm transition-all shadow-sm">
+        <button onClick={() => setShowAddModal(true)} className="bg-primary hover:opacity-90 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-primary/10 border-none">
           + Add Product
         </button>
       </div>
@@ -69,10 +69,10 @@ export default function AdminProducts() {
             placeholder="Search products..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
           />
         </div>
-        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500">
+        <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
           {categories.map(c => <option key={c} value={c}>{c === 'all' ? 'All Categories' : c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
         </select>
       </div>
@@ -155,17 +155,17 @@ export default function AdminProducts() {
             <div className="p-8 overflow-y-auto space-y-6 flex-1">
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Product Name *</label>
-                <input value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" placeholder="e.g. Premium Cotton T-Shirt" />
+                <input value={form.name} onChange={(e) => setForm({...form, name: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" placeholder="e.g. Premium Cotton T-Shirt" />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Price (₹) *</label>
-                  <input type="number" value={form.price} onChange={(e) => setForm({...form, price: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" placeholder="1299" />
+                  <input type="number" value={form.price} onChange={(e) => setForm({...form, price: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" placeholder="1299" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Category *</label>
-                  <select value={form.category} onChange={(e) => setForm({...form, category: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors bg-white">
+                  <select value={form.category} onChange={(e) => setForm({...form, category: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white">
                     <option value="electronics">Electronics</option>
                     <option value="fashion">Fashion</option>
                     <option value="home">Home</option>
@@ -179,27 +179,27 @@ export default function AdminProducts() {
               
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Description</label>
-                <textarea value={form.description} onChange={(e) => setForm({...form, description: e.target.value})} rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors resize-none" placeholder="Product description..." />
+                <textarea value={form.description} onChange={(e) => setForm({...form, description: e.target.value})} rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none" placeholder="Product description..." />
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Stock</label>
-                  <input type="number" value={form.stock} onChange={(e) => setForm({...form, stock: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" />
+                  <input type="number" value={form.stock} onChange={(e) => setForm({...form, stock: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">SKU</label>
-                  <input value={form.sku} onChange={(e) => setForm({...form, sku: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" placeholder="SKU-001" />
+                  <input value={form.sku} onChange={(e) => setForm({...form, sku: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" placeholder="SKU-001" />
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Brand</label>
-                  <input value={form.brand} onChange={(e) => setForm({...form, brand: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#e60000]/20 focus:border-[#e60000] transition-colors" placeholder="KVT" />
+                  <input value={form.brand} onChange={(e) => setForm({...form, brand: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" placeholder="KVT" />
                 </div>
               </div>
 
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Upload Product Image</label>
-                <div className="relative group p-4 border-2 border-dashed border-gray-300 hover:border-[#e60000] rounded-2xl bg-gray-50 hover:bg-[#e60000]/5 transition-colors flex items-center gap-6">
+                <div className="relative group p-4 border-2 border-dashed border-gray-300 hover:border-primary rounded-2xl bg-gray-50 hover:bg-primary/5 transition-colors flex items-center gap-6">
                   {form.image ? (
                     <img src={form.image} alt="" className="w-16 h-16 rounded-xl object-cover shadow-md bg-white shrink-0 border border-gray-200" />
                   ) : (
@@ -214,7 +214,7 @@ export default function AdminProducts() {
                     }
                   }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                   <div>
-                    <p className="text-sm font-bold text-gray-700 group-hover:text-[#e60000] transition-colors">Click to upload or drag and drop</p>
+                    <p className="text-sm font-bold text-gray-700 group-hover:text-primary transition-colors">Click to upload or drag and drop</p>
                     <p className="text-xs text-gray-500 mt-1">SVG, PNG, JPG or WEBP (max. 5MB)</p>
                   </div>
                 </div>
@@ -223,7 +223,7 @@ export default function AdminProducts() {
             
             <div className="px-8 py-5 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 shrink-0">
               <button onClick={() => setShowAddModal(false)} className="px-6 py-3 border border-gray-200 bg-white rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm">Cancel</button>
-              <button onClick={handleAdd} disabled={!form.name || !form.price} className="px-6 py-3 bg-[#e60000] text-white hover:bg-[#cc0000] rounded-xl text-sm font-bold disabled:opacity-50 transition-colors shadow-sm">Publish Product</button>
+              <button onClick={handleAdd} disabled={!form.name || !form.price} className="px-6 py-3 bg-primary text-white hover:opacity-90 rounded-xl text-sm font-bold disabled:opacity-50 transition-all shadow-lg shadow-primary/10 border-none">Publish Product</button>
             </div>
           </div>
         </div>

@@ -29,8 +29,22 @@ import {
   Database,
   Copy,
   UploadCloud,
-  ChevronRight
+  ChevronRight,
+  Plus,
+  Check
 } from 'lucide-react';
+
+const COLOR_PALETTE = [
+  ['#BFDBFE', '#60A5FA', '#3B82F6', '#2563EB', '#1D4ED8'],
+  ['#A7F3D0', '#34D399', '#10B981', '#059669', '#047857'],
+  ['#FEF08A', '#FDE047', '#FACC15', '#EAB308', '#CA8A04'],
+  ['#FFEDD5', '#FED7AA', '#FDBA74', '#FB923C', '#F97316'],
+  ['#FEE2E2', '#FCA5A5', '#F87171', '#EF4444', '#DC2626'],
+  ['#FBCFE8', '#F472B6', '#EC4899', '#DB2777', '#BE185D'],
+  ['#E9D5FF', '#C084FC', '#A855F7', '#9333EA', '#7E22CE'],
+  ['#FDE68A', '#F59E0B', '#B45309', '#92400E', '#78350F'],
+  ['#F3F4F6', '#D1D5DB', '#9CA3AF', '#4B5563', '#111827'],
+];
 
 const TABS = [
   { id: 'general', label: 'General', icon: Globe },
@@ -44,6 +58,7 @@ export default function AdminSettings() {
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [copied, setCopied] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   const [form, setForm] = useState(() => {
     const defaults = {
@@ -88,7 +103,7 @@ export default function AdminSettings() {
     >
       <div className="flex items-center gap-4">
         {Icon && (
-          <div className={`p-2.5 rounded-xl transition-all duration-300 ${checked ? 'bg-[#e60000]/10 text-[#e60000]' : 'bg-gray-100 text-gray-400'} group-hover:scale-110`}>
+          <div className={`p-2.5 rounded-xl transition-all duration-300 ${checked ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-400'} group-hover:scale-110`}>
             <Icon size={20} />
           </div>
         )}
@@ -99,7 +114,7 @@ export default function AdminSettings() {
       </div>
       <button
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none ${checked ? 'bg-[#e60000]' : 'bg-gray-200'}`}
+        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none ${checked ? 'bg-primary' : 'bg-gray-200'}`}
       >
         <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xl ring-0 transition duration-300 ease-in-out ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>
@@ -113,21 +128,21 @@ export default function AdminSettings() {
       </label>
       <div className="relative group">
         {Icon && (
-          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#e60000] group-hover:text-gray-500 transition-colors z-10 pointer-events-none">
+          <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-primary group-hover:text-gray-500 transition-colors z-10 pointer-events-none">
             <Icon size={18} />
           </div>
         )}
         {props.type === 'select' ? (
           <select
             {...props}
-            className={`w-full bg-white/80 border border-gray-200 rounded-[14px] ${Icon ? 'pl-10' : 'px-4'} py-3 text-xs font-bold text-gray-800 focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#e60000]/10 focus:border-[#e60000] hover:border-gray-300 transition-all shadow-sm focus:shadow-md appearance-none cursor-pointer`}
+            className={`w-full bg-white/80 border border-gray-200 rounded-[14px] ${Icon ? 'pl-10' : 'px-4'} py-3 text-xs font-bold text-gray-800 focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary hover:border-gray-300 transition-all shadow-sm focus:shadow-md appearance-none cursor-pointer`}
           >
             {children}
           </select>
         ) : (
           <input
             {...props}
-            className={`w-full bg-white/80 border border-gray-200 rounded-[14px] ${Icon ? 'pl-10' : 'px-4'} py-3 text-xs font-bold text-gray-800 placeholder:text-gray-400 placeholder:font-medium focus:bg-white focus:outline-none focus:ring-4 focus:ring-[#e60000]/10 focus:border-[#e60000] hover:border-gray-300 transition-all shadow-sm focus:shadow-md`}
+            className={`w-full bg-white/80 border border-gray-200 rounded-[14px] ${Icon ? 'pl-10' : 'px-4'} py-3 text-xs font-bold text-gray-800 placeholder:text-gray-400 placeholder:font-medium focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary hover:border-gray-300 transition-all shadow-sm focus:shadow-md`}
           />
         )}
       </div>
@@ -154,7 +169,7 @@ export default function AdminSettings() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`
                   relative flex items-center gap-3 px-8 py-3 text-[11px] uppercase tracking-[0.15em] transition-all duration-300 rounded-[18px] whitespace-nowrap outline-none
-                  ${isActive ? 'bg-red-50 text-[#e60000] font-black' : 'text-gray-400 font-bold hover:text-gray-900 hover:bg-gray-50'}
+                  ${isActive ? 'bg-primary/5 text-primary font-black' : 'text-gray-400 font-bold hover:text-gray-900 hover:bg-gray-50'}
                 `}
               >
                 <Icon size={16} className={`transition-transform duration-500 ${isActive ? 'scale-110' : 'opacity-60'}`} />
@@ -162,7 +177,7 @@ export default function AdminSettings() {
                 {isActive && (
                   <motion.div
                     layoutId="activeTabPill"
-                    className="absolute inset-0 border-2 border-[#e60000]/10 rounded-[18px]"
+                    className="absolute inset-0 border-2 border-primary/10 rounded-[18px]"
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                   />
                 )}
@@ -174,7 +189,7 @@ export default function AdminSettings() {
 
       {/* Main Content Area */}
       <div className="bg-white border border-gray-100 rounded-[32px] p-8 md:p-12 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#e60000]/10 to-transparent"></div>
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/10 to-transparent"></div>
 
         <AnimatePresence mode="wait">
           {activeTab === 'general' && (
@@ -195,8 +210,11 @@ export default function AdminSettings() {
                   <div className="pt-2">
                     <label className="block text-[11px] font-black text-gray-600 uppercase tracking-[0.1em] mb-2 ml-1">Universal Theme Palette</label>
                     <div className="flex items-center gap-4 bg-gray-50/50 border border-gray-100 rounded-[20px] p-2 pr-6 hover:bg-white hover:border-gray-200 hover:shadow-lg transition-all transition-duration-300">
-                      <div className="relative group">
-                        <input type="color" value={form.themeColor} onChange={(e) => setForm({ ...form, themeColor: e.target.value })} className="w-12 h-12 rounded-[16px] cursor-pointer border-0 p-0 bg-transparent shrink-0 overflow-hidden shadow-inner" />
+                      <div className="relative group" onClick={() => setShowColorPicker(true)}>
+                        <div 
+                          className="w-12 h-12 rounded-[16px] cursor-pointer border-0 p-0 shrink-0 overflow-hidden shadow-inner flex items-center justify-center transition-transform active:scale-95"
+                          style={{ backgroundColor: form.themeColor }}
+                        />
                         <div className="absolute inset-0 rounded-[16px] pointer-events-none ring-1 ring-black/5"></div>
                       </div>
                       <div className="flex-1 flex flex-col">
@@ -219,21 +237,21 @@ export default function AdminSettings() {
                       <label className="block text-[11px] font-black text-gray-600 uppercase tracking-[0.1em] ml-1">{u.fieldLabel}</label>
                       <motion.div
                         whileHover={{ y: -4 }}
-                        className="group relative p-6 border-2 border-dashed border-gray-200 hover:border-[#e60000] hover:bg-red-50/10 rounded-[24px] bg-gray-50/20 transition-all duration-500 cursor-pointer overflow-hidden border-spacing-4"
+                        className="group relative p-6 border-2 border-dashed border-gray-200 hover:border-primary hover:bg-primary/5 rounded-[24px] bg-gray-50/20 transition-all duration-500 cursor-pointer overflow-hidden border-spacing-4"
                       >
                         <div className="flex items-center gap-6">
-                          <div className="w-16 h-16 rounded-[20px] bg-white border border-gray-100 shadow-sm flex items-center justify-center text-gray-300 group-hover:text-[#e60000] group-hover:scale-105 transition-all duration-500">
+                          <div className="w-16 h-16 rounded-[20px] bg-white border border-gray-100 shadow-sm flex items-center justify-center text-gray-300 group-hover:text-primary group-hover:scale-105 transition-all duration-500">
                             {u.icon}
                           </div>
                           <div className="flex-1">
                             <p className="text-base font-black text-gray-900 tracking-tight flex items-center gap-2">
                               {u.label}
-                              <ChevronRight size={14} className="opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-[#e60000]" />
+                              <ChevronRight size={14} className="opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-primary" />
                             </p>
                             <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1 mb-2 opacity-70">
                               📁 Drop your file here or click to browse
                             </p>
-                            <span className="text-[9px] font-black text-[#e60000]/60 uppercase tracking-widest bg-white/80 px-3 py-1.5 rounded-full border border-gray-100 shadow-sm group-hover:bg-[#e60000] group-hover:text-white transition-all">
+                            <span className="text-[9px] font-black text-primary/60 uppercase tracking-widest bg-white/80 px-3 py-1.5 rounded-full border border-gray-100 shadow-sm group-hover:bg-primary group-hover:text-white transition-all">
                               {u.desc}
                             </span>
                           </div>
@@ -264,13 +282,13 @@ export default function AdminSettings() {
               </div>
 
               <div className={`p-6 border-2 rounded-[28px] transition-all duration-500 relative overflow-hidden group ${!form.storeEnabled ? 'border-[#e60000] bg-red-50/30 shadow-lg' : 'border-gray-100 bg-gray-50/30 hover:border-gray-200 hover:bg-white'}`}>
-                {!form.storeEnabled && <div className="absolute top-0 right-0 p-3"><span className="text-[9px] font-black text-red-600 bg-white px-3 py-1 rounded-full shadow-sm animate-pulse tracking-widest border border-red-100">SYSTEM OFFLINE</span></div>}
+                {!form.storeEnabled && <div className="absolute top-0 right-0 p-3"><span className="text-[9px] font-black text-primary bg-white px-3 py-1 rounded-full shadow-sm animate-pulse tracking-widest border border-primary/10">SYSTEM OFFLINE</span></div>}
                 <label 
                   onClick={() => setForm({ ...form, storeEnabled: !form.storeEnabled })}
                   className="flex items-center justify-between cursor-pointer relative z-10 select-none"
                 >
                   <div className="flex items-center gap-5">
-                    <div className={`p-3 rounded-2xl transition-all duration-500 ${!form.storeEnabled ? 'bg-[#e60000] text-white shadow-xl shadow-red-500/40 rotate-12' : 'bg-white text-gray-400 group-hover:text-gray-600 shadow-sm border border-gray-100'}`}>
+                    <div className={`p-3 rounded-2xl transition-all duration-500 ${!form.storeEnabled ? 'bg-primary text-white shadow-xl shadow-primary/40 rotate-12' : 'bg-white text-gray-400 group-hover:text-gray-600 shadow-sm border border-gray-100'}`}>
                       <AlertCircle size={22} />
                     </div>
                     <div>
@@ -282,7 +300,7 @@ export default function AdminSettings() {
                     </div>
                   </div>
                   <div className="flex items-center group/toggle">
-                    <div className={`relative w-14 h-7 rounded-full transition-all duration-500 overflow-hidden ${!form.storeEnabled ? 'bg-red-600' : 'bg-gray-200'}`}>
+                    <div className={`relative w-14 h-7 rounded-full transition-all duration-500 overflow-hidden ${!form.storeEnabled ? 'bg-primary' : 'bg-gray-200'}`}>
                       <motion.div
                         animate={{ x: !form.storeEnabled ? 30 : 4 }}
                         transition={{ type: "spring", stiffness: 500, damping: 30 }}
@@ -303,10 +321,10 @@ export default function AdminSettings() {
                   <motion.div
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: 'auto', opacity: 1 }}
-                    className="mt-8 pt-8 border-t border-[#e60000]/10"
+                    className="mt-8 pt-8 border-t border-primary/10"
                   >
-                    <label className="block text-[11px] font-black text-[#e60000] uppercase tracking-widest mb-4 ml-1">Global Broadcast Message</label>
-                    <textarea value={form.maintenanceMessage} onChange={(e) => setForm({ ...form, maintenanceMessage: e.target.value })} rows={4} className="w-full bg-white border-2 border-[#e60000]/10 rounded-[28px] px-8 py-6 text-base font-bold text-gray-950 focus:outline-none focus:border-[#e60000] focus:ring-4 focus:ring-[#e60000]/10 transition-all resize-none shadow-xl shadow-red-500/5 placeholder:text-gray-300" placeholder="e.g. We're currently enhancing your shopping experience..." />
+                    <label className="block text-[11px] font-black text-primary uppercase tracking-widest mb-4 ml-1">Global Broadcast Message</label>
+                    <textarea value={form.maintenanceMessage} onChange={(e) => setForm({ ...form, maintenanceMessage: e.target.value })} rows={4} className="w-full bg-white border-2 border-primary/10 rounded-[28px] px-8 py-6 text-base font-bold text-gray-950 focus:outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all resize-none shadow-xl shadow-primary/5 placeholder:text-gray-300" placeholder="e.g. We're currently enhancing your shopping experience..." />
                   </motion.div>
                 )}
               </div>
@@ -432,6 +450,90 @@ export default function AdminSettings() {
           </motion.button>
         </div>
       </div>
+
+      {/* Custom Color Picker Modal */}
+      <AnimatePresence>
+        {showColorPicker && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowColorPicker(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-md"
+            />
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-[#1a1a1a] text-white w-full max-w-[500px] rounded-[28px] shadow-2xl overflow-hidden border border-white/10 relative z-10"
+            >
+              {/* Header */}
+              <div className="px-6 py-4 flex items-center justify-between border-b border-white/10">
+                <button 
+                  onClick={() => setShowColorPicker(false)} 
+                  className="px-4 py-2 hover:bg-white/5 rounded-xl text-xs font-black uppercase tracking-widest text-gray-400 hover:text-white transition-all flex items-center gap-2 border border-white/5"
+                >
+                  Cancel
+                </button>
+                <span className="font-black text-sm uppercase tracking-[0.2em] text-gray-200">Choose a color</span>
+                <button 
+                  onClick={() => setShowColorPicker(false)} 
+                  className="px-6 py-2 bg-[#059669] hover:bg-[#047857] rounded-xl text-xs font-black uppercase tracking-widest transition-all text-white shadow-lg shadow-green-900/40"
+                >
+                  Select
+                </button>
+              </div>
+
+              {/* Grid */}
+              <div className="p-8">
+                <div className="grid grid-cols-9 gap-2">
+                  {COLOR_PALETTE.map((column, i) => (
+                     <div key={i} className="flex flex-col gap-2">
+                       {column.map((color, j) => (
+                         <button
+                           key={j}
+                           onClick={() => setForm({ ...form, themeColor: color })}
+                           className={`w-full aspect-square rounded-md border-2 transition-all relative ${form.themeColor.toLowerCase() === color.toLowerCase() ? 'border-white scale-110 z-10 shadow-xl' : 'border-transparent hover:scale-110 hover:z-10'}`}
+                           style={{ backgroundColor: color }}
+                         >
+                            {form.themeColor.toLowerCase() === color.toLowerCase() && (
+                              <Check className="absolute inset-0 m-auto text-white drop-shadow-md stroke-[4]" size={12} />
+                            )}
+                         </button>
+                       ))}
+                     </div>
+                  ))}
+                </div>
+
+                {/* Custom Section */}
+                <div className="mt-8 space-y-4">
+                  <p className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] ml-1">Custom Preference</p>
+                  <div className="flex items-center gap-4">
+                    <div className="relative group">
+                      <input 
+                        type="color" 
+                        value={form.themeColor} 
+                        onChange={(e) => setForm({ ...form, themeColor: e.target.value })} 
+                        className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      />
+                      <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/10 group-hover:bg-white/10 transition-all shadow-inner">
+                        <Plus size={20} className="text-gray-400 group-hover:text-white" />
+                      </div>
+                    </div>
+                    <div 
+                      className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-2xl border-2 border-white ring-4 ring-black/5"
+                      style={{ backgroundColor: form.themeColor }}
+                    >
+                      <Check className="text-white drop-shadow-md stroke-[4]" size={18} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

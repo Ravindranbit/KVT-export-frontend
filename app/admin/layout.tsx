@@ -32,12 +32,12 @@ function NavItem({ item, isActive }: { item: { label: string; href: string; icon
       href={item.href}
       className={`relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-all duration-150 group ${
         isActive
-          ? 'bg-red-50 text-red-700 font-bold'
+          ? 'bg-primary/5 text-primary font-bold'
           : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
       }`}
     >
-      {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-red-600 rounded-r-full" />}
-      <span className={`${isActive ? 'text-red-600' : 'text-gray-400 group-hover:text-gray-600'} transition-colors`}>{item.icon}</span>
+      {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-primary rounded-r-full" />}
+      <span className={`${isActive ? 'text-primary' : 'text-gray-400 group-hover:text-gray-600'} transition-colors`}>{item.icon}</span>
       {item.label}
     </Link>
   );
@@ -160,8 +160,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
             <div>
-              <h1 className="text-lg font-bold text-gray-900 capitalize">{pageTitle}</h1>
-              <p className="text-[11px] text-gray-400 hidden sm:block">Manage your store</p>
+              <h1 className="text-xl font-black text-gray-950 capitalize tracking-tight leading-none">{pageTitle}</h1>
+              <p className="text-[11px] font-bold text-gray-400 mt-1.5 hidden sm:block uppercase tracking-wider opacity-70">Manage your store</p>
             </div>
           </div>
 
@@ -171,14 +171,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <button onClick={() => setShowNotif(!showNotif)} className="relative w-9 h-9 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-900 hover:bg-gray-100 transition-all">
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
                 {notifCount > 0 && (
-                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-600 rounded-full text-[9px] font-bold text-white flex items-center justify-center">{notifCount}</span>
+                  <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-primary rounded-full text-[9px] font-bold text-white flex items-center justify-center border-none">{notifCount}</span>
                 )}
               </button>
               {showNotif && (
                 <div className="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-100 rounded-[20px] shadow-2xl z-50 overflow-hidden ring-1 ring-black/5">
                   <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
                     <p className="text-sm font-black text-gray-900 tracking-tight">Intelligence Log</p>
-                    <span className="text-[10px] font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-full">{notifCount} New</span>
+                    <span className="text-[10px] font-bold text-primary bg-primary/5 px-2 py-0.5 rounded-full">{notifCount} New</span>
                   </div>
                   <div className="divide-y divide-gray-50 max-h-[320px] overflow-y-auto">
                     {pendingOrders > 0 && (
@@ -212,7 +212,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     )}
                   </div>
                   <div className="p-3 border-t border-gray-50 bg-gray-50/20">
-                     <button className="w-full py-2 text-[11px] font-black text-gray-400 uppercase tracking-widest hover:text-[#e60000] transition-colors">Mark all as acknowledged</button>
+                     <button className="w-full py-2 text-[11px] font-black text-gray-400 uppercase tracking-widest hover:text-primary transition-colors">Mark all as acknowledged</button>
                   </div>
                 </div>
               )}
@@ -225,7 +225,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   <p className="text-sm font-black text-gray-900 tracking-tight leading-none">{user.name}</p>
                   <p className="text-[10px] text-gray-400 font-bold mt-1 uppercase tracking-wider">{user.role}</p>
                 </div>
-                <div className="w-10 h-10 bg-gray-900 rounded-[14px] flex items-center justify-center text-white ring-4 ring-gray-100 group-hover:ring-red-50/50 transition-all shadow-md">
+                <div className="w-10 h-10 bg-gray-900 rounded-[14px] flex items-center justify-center text-white ring-4 ring-gray-100 group-hover:ring-primary/10 transition-all shadow-md">
                   <User size={18} />
                 </div>
               </div>

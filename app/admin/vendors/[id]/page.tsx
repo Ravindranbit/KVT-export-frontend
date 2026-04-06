@@ -163,7 +163,7 @@ export default function VendorDetails() {
                         <div className="flex items-center gap-4">
                           <img src={p.image} className="w-12 h-12 rounded-lg object-cover bg-gray-50 border border-gray-200 object-top" alt={p.name} />
                           <div>
-                            <p className="text-sm font-bold text-gray-900 group-hover:text-red-600 transition-colors">{p.name}</p>
+                            <p className="text-sm font-bold text-gray-900 group-hover:text-primary transition-colors">{p.name}</p>
                             <p className="text-[11px] text-gray-400 mt-0.5 font-bold uppercase tracking-tight">ID: {p.id}</p>
                           </div>
                         </div>
@@ -228,7 +228,7 @@ export default function VendorDetails() {
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl animate-in fade-in zoom-in duration-200 border border-gray-100 overflow-hidden">
             <div className="px-8 py-6 border-b border-gray-50">
               <h3 className="text-xl font-black text-gray-900 tracking-tight">Hide Product</h3>
-              <p className="text-xs text-gray-500 font-medium mt-1">Reason for hiding <span className="text-red-600 font-bold">"{selectedProduct.name}"</span></p>
+              <p className="text-xs text-gray-500 font-medium mt-1">Reason for hiding <span className="text-primary font-bold">"{selectedProduct.name}"</span></p>
             </div>
             
             <div className="p-8">
@@ -237,7 +237,7 @@ export default function VendorDetails() {
                 value={hideReason}
                 onChange={(e) => setHideReason(e.target.value)}
                 placeholder="e.g. Product images are low quality or incorrect pricing..."
-                className="w-full h-32 border border-gray-200 rounded-2xl p-4 text-sm focus:outline-none focus:ring-4 focus:ring-red-500/5 focus:border-red-500 transition-all font-medium bg-gray-50/50 resize-none"
+                className="w-full h-32 border border-gray-200 rounded-2xl p-4 text-sm focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-medium bg-gray-50/50 resize-none"
               />
             </div>
 
@@ -263,7 +263,7 @@ export default function VendorDetails() {
                   setHideReason('');
                 }}
                 disabled={!hideReason.trim()}
-                className="px-8 py-2.5 bg-red-600 text-white rounded-xl text-sm hover:bg-red-700 transition-all shadow-lg shadow-red-600/20 disabled:opacity-50 disabled:shadow-none"
+                className="px-8 py-2.5 bg-primary text-white rounded-xl text-sm hover:opacity-90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:shadow-none border-none"
               >
                 Hide & Notify
               </button>
