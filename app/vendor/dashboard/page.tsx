@@ -25,7 +25,7 @@ export default function VendorDashboard() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { products, addProduct, removeProduct } = useProductStore();
-  
+
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('fashion');
@@ -50,7 +50,7 @@ export default function VendorDashboard() {
   };
 
   const vendorProducts = products.filter(p => p.vendorId === (user?.id || 'v1'));
-  const filteredProducts = vendorProducts.filter(p => 
+  const filteredProducts = vendorProducts.filter(p =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -164,7 +164,7 @@ export default function VendorDashboard() {
             </button>
           ))}
         </nav>
-        
+
         {/* Seller Score Widget - Fixed at Bottom */}
         <div className="p-4 border-t border-gray-100">
           <div className="flex items-center gap-3">
@@ -255,8 +255,12 @@ export default function VendorDashboard() {
                         <p className="text-gray-400 text-[11px] font-medium mt-0.5">Weekly sales performance</p>
                       </div>
                     </div>
+                    <div className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 uppercase tracking-widest flex items-center gap-1.5">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                      +12.5% this month
+                    </div>
                   </div>
-                  
+
                   <div className="flex h-64">
                     {/* Y-Axis */}
                     <div className="flex flex-col justify-between items-end pr-3 pb-8 text-[10px] font-semibold text-gray-300 tabular-nums w-12 shrink-0">
@@ -351,7 +355,7 @@ export default function VendorDashboard() {
                     <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} type="text" placeholder="Search products..." className="w-full pl-9 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 focus:bg-white transition-all placeholder:text-gray-400" />
                   </div>
                 </div>
-                
+
                 {filteredProducts.length === 0 ? (
                   <div className="p-16 text-center">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
@@ -366,61 +370,61 @@ export default function VendorDashboard() {
                     )}
                   </div>
                 ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-400 text-[10px] tracking-widest uppercase font-bold">
-                        <th className="px-6 py-4">Product Details</th>
-                        <th className="px-6 py-4">Price</th>
-                        <th className="px-6 py-4">Category</th>
-                        <th className="px-6 py-4">Inventory Status</th>
-                        <th className="px-6 py-4 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {filteredProducts.map(item => (
-                        <tr key={item.id} className="hover:bg-gray-50/50 transition-all duration-200 group">
-                          <td className="px-6 py-4 text-gray-900">
-                            <div className="flex items-center gap-3">
-                              <div className="w-11 h-11 bg-white border border-gray-100 rounded-xl p-1.5 overflow-hidden flex items-center justify-center shrink-0 shadow-sm group-hover:shadow-md transition-shadow">
-                                <img src={item.image} className="w-full h-full object-contain" alt="" />
-                              </div>
-                              <span className="font-semibold text-sm">{item.name}</span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 font-bold text-gray-900 text-sm">₹{item.price.toLocaleString()}</td>
-                          <td className="px-6 py-4">
-                             <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest">
-                               {item.category}
-                             </span>
-                          </td>
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-2">
-                              <div className={`w-2 h-2 rounded-full ${(item.stock || 0) > 5 ? 'bg-emerald-500' : (item.stock || 0) > 0 ? 'bg-amber-500' : 'bg-red-500'}`} />
-                              <span className={`font-semibold text-xs ${(item.stock || 0) > 5 ? 'text-emerald-700' : (item.stock || 0) > 0 ? 'text-amber-700' : 'text-red-700'}`}>
-                                {(item.stock || 0)} units
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <button className="text-gray-400 hover:text-gray-700 transition-all cursor-pointer p-2 hover:bg-gray-100 rounded-lg" title="Edit Product">
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                              </button>
-                              <button 
-                                onClick={() => handleDeleteProduct(item.id)}
-                                className="text-gray-400 hover:text-red-600 transition-all cursor-pointer p-2 hover:bg-red-50 rounded-lg" 
-                                title="Delete Product"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                              </button>
-                            </div>
-                          </td>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-400 text-[10px] tracking-widest uppercase font-bold">
+                          <th className="px-6 py-4">Product Details</th>
+                          <th className="px-6 py-4">Price</th>
+                          <th className="px-6 py-4">Category</th>
+                          <th className="px-6 py-4">Inventory Status</th>
+                          <th className="px-6 py-4 text-right">Actions</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {filteredProducts.map(item => (
+                          <tr key={item.id} className="hover:bg-gray-50/50 transition-all duration-200 group">
+                            <td className="px-6 py-4 text-gray-900">
+                              <div className="flex items-center gap-3">
+                                <div className="w-11 h-11 bg-white border border-gray-100 rounded-xl p-1.5 overflow-hidden flex items-center justify-center shrink-0 shadow-sm group-hover:shadow-md transition-shadow">
+                                  <img src={item.image} className="w-full h-full object-contain" alt="" />
+                                </div>
+                                <span className="font-semibold text-sm">{item.name}</span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 font-bold text-gray-900 text-sm">₹{item.price.toLocaleString()}</td>
+                            <td className="px-6 py-4">
+                              <span className="bg-gray-100 text-gray-600 px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase tracking-widest">
+                                {item.category}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-2">
+                                <div className={`w-2 h-2 rounded-full ${(item.stock || 0) > 5 ? 'bg-emerald-500' : (item.stock || 0) > 0 ? 'bg-amber-500' : 'bg-red-500'}`} />
+                                <span className={`font-semibold text-xs ${(item.stock || 0) > 5 ? 'text-emerald-700' : (item.stock || 0) > 0 ? 'text-amber-700' : 'text-red-700'}`}>
+                                  {(item.stock || 0)} units
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <button className="text-gray-400 hover:text-gray-700 transition-all cursor-pointer p-2 hover:bg-gray-100 rounded-lg" title="Edit Product">
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteProduct(item.id)}
+                                  className="text-gray-400 hover:text-red-600 transition-all cursor-pointer p-2 hover:bg-red-50 rounded-lg"
+                                  title="Delete Product"
+                                >
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 )}
               </div>
             )}
@@ -455,11 +459,10 @@ export default function VendorDashboard() {
                           <td className="px-6 py-4 text-sm text-gray-500">{order.items}</td>
                           <td className="px-6 py-4 font-bold text-sm text-gray-900">₹{order.total.toLocaleString()}</td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${
-                              order.status === 'Processing' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                              order.status === 'Shipped' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                              'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                            }`}>
+                            <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${order.status === 'Processing' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                                order.status === 'Shipped' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
+                                  'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                              }`}>
                               <span className={`w-1.5 h-1.5 rounded-full ${order.status === 'Processing' ? 'bg-amber-500' : order.status === 'Shipped' ? 'bg-blue-500' : 'bg-emerald-500'}`} />
                               {order.status}
                             </span>
@@ -542,14 +545,14 @@ export default function VendorDashboard() {
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            
+
             <div className="overflow-y-auto flex-1 p-8">
               <form onSubmit={handleAddProduct} className="space-y-6">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Product Name</label>
                   <input name="name" type="text" required placeholder="Ex: Classic Black T-Shirt" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
                 </div>
-                
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Price (₹)</label>
@@ -557,8 +560,8 @@ export default function VendorDashboard() {
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Category</label>
-                    <select 
-                      name="category" 
+                    <select
+                      name="category"
                       value={selectedCategory}
                       onChange={(e) => setSelectedCategory(e.target.value)}
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 outline-none font-bold transition-all"
@@ -596,7 +599,7 @@ export default function VendorDashboard() {
                 {/* Dynamic Category Fields */}
                 <div className="bg-gray-50 p-6 rounded-lg space-y-4 border border-gray-100">
                   <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Category Specific Details</p>
-                  
+
                   {selectedCategory === 'fashion' && (
                     <div className="grid grid-cols-2 gap-4">
                       <div>
@@ -690,7 +693,7 @@ export default function VendorDashboard() {
                     </label>
                   </div>
                 </div>
-                
+
                 <div className="pt-6 border-t border-gray-100 flex gap-4">
                   <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 bg-white border border-gray-200 hover:border-gray-900 text-gray-900 font-bold py-3.5 rounded transition-all">
                     Cancel
