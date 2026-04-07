@@ -31,6 +31,13 @@ export default function VendorDashboard() {
   const [selectedCategory, setSelectedCategory] = useState('fashion');
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  const MOCK_NOTIFICATIONS = [
+    { id: 1, title: 'New Order Received', message: 'ORD-7821 is waiting for processing.', time: '2 mins ago', type: 'order', unread: true },
+    { id: 2, title: 'Inventory Alert', message: 'Summer T-Shirt is low on stock (5 left).', time: '1 hour ago', type: 'inventory', unread: true },
+    { id: 3, title: 'Payout Successful', message: '₹34,200 has been credited to your bank.', time: '5 hours ago', type: 'payout', unread: false },
+  ];
 
   useEffect(() => {
     setMounted(true);
@@ -193,14 +200,53 @@ export default function VendorDashboard() {
               <span className="font-semibold text-gray-500 text-sm uppercase tracking-wide">Seller Dashboard</span>
             </div>
             <div className="flex items-center gap-4">
-              <button className="relative p-2 rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-900">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className={`relative p-2 rounded-full transition-all duration-300 ${showNotifications ? 'bg-gray-900 text-white shadow-lg' : 'hover:bg-gray-100 text-gray-500 hover:text-gray-900'}`}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white animate-pulse" />
+                </button>
+
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-3 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden z-50 animate-in fade-in zoom-in duration-200">
+                    <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/50">
+                      <h3 className="font-bold text-gray-900 text-sm">Notifications</h3>
+                      <button onClick={() => setShowNotifications(false)} className="text-[10px] font-bold text-red-500 hover:text-red-700 uppercase tracking-widest transition-colors">Mark all as read</button>
+                    </div>
+                    <div className="max-h-[400px] overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:display-none">
+                      {MOCK_NOTIFICATIONS.map(note => (
+                        <div 
+                          key={note.id} 
+                          className="px-5 py-4 transition-all duration-300 cursor-pointer border-b border-gray-50 last:border-0 relative group/note bg-white hover:bg-white hover:shadow-lg hover:z-10 hover:scale-[1.02]"
+                        >
+                          <div className="flex items-start">
+                            <div className="flex-1">
+                              <p className="text-xs font-bold text-gray-900 mb-0.5 uppercase tracking-tight">{note.title}</p>
+                              <p className="text-[11px] text-gray-500 font-medium leading-relaxed">{note.message}</p>
+                              <p className="text-[10px] text-gray-400 mt-2 font-bold uppercase tracking-wider">{note.time}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="px-5 py-3 bg-gray-50/50 text-center border-t border-gray-50">
+                      <button 
+                        onClick={() => setShowNotifications(false)}
+                        className="text-[10px] font-bold text-gray-500 hover:text-gray-900 uppercase tracking-widest transition-colors w-full py-1"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
               <div className="h-5 w-px bg-gray-300" />
-              <Link href={`/vendor/${user?.id || 'v1'}`} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-1.5">
+              <Link href={`/vendor/${user?.id || 'v1'}`} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-1.5 group">
                 View Store
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
               </Link>
             </div>
           </div>
