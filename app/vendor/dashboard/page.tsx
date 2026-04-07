@@ -224,91 +224,125 @@ export default function VendorDashboard() {
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   {[
-                    { label: 'Total Revenue', value: `₹${stats.revenue.toLocaleString()}`, change: '+12.5%', up: true, color: 'emerald', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
-                    { label: 'Active Orders', value: stats.orders.toString(), change: '+4.1%', up: true, color: 'blue', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg> },
-                    { label: 'Store Views', value: stats.views.toLocaleString(), change: '-1.2%', up: false, color: 'violet', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> },
-                    { label: 'Avg Rating', value: stats.rating.toString(), change: '142 reviews', up: true, color: 'amber', icon: <svg className="w-5 h-5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg> },
+                    { 
+                      label: 'Total Revenue', 
+                      value: `₹${stats.revenue.toLocaleString()}`, 
+                      color: 'emerald', 
+                      icon: <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg> 
+                    },
+                    { 
+                      label: 'Active Orders', 
+                      value: stats.orders.toString(), 
+                      color: 'blue', 
+                      icon: <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg> 
+                    },
+                    { 
+                      label: 'Store Views', 
+                      value: stats.views.toLocaleString(), 
+                      color: 'violet', 
+                      icon: <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> 
+                    },
+                    { 
+                      label: 'Avg Rating', 
+                      value: stats.rating.toString(), 
+                      color: 'amber', 
+                      icon: <svg className="w-full h-full" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.921-.755 1.688-1.54 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.539-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" /></svg> 
+                    },
                   ].map((stat, i) => (
-                    <div key={i} className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm flex flex-col justify-between">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${stat.color === 'emerald' ? 'bg-emerald-50 text-emerald-600' : stat.color === 'blue' ? 'bg-blue-50 text-blue-600' : stat.color === 'violet' ? 'bg-violet-50 text-violet-600' : 'bg-amber-50 text-amber-500'}`}>
+                    <div key={i} className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-500 group relative overflow-hidden flex h-32">
+                      {/* Colored Accent Line */}
+                      <div className={`w-1.5 h-full ${
+                        stat.color === 'emerald' ? 'bg-emerald-500' : 
+                        stat.color === 'blue' ? 'bg-blue-500' : 
+                        stat.color === 'violet' ? 'bg-violet-500' : 
+                        'bg-amber-500'
+                      }`} />
+                      
+                      <div className="flex-1 p-6 flex flex-col justify-center relative">
+                        {/* Background Watermark Icon */}
+                        <div className={`absolute right-6 top-1/2 -translate-y-1/2 w-20 h-20 opacity-[0.04] transition-all duration-700 group-hover:scale-125 group-hover:rotate-12 ${
+                          stat.color === 'emerald' ? 'text-emerald-900' : 
+                          stat.color === 'blue' ? 'text-blue-900' : 
+                          stat.color === 'violet' ? 'text-violet-900' : 
+                          'text-amber-900'
+                        }`}>
                           {stat.icon}
                         </div>
-                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded ${stat.up ? 'text-green-700 bg-green-50' : 'text-red-700 bg-red-50'}`}>{stat.change}</span>
-                      </div>
-                      <div>
-                        <p className="text-gray-500 font-medium text-[11px] uppercase tracking-widest mb-1">{stat.label}</p>
-                        <h3 className="text-2xl font-bold text-gray-900">{stat.value}</h3>
+
+                        {/* Content */}
+                        <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-1.5 relative z-10">{stat.label}</p>
+                        <div className="flex items-baseline gap-2 relative z-10">
+                          <h3 className="text-3xl font-black text-gray-900 tracking-tight">{stat.value}</h3>
+                          {stat.color === 'amber' && <span className="text-xs font-bold text-amber-500">★</span>}
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
 
                 <div className="bg-white p-6 md:p-8 rounded-xl border border-gray-200 mt-8">
-                  <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center justify-between mb-10">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-gray-900 flex items-center justify-center text-white">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                      <div className="w-10 h-10 rounded-xl bg-gray-900 flex items-center justify-center text-white">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       </div>
                       <div>
-                        <h3 className="text-base font-bold text-gray-900">Revenue Analytics</h3>
-                        <p className="text-gray-400 text-[11px] font-medium mt-0.5">Weekly sales performance</p>
+                        <h3 className="text-lg font-bold text-gray-900">Revenue Analytics</h3>
+                        <p className="text-gray-500 text-[11px] font-medium mt-0.5">Weekly performance report</p>
                       </div>
-                    </div>
-                    <div className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 uppercase tracking-widest flex items-center gap-1.5">
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                      +12.5% this month
                     </div>
                   </div>
 
-                  <div className="flex h-64">
-                    {/* Y-Axis */}
-                    <div className="flex flex-col justify-between items-end pr-3 pb-8 text-[10px] font-semibold text-gray-300 tabular-nums w-12 shrink-0">
-                      <span>₹150K</span>
-                      <span>₹113K</span>
-                      <span>₹75K</span>
-                      <span>₹38K</span>
-                      <span>₹0</span>
+                  <div className="flex h-72">
+                    {/* Y-Axis Column */}
+                    <div className="flex flex-col justify-between items-end pr-4 pb-8 text-[10px] font-bold text-gray-500 tabular-nums w-14 shrink-0 h-full">
+                      <div className="flex flex-col justify-between h-[calc(100%-32px)] w-full items-end">
+                        <span>₹150K</span>
+                        <span>₹113K</span>
+                        <span>₹75K</span>
+                        <span>₹38K</span>
+                        <span className="text-gray-400">₹0</span>
+                      </div>
+                      <div className="h-8" />
                     </div>
 
-                    {/* Chart Area */}
-                    <div className="flex-1 relative border-l border-b border-gray-100 flex items-end justify-around pb-8 px-3">
-                      {/* Grid Lines */}
-                      {[25, 50, 75, 100].map(line => (
-                        <div key={line} className="absolute left-0 right-0 border-t border-dashed border-gray-100 z-0 pointer-events-none" style={{ bottom: `calc(${line}% + 32px)` }} />
-                      ))}
+                    {/* Chart & X-Axis Area */}
+                    <div className="flex-1 flex flex-col h-full">
+                      <div className="flex-1 relative border-l border-b border-gray-100 flex items-end justify-around px-2 min-h-0 group/chart">
+                        {[25, 50, 75, 100].map(line => (
+                          <div key={line} className="absolute left-0 right-0 border-t border-dashed border-gray-100 z-0 pointer-events-none" style={{ bottom: `${line}%` }} />
+                        ))}
 
-                      {/* Bars */}
-                      {[
-                        { h: 45, day: 'Mon', val: 55350 },
-                        { h: 75, day: 'Tue', val: 92250 },
-                        { h: 52, day: 'Wed', val: 63960 },
-                        { h: 95, day: 'Thu', val: 116850 },
-                        { h: 68, day: 'Fri', val: 83640 },
-                        { h: 100, day: 'Sat', val: 123000 },
-                        { h: 88, day: 'Sun', val: 108240 },
-                      ].map(({ h, day, val }, i) => (
-                        <div key={i} className="flex flex-col items-center justify-end h-full relative group">
-                          {/* Bar */}
-                          <div
-                            className="w-9 sm:w-11 md:w-12 rounded-t-md bg-emerald-400 group-hover:bg-emerald-500 transition-colors duration-200 relative z-10 cursor-pointer"
-                            style={{ height: `calc(${h}% - 32px)` }}
-                          >
-                            {/* Tooltip */}
-                            <div className="absolute -top-11 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] font-bold py-1.5 px-3 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-lg pointer-events-none whitespace-nowrap z-30">
-                              ₹{val.toLocaleString()}
-                              <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rotate-45 w-1.5 h-1.5 bg-gray-900" />
+                        {[
+                          { h: 45, d: 'Mon', v: 55350 },
+                          { h: 75, d: 'Tue', v: 92250 },
+                          { h: 52, d: 'Wed', v: 63960 },
+                          { h: 95, d: 'Thu', v: 116850 },
+                          { h: 68, d: 'Fri', v: 83640 },
+                          { h: 100, d: 'Sat', v: 123000 },
+                          { h: 88, d: 'Sun', v: 108240 },
+                        ].map((item, i) => (
+                          <div key={i} className="flex flex-col items-center justify-end h-full relative group/bar w-full">
+                            <div
+                              className="w-9 sm:w-11 md:w-12 rounded-t-md bg-emerald-400 group-hover/bar:bg-emerald-500 transition-all duration-300 relative z-10 cursor-pointer shadow-sm"
+                              style={{ height: `${item.h}%` }}
+                            >
+                              <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-[10px] font-bold py-2 px-3 rounded-lg opacity-0 group-hover/bar:opacity-100 transition-all shadow-xl pointer-events-none whitespace-nowrap z-30 scale-90 group-hover/bar:scale-100">
+                                ₹{item.v.toLocaleString()}
+                                <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rotate-45 w-1.5 h-1.5 bg-gray-900" />
+                              </div>
                             </div>
                           </div>
+                        ))}
+                      </div>
 
-                          {/* Day Label */}
-                          <div className="absolute bottom-0 h-8 flex items-center">
-                            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider group-hover:text-gray-700 transition-colors">
-                              {day}
-                            </span>
+                      <div className="h-8 flex items-center justify-around px-2">
+                        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
+                          <div key={day} className="w-full text-center">
+                            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{day}</span>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
