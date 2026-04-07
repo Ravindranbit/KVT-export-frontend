@@ -255,10 +255,6 @@ export default function VendorDashboard() {
                         <p className="text-gray-400 text-[11px] font-medium mt-0.5">Weekly sales performance</p>
                       </div>
                     </div>
-                    <div className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 uppercase tracking-widest flex items-center gap-1.5">
-                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                      +12.5% this month
-                    </div>
                   </div>
                   
                   <div className="flex h-64">
