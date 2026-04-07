@@ -259,16 +259,6 @@ export default function VendorDashboard() {
                       }`} />
                       
                       <div className="flex-1 p-6 flex flex-col justify-center relative">
-                        {/* Background Watermark Icon */}
-                        <div className={`absolute right-6 top-1/2 -translate-y-1/2 w-20 h-20 opacity-[0.04] transition-all duration-700 group-hover:scale-125 group-hover:rotate-12 ${
-                          stat.color === 'emerald' ? 'text-emerald-900' : 
-                          stat.color === 'blue' ? 'text-blue-900' : 
-                          stat.color === 'violet' ? 'text-violet-900' : 
-                          'text-amber-900'
-                        }`}>
-                          {stat.icon}
-                        </div>
-
                         {/* Content */}
                         <p className="text-gray-400 font-bold text-[10px] uppercase tracking-[0.2em] mb-1.5 relative z-10">{stat.label}</p>
                         <div className="flex items-baseline gap-2 relative z-10">
