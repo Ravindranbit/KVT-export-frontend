@@ -24,14 +24,32 @@ const MOCK_PAYOUTS = [
 export default function VendorDashboard() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { products, addProduct, removeProduct } = useProductStore();
+  const { products, addProduct, removeProduct, updateProduct } = useProductStore();
 
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<any>(null);
   const [selectedCategory, setSelectedCategory] = useState('fashion');
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (editingProduct) {
+      setImagePreview(editingProduct.image);
+    } else {
+      setImagePreview(null);
+    }
+  }, [editingProduct]);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setImagePreview(url);
+    }
+  };
 
   const MOCK_NOTIFICATIONS = [
     { id: 1, title: 'New Order Received', message: 'ORD-7821 is waiting for processing.', time: '2 mins ago', type: 'order', unread: true },
@@ -127,8 +145,13 @@ export default function VendorDashboard() {
       })).filter(c => c.name);
     }
 
-    addProduct(newProduct);
+    if (editingProduct) {
+      updateProduct(editingProduct.id, newProduct);
+    } else {
+      addProduct(newProduct);
+    }
     setShowAddModal(false);
+    setEditingProduct(null);
   };
 
   const handleDeleteProduct = (id: number) => {
@@ -478,7 +501,7 @@ export default function VendorDashboard() {
                             </td>
                             <td className="px-6 py-4 text-right">
                               <div className="flex items-center justify-end gap-1">
-                                <button className="text-gray-400 hover:text-gray-700 transition-all cursor-pointer p-2 hover:bg-gray-100 rounded-lg" title="Edit Product">
+                                <button className="text-gray-400 hover:text-gray-700 transition-all cursor-pointer p-2 hover:bg-gray-100 rounded-lg" title="Edit Product" onClick={() => { setEditingProduct(item); setSelectedCategory(item.category); setShowAddModal(true); }}>
                                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                 </button>
                                 <button
@@ -610,8 +633,16 @@ export default function VendorDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg animate-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
             <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
-              <h2 className="text-xl font-bold text-gray-900 tracking-tight">Create New Product</h2>
-              <button type="button" onClick={() => setShowAddModal(false)} className="text-gray-400 hover:text-gray-900 p-2 rounded-lg transition-all">
+              <h2 className="text-xl font-bold text-gray-900 tracking-tight">{editingProduct ? 'Edit Product' : 'Create New Product'}</h2>
+              <button 
+                type="button" 
+                onClick={() => {
+                  setShowAddModal(false);
+                  setEditingProduct(null);
+                  setImagePreview(null);
+                }} 
+                className="text-gray-400 hover:text-gray-900 p-2 rounded-lg transition-all"
+              >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -620,13 +651,13 @@ export default function VendorDashboard() {
               <form onSubmit={handleAddProduct} className="space-y-6">
                 <div>
                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Product Name</label>
-                  <input name="name" type="text" required placeholder="Ex: Classic Black T-Shirt" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
+                  <input name="name" type="text" required defaultValue={editingProduct?.name} placeholder="Ex: Classic Black T-Shirt" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Price (₹)</label>
-                    <input name="price" type="number" step="0.01" min="0" required placeholder="0.00" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
+                    <input name="price" type="number" step="0.01" min="0" required defaultValue={editingProduct?.price} placeholder="0.00" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Category</label>
@@ -647,22 +678,22 @@ export default function VendorDashboard() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Units Available</label>
-                    <input name="stock" type="number" min="0" required placeholder="Quantity" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
+                    <input name="stock" type="number" min="0" required defaultValue={editingProduct?.stock} placeholder="Quantity" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">SKU (Internal ID)</label>
-                    <input name="sku" type="text" placeholder="Ex: KVT-001" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
+                    <input name="sku" type="text" defaultValue={editingProduct?.sku} placeholder="Ex: KVT-001" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Brand</label>
-                    <input name="brand" type="text" placeholder="Ex: KVT Originals" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
+                    <input name="brand" type="text" defaultValue={editingProduct?.brand} placeholder="Ex: KVT Originals" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Weight (kg)</label>
-                    <input name="weight" type="text" placeholder="Ex: 0.5" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
+                    <input name="weight" type="text" defaultValue={editingProduct?.weight} placeholder="Ex: 0.5" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
                   </div>
                 </div>
 
@@ -729,11 +760,11 @@ export default function VendorDashboard() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Available Sizes</label>
-                    <input name="sizes" type="text" placeholder="S, M, L, XL" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
+                    <input name="sizes" type="text" defaultValue={editingProduct?.sizes?.join(', ')} placeholder="S, M, L, XL" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Available Colors</label>
-                    <input name="colors" type="text" placeholder="Red, Black, Blue" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
+                    <input name="colors" type="text" defaultValue={editingProduct?.colors?.map((c: any) => c.name).join(', ')} placeholder="Red, Black, Blue" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all placeholder:font-normal" />
                   </div>
                 </div>
 
@@ -748,18 +779,29 @@ export default function VendorDashboard() {
 
                 <div>
                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Product Description</label>
-                  <textarea name="description" required rows={3} placeholder="Write something about this product..." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-medium text-gray-900 transition-all resize-none"></textarea>
+                  <textarea name="description" required defaultValue={editingProduct?.description} rows={3} placeholder="Write something about this product..." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-medium text-gray-900 transition-all resize-none"></textarea>
                 </div>
 
                 <div>
                   <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Product Image</label>
                   <div className="flex items-center justify-center w-full">
                     <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-200 border-dashed rounded cursor-pointer bg-gray-50 hover:bg-gray-100 transition-all">
-                      <div className="flex flex-col items-center justify-center pt-5 pb-6 text-gray-400">
-                        <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                        <p className="text-xs font-bold tracking-tight"><span className="text-gray-900">Upload Image</span> or drag & drop</p>
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6 text-gray-400 relative overflow-hidden w-full h-full">
+                        {imagePreview ? (
+                          <div className="absolute inset-0 w-full h-full group">
+                            <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <p className="text-white text-xs font-bold uppercase tracking-widest">Change Image</p>
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            <p className="text-xs font-bold tracking-tight"><span className="text-gray-900">Upload Image</span> or drag & drop</p>
+                          </>
+                        )}
                       </div>
-                      <input name="imageFile" type="file" accept="image/*" className="hidden" required />
+                      <input name="imageFile" type="file" accept="image/*" onChange={handleImageChange} className="hidden" required={!editingProduct} />
                     </label>
                   </div>
                 </div>
@@ -769,7 +811,7 @@ export default function VendorDashboard() {
                     Cancel
                   </button>
                   <button type="submit" className="flex-[2] bg-gray-900 hover:bg-black text-white font-bold py-3.5 rounded transition-all shadow-md hover:-translate-y-0.5">
-                    Save Product
+                    {editingProduct ? 'Update Product' : 'Save Product'}
                   </button>
                 </div>
               </form>
