@@ -34,6 +34,14 @@ export default function VendorDashboard() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (message) {
+      const t = setTimeout(() => setMessage(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [message]);
 
   useEffect(() => {
     if (editingProduct) {
@@ -147,8 +155,10 @@ export default function VendorDashboard() {
 
     if (editingProduct) {
       updateProduct(editingProduct.id, newProduct);
+      setMessage('Product updated successfully!');
     } else {
       addProduct(newProduct);
+      setMessage('Product added to inventory!');
     }
     setShowAddModal(false);
     setEditingProduct(null);
@@ -157,6 +167,7 @@ export default function VendorDashboard() {
   const handleDeleteProduct = (id: number) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       removeProduct(id);
+      setMessage('Product removed successfully');
     }
   };
 
@@ -213,6 +224,17 @@ export default function VendorDashboard() {
       {/* Main Content Area */}
       <div className="flex-1 ml-64 flex flex-col min-h-screen">
         <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
+          {/* Toast Notification */}
+          {message && (
+            <div className="fixed top-6 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
+              <div className="bg-white text-gray-900 px-6 py-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] border border-gray-100 flex items-center gap-3.5 min-w-[300px]">
+                <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
+                  <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                </div>
+                <p className="text-sm font-bold text-gray-900 flex-1">{message}</p>
+              </div>
+            </div>
+          )}
           <div className="px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Link href="/" className="text-xl font-bold text-gray-900 tracking-tighter" style={{ fontFamily: 'var(--font-kumar-one)' }}>KVT exports</Link>

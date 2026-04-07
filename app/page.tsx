@@ -29,6 +29,7 @@ function HomeContent() {
   const [visibleCount, setVisibleCount] = useState(8);
   const [selectedSort, setSelectedSort] = useState('Recommended');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [cartMessage, setCartMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (catParam) {
@@ -39,6 +40,13 @@ function HomeContent() {
   const wishlist = useWishlistStore((state) => state.items);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
   const addToCart = useCartStore((state) => state.addItem);
+
+  const handleAddToCart = (productId: number) => {
+    addToCart(productId);
+    const product = products.find(p => p.id === productId);
+    setCartMessage(product?.name || 'Product added to cart');
+    setTimeout(() => setCartMessage(null), 3000);
+  };
 
   const isFiltered = selectedCategory !== 'all' || priceRange[1] < 10000 || selectedTags.length > 0 || selectedSort !== 'Recommended';
 
@@ -76,6 +84,29 @@ function HomeContent() {
       {/* Header */}
       <Header />
       <CartDrawer getProductDetails={getProductDetails} />
+
+      {/* Cart Toast Notification */}
+      {cartMessage && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-white text-gray-900 px-6 py-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] border border-gray-100 flex items-center gap-4 min-w-[320px]">
+            <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
+              <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-gray-900">Added to Cart</p>
+              <p className="text-xs text-gray-500 font-medium">{cartMessage}</p>
+            </div>
+            <Link 
+              href="/cart" 
+              className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 px-4 py-2.5 rounded-lg transition-colors whitespace-nowrap"
+            >
+              View Cart
+            </Link>
+          </div>
+        </div>
+      )}
 
 
       {/* Amazon/Flipkart-Style Offer Banner Carousel */}
@@ -261,7 +292,7 @@ function HomeContent() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  addToCart(product.id);
+                  handleAddToCart(product.id);
                 }}
                 className="absolute bottom-[130px] left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs font-bold px-6 py-2.5 rounded-full opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-lg hover:bg-black whitespace-nowrap z-20 cursor-pointer"
               >

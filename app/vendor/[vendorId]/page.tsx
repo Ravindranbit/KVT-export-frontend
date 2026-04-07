@@ -14,6 +14,7 @@ const VENDORS = [
 import { useProductStore } from '../../../store/useProductStore';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useCartStore } from '../../../store/useCartStore';
+import { useState, useEffect } from 'react';
 
 export default function VendorStorefront() {
   const params = useParams();
@@ -22,6 +23,14 @@ export default function VendorStorefront() {
   const { user } = useAuthStore();
   const addToCart = useCartStore((state) => state.addItem);
   const setCartOpen = useCartStore((state) => state.setIsOpen);
+  const [message, setMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (message) {
+      const t = setTimeout(() => setMessage(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [message]);
   
   // Find vendor in static list or use current user if they are the vendor
   let vendor = VENDORS.find(v => v.id === vendorId);
@@ -61,6 +70,18 @@ export default function VendorStorefront() {
       <Header />
       <CartDrawer getProductDetails={(id) => products.find(p => p.id === id)} />
       
+      {/* Toast Notification */}
+      {message && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="bg-white text-gray-900 px-6 py-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] border border-gray-100 flex items-center gap-3.5 min-w-[300px]">
+             <div className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center shrink-0">
+               <svg className="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+             </div>
+             <p className="text-sm font-bold text-gray-900 flex-1">{message}</p>
+          </div>
+        </div>
+      )}
+      
       {/* Vendor Banner Header */}
       <div className="relative h-[350px] w-full overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent z-10" />
@@ -98,13 +119,13 @@ export default function VendorStorefront() {
               
               <div className="pt-8 border-t border-gray-100 space-y-3">
                 <button 
-                  onClick={() => alert(`Connecting you to ${vendor.name} support...`)}
+                  onClick={() => setMessage(`Connecting you to ${vendor.name} support...`)}
                   className="w-full bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5"
                 >
                   Contact Seller
                 </button>
                 <button 
-                  onClick={() => alert(`You are now following ${vendor.name}!`)}
+                  onClick={() => setMessage(`You are now following ${vendor.name}!`)}
                   className="w-full bg-white border-2 border-gray-200 hover:border-gray-900 hover:bg-gray-50 text-gray-900 font-bold py-4 rounded-xl transition-all hover:-translate-y-0.5"
                 >
                   Follow Shop

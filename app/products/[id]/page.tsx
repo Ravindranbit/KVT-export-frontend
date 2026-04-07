@@ -169,62 +169,25 @@ export default function ProductDetail() {
             </div>
 
             {cartMessage && (
-              <>
-                {/* Backdrop with blur */}
-                <div 
-                  className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-                  onClick={() => setCartMessage('')}
-                />
-                <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-                  <div className="bg-white rounded-2xl p-8 max-w-xl w-full shadow-2xl relative animate-[fadeIn_0.2s_ease-out]">
-                    <button
-                      onClick={() => setCartMessage('')}
-                      className="absolute top-5 right-5 text-gray-400 hover:text-gray-600 transition-colors w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    </button>
-                    
-                    <div className="flex items-center gap-2 mb-6">
-                      <svg className="w-5 h-5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      <p className="text-emerald-600 font-bold text-lg">Added to cart</p>
-                    </div>
-                    
-                    <div className="flex gap-5 mb-8 p-4 bg-gray-50 rounded-xl">
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-24 h-24 object-cover rounded-lg bg-white"
-                      />
-                      <div className="flex-1">
-                        <h3 className="text-gray-900 font-bold text-base mb-1">{product.name}</h3>
-                        <p className="text-gray-900 font-extrabold text-lg">₹{product.price.toFixed(2)}</p>
-                        <p className="text-gray-400 text-sm font-medium mt-1">Qty: {quantity}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-3">
-                      {/* Secondary — outline/dark */}
-                      <button
-                        onClick={() => setCartMessage('')}
-                        className="flex-1 border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white py-3.5 rounded-lg font-bold text-sm transition-all duration-200"
-                      >
-                        Continue Shopping
-                      </button>
-                      {/* Primary — solid red */}
-                      <button
-                        onClick={() => window.location.href = '/cart'}
-                        className="flex-1 bg-red-600 hover:bg-red-700 text-white py-3.5 rounded-lg font-bold text-sm transition-all duration-200 shadow-md shadow-red-200"
-                      >
-                        Proceed to Checkout
-                      </button>
-                    </div>
+              <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
+                <div className="bg-white text-gray-900 px-6 py-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] border border-gray-100 flex items-center gap-4 min-w-[320px]">
+                  <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
+                    <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
                   </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-gray-900">Added to Cart</p>
+                    <p className="text-xs text-gray-500 font-medium">{product.name} (Qty: {quantity})</p>
+                  </div>
+                  <Link 
+                    href="/cart" 
+                    className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 px-4 py-2.5 rounded-lg transition-colors whitespace-nowrap"
+                  >
+                    View Cart
+                  </Link>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>

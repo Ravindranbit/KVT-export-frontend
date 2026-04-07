@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useProductStore, Feedback } from '../../store/useProductStore';
 
@@ -17,11 +17,19 @@ export default function ProductReviewForm({ productId }: ProductReviewFormProps)
   const [comment, setComment] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (error) {
+      const t = setTimeout(() => setError(null), 3000);
+      return () => clearTimeout(t);
+    }
+  }, [error]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      alert('Please sign in to leave a review');
+      setError('Please sign in to leave a review');
       return;
     }
 
@@ -65,12 +73,19 @@ export default function ProductReviewForm({ productId }: ProductReviewFormProps)
         </div>
         
         {!showForm && !submitted && (
-          <button
-            onClick={() => user ? setShowForm(true) : alert('Please sign in to write a review')}
-            className="px-6 py-2.5 bg-gray-900 text-white rounded-md font-bold hover:bg-gray-800 transition shadow-md"
-          >
-            Write a Review
-          </button>
+          <div className="flex flex-col items-end gap-3">
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-lg text-sm font-bold animate-in fade-in slide-in-from-right-4 duration-300">
+                {error}
+              </div>
+            )}
+            <button
+              onClick={() => user ? setShowForm(true) : setError('Please sign in to write a review')}
+              className="px-6 py-2.5 bg-gray-900 text-white rounded-md font-bold hover:bg-gray-800 transition shadow-md whitespace-nowrap"
+            >
+              Write a Review
+            </button>
+          </div>
         )}
       </div>
 
