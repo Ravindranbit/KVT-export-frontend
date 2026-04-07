@@ -143,10 +143,6 @@ export default function VendorDashboard() {
           <div className="w-10 h-10 rounded-full bg-gray-900 flex items-center justify-center text-white text-sm font-bold">{displayLogo}</div>
           <div className="flex-1 min-w-0">
             <h2 className="font-bold text-gray-900 text-sm truncate">{displayName}&apos;s Store</h2>
-            <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-              <span className="text-xs font-medium text-gray-500">Active</span>
-            </div>
           </div>
         </div>
 
