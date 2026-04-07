@@ -162,7 +162,6 @@ export default function VendorDashboard() {
 
   const displayName = user?.storeName || user?.name || 'Vendor';
   const displayLogo = user?.storeName?.substring(0, 2).toUpperCase() || 'V';
-  const sellerScore = 92;
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
@@ -195,21 +194,19 @@ export default function VendorDashboard() {
           ))}
         </nav>
 
-        {/* Seller Score Widget - Fixed at Bottom */}
+        {/* View Store - Fixed at Bottom */}
         <div className="p-4 border-t border-gray-100">
-          <div className="flex items-center gap-3">
-            <div className="relative w-10 h-10 shrink-0">
-              <svg className="w-10 h-10 -rotate-90" viewBox="0 0 44 44">
-                <circle cx="22" cy="22" r="18" fill="none" stroke="#f3f4f6" strokeWidth="4" />
-                <circle cx="22" cy="22" r="18" fill="none" stroke="#10b981" strokeWidth="4" strokeLinecap="round" strokeDasharray={`${sellerScore * 1.13} 200`} />
+          <Link
+            href={`/vendor/${user?.id || 'v1'}`}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors group"
+          >
+            <span className="text-gray-400 group-hover:text-gray-600 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
-              <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-gray-900">{sellerScore}</span>
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-gray-500">Seller Score</p>
-              <p className="text-sm font-bold text-green-600">Excellent</p>
-            </div>
-          </div>
+            </span>
+            View Store
+          </Link>
         </div>
       </aside>
 
@@ -266,11 +263,7 @@ export default function VendorDashboard() {
                   </div>
                 )}
               </div>
-              <div className="h-5 w-px bg-gray-300" />
-              <Link href={`/vendor/${user?.id || 'v1'}`} className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors flex items-center gap-1.5 group">
-                View Store
-                <svg className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-              </Link>
+
             </div>
           </div>
         </header>
