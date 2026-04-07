@@ -426,7 +426,7 @@ export default function VendorDashboard() {
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-bold text-gray-900">₹{order.total.toLocaleString()}</p>
-                          <span className="text-[10px] font-bold text-gray-900 uppercase tracking-widest">{order.status}</span>
+                          <span className="text-sm font-medium text-gray-900">{order.status}</span>
                         </div>
                       </div>
                     ))}
@@ -551,7 +551,7 @@ export default function VendorDashboard() {
                           <td className="px-6 py-4 text-sm text-gray-500">{order.items}</td>
                           <td className="px-6 py-4 font-bold text-sm text-gray-900">₹{order.total.toLocaleString()}</td>
                           <td className="px-6 py-4">
-                            <span className="text-[10px] font-bold text-gray-900 uppercase tracking-widest">
+                            <span className="text-sm font-medium text-gray-700">
                               {order.status}
                             </span>
                           </td>
@@ -606,10 +606,7 @@ export default function VendorDashboard() {
                             <td className="px-6 py-4 text-sm text-gray-500">{payout.method}</td>
                             <td className="px-6 py-4 font-bold text-sm text-gray-900">₹{payout.amount.toLocaleString()}</td>
                             <td className="px-6 py-4">
-                              <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                                {payout.status}
-                              </span>
+                            <span className="text-sm font-medium text-gray-700">{payout.status}</span>
                             </td>
                           </tr>
                         ))}
