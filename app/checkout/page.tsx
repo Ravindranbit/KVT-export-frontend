@@ -44,22 +44,21 @@ export default function Checkout() {
   if (isSuccess) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-12 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-gray-100 max-w-lg w-full text-center relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-emerald-500" />
-          <div className="w-24 h-24 bg-emerald-50 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce-slow">
-            <svg className="w-12 h-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+        <div className="bg-white p-10 rounded-xl shadow-sm border border-gray-200 max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-green-50 border border-green-200 rounded-full flex items-center justify-center mx-auto mb-6">
+            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-4xl font-extrabold text-gray-900 mb-4 tracking-tight">Order Confirmed!</h2>
-          <p className="text-gray-500 mb-10 text-lg leading-relaxed">
-            Your order <strong className="text-gray-900">#KVT-{Math.floor(Math.random() * 89999 + 10000)}</strong> has been placed successfully. 
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Order Confirmed</h2>
+          <p className="text-gray-500 mb-8 text-sm leading-relaxed">
+            Your order <span className="font-semibold text-gray-900">#KVT-{Math.floor(Math.random() * 89999 + 10000)}</span> has been placed successfully. 
             We'll send you a shipping confirmation email shortly.
           </p>
-          <Link href="/dashboard" className="block w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-4 rounded-xl transition-all shadow-[0_10px_20px_rgba(0,0,0,0.1)] hover:shadow-[0_15px_25px_rgba(0,0,0,0.15)] hover:-translate-y-1 mb-4">
+          <Link href="/dashboard" className="block w-full bg-gray-900 hover:bg-black text-white font-medium py-3 rounded-lg transition-colors mb-3 text-sm">
             View Order Dashboard
           </Link>
-          <Link href="/" className="block underline underline-offset-4 text-gray-500 hover:text-gray-900 font-medium transition-colors">
+          <Link href="/" className="block text-sm text-gray-500 hover:text-gray-900 font-medium transition-colors">
             Continue Shopping
           </Link>
         </div>
@@ -72,9 +71,9 @@ export default function Checkout() {
       <Header />
       
       <main className="max-w-7xl mx-auto px-4 py-12 md:py-20">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight mb-4">Checkout</h1>
-          <p className="text-gray-500 text-lg">Complete your purchase securely</p>
+        <div className="text-center mb-12">
+          <h1 className="text-2xl md:text-3xl font-semibold text-gray-900 mb-2">Checkout</h1>
+          <p className="text-gray-500 text-sm">Complete your purchase securely</p>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-20">
@@ -99,7 +98,7 @@ export default function Checkout() {
               ))}
             </div>
 
-            <div className="bg-white p-8 md:p-12 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+            <div className="bg-white p-8 md:p-10 rounded-xl shadow-sm border border-gray-200">
               <form onSubmit={handleNext}>
                 
                 {/* Step 1: Contact Detail */}
@@ -229,8 +228,8 @@ export default function Checkout() {
 
           {/* Right Order Summary Column */}
           <div className="w-full lg:w-[400px]">
-            <div className="bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 sticky top-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-6 pb-6 border-b border-gray-100">Order Summary ({cartItems.length})</h3>
+            <div className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 sticky top-8">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 pb-6 border-b border-gray-200">Order Summary ({cartItems.length})</h3>
               
               <div className="space-y-6 mb-8 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {cartItems.map(item => {
@@ -260,7 +259,7 @@ export default function Checkout() {
                   <span>Shipping</span>
                   <span className={total > 4150 ? "text-green-600 font-bold tracking-wide uppercase" : "text-gray-900"}>{total > 4150 ? 'Free' : '₹415.00'}</span>
                 </div>
-                <div className="flex justify-between text-xl font-extrabold text-gray-900 pt-4 border-t border-dashed border-gray-200">
+                <div className="flex justify-between text-lg font-semibold text-gray-900 pt-4 border-t border-gray-200">
                   <span>Total</span>
                   <span className="text-red-600">₹{(total > 4150 ? total : total + 415).toFixed(2)}</span>
                 </div>

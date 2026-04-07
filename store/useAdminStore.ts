@@ -209,6 +209,8 @@ interface AdminState {
 
   // Settings
   updateSettings: (updates: Partial<SiteSettings>) => void;
+  hasHydrated: boolean;
+  setHasHydrated: (h: boolean) => void;
 }
 
 const MOCK_USERS: AdminUser[] = [
@@ -426,7 +428,14 @@ export const useAdminStore = create<AdminState>()(
       updateSettings: (updates) => set((s) => ({
         settings: { ...s.settings, ...updates },
       })),
+      hasHydrated: false,
+      setHasHydrated: (h) => set({ hasHydrated: h }),
     }),
-    { name: 'admin-storage' }
+    { 
+      name: 'admin-storage',
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      }
+    }
   )
 );
