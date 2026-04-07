@@ -426,7 +426,7 @@ export default function VendorDashboard() {
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-bold text-gray-900">₹{order.total.toLocaleString()}</p>
-                          <span className={`text-[10px] font-bold ${order.status === 'Processing' ? 'text-amber-600' : order.status === 'Shipped' ? 'text-blue-600' : 'text-emerald-600'}`}>{order.status}</span>
+                          <span className="text-[10px] font-bold text-gray-900 uppercase tracking-widest">{order.status}</span>
                         </div>
                       </div>
                     ))}
@@ -529,7 +529,6 @@ export default function VendorDashboard() {
                     <h2 className="text-lg font-bold text-gray-900">Customer Orders</h2>
                     <p className="text-gray-400 font-bold text-[10px] uppercase tracking-widest mt-0.5">Manage and fulfil incoming orders</p>
                   </div>
-                  <span className="text-[10px] font-bold text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg border border-gray-200 uppercase tracking-wider">{MOCK_ORDERS.length} Total</span>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
@@ -552,11 +551,7 @@ export default function VendorDashboard() {
                           <td className="px-6 py-4 text-sm text-gray-500">{order.items}</td>
                           <td className="px-6 py-4 font-bold text-sm text-gray-900">₹{order.total.toLocaleString()}</td>
                           <td className="px-6 py-4">
-                            <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full ${order.status === 'Processing' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
-                                order.status === 'Shipped' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                                  'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              }`}>
-                              <span className={`w-1.5 h-1.5 rounded-full ${order.status === 'Processing' ? 'bg-amber-500' : order.status === 'Shipped' ? 'bg-blue-500' : 'bg-emerald-500'}`} />
+                            <span className="text-[10px] font-bold text-gray-900 uppercase tracking-widest">
                               {order.status}
                             </span>
                           </td>
