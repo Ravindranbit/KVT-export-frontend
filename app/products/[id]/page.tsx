@@ -151,9 +151,9 @@ export default function ProductDetail() {
               <div className="grid grid-cols-2 gap-y-6">
                 <div>
                   <p className="text-gray-500 text-sm mb-1">Sold By</p>
-                  <Link href={`/vendor/${product.vendorId}`} className="font-bold text-red-600 hover:underline">
+                  <p className="font-bold text-gray-900 transition-colors">
                     {product.vendorId === 'v1' ? 'Artisan Threadsco' : product.vendorId === 'v2' ? 'Urban Sole' : 'Verified Vendor'}
-                  </Link>
+                  </p>
                 </div>
                 <div>
                   <p className="text-gray-500 text-sm mb-1">Category</p>

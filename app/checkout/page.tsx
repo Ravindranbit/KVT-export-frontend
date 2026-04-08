@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useCartStore } from '../../store/useCartStore';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useOrderStore, Order } from '../../store/useOrderStore';
 import Header from '../../components/layout/Header';
 
 import { useProductStore } from '../../store/useProductStore';
@@ -17,6 +19,20 @@ export default function Checkout() {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [orderId, setOrderId] = useState('');
+  
+  const { user } = useAuthStore();
+  const { addOrder } = useOrderStore();
+
+  const [formData, setFormData] = useState({
+    email: user?.email || '',
+    phone: '',
+    firstName: user?.name?.split(' ')[0] || '',
+    lastName: user?.name?.split(' ')[1] || '',
+    address: '',
+    city: '',
+    zip: '',
+  });
 
   const getProductDetails = (id: number) => products.find(p => p.id === id);
   const total = cartItems.reduce((sum, item) => sum + ((getProductDetails(item.id)?.price || 0) * item.quantity), 0);
@@ -34,7 +50,48 @@ export default function Checkout() {
 
   const handlePlaceOrder = () => {
     setIsProcessing(true);
+    const newOrderId = `KVT-${Math.floor(Math.random() * 89999 + 10000)}`;
+    setOrderId(newOrderId);
+
     setTimeout(() => {
+      const orderItems = cartItems.map(item => {
+        const product = getProductDetails(item.id);
+        return {
+          id: item.id,
+          name: product?.name || 'Unknown Product',
+          price: product?.price || 0,
+          image: product?.image || '',
+          quantity: item.quantity,
+          vendorId: product?.vendorId || 'v0'
+        };
+      });
+
+      const newOrder: Order = {
+        id: newOrderId,
+        customerId: user?.id || 'guest',
+        customerName: user?.name || formData.firstName + ' ' + formData.lastName,
+        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        total: total > 4150 ? total : total + 415,
+        status: 'Processing',
+        items: orderItems,
+        shippingAddress: {
+          line1: formData.address,
+          city: formData.city,
+          zip: formData.zip,
+          country: 'India'
+        }
+      };
+
+      orderItems.forEach(item => {
+        const product = getProductDetails(item.id);
+        if (product && product.stock) {
+          useProductStore.getState().updateProduct(item.id, { 
+            stock: Math.max(0, product.stock - item.quantity) 
+          });
+        }
+      });
+
+      addOrder(newOrder);
       setIsProcessing(false);
       setIsSuccess(true);
       clearCart();
@@ -52,7 +109,7 @@ export default function Checkout() {
           </div>
           <h2 className="text-2xl font-semibold text-gray-900 mb-2">Order Confirmed</h2>
           <p className="text-gray-500 mb-8 text-sm leading-relaxed">
-            Your order <span className="font-semibold text-gray-900">#KVT-{Math.floor(Math.random() * 89999 + 10000)}</span> has been placed successfully. 
+            Your order <span className="font-semibold text-gray-900">#{orderId}</span> has been placed successfully. 
             We'll send you a shipping confirmation email shortly.
           </p>
           <Link href="/dashboard" className="block w-full bg-gray-900 hover:bg-black text-white font-medium py-3 rounded-lg transition-colors mb-3 text-sm">
@@ -108,11 +165,11 @@ export default function Checkout() {
                     <div className="space-y-6">
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Email address</label>
-                        <input type="email" required placeholder="you@example.com" className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none text-gray-900 placeholder:text-gray-400 transition-all" />
+                        <input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="you@example.com" className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none text-gray-900 placeholder:text-gray-400 transition-all" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Phone number <span className="text-red-500">*</span></label>
-                        <input type="tel" required placeholder="+91 98765 43210" className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none text-gray-900 placeholder:text-gray-400 transition-all" />
+                        <input type="tel" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="+91 98765 43210" className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none text-gray-900 placeholder:text-gray-400 transition-all" />
                       </div>
                       <div className="pt-6">
                         <button type="submit" className="w-full bg-gray-900 hover:bg-black text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5">
@@ -131,25 +188,25 @@ export default function Checkout() {
                       <div className="grid grid-cols-2 gap-6">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">First name</label>
-                          <input type="text" required className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 placeholder:text-gray-400 transition-all" />
+                          <input type="text" required value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 placeholder:text-gray-400 transition-all" />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Last name</label>
-                          <input type="text" required className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 placeholder:text-gray-400 transition-all" />
+                          <input type="text" required value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 placeholder:text-gray-400 transition-all" />
                         </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
-                        <input type="text" required className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 placeholder:text-gray-400 transition-all" />
+                        <input type="text" required value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 placeholder:text-gray-400 transition-all" />
                       </div>
                       <div className="grid grid-cols-2 gap-6">
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">City</label>
-                          <input type="text" required className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 placeholder:text-gray-400 transition-all" />
+                          <input type="text" required value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 placeholder:text-gray-400 transition-all" />
                         </div>
                         <div>
                           <label className="block text-sm font-medium text-gray-700 mb-2">Postal code</label>
-                          <input type="text" required className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 placeholder:text-gray-400 transition-all" />
+                          <input type="text" required value={formData.zip} onChange={e => setFormData({...formData, zip: e.target.value})} className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-gray-900 text-gray-900 placeholder:text-gray-400 transition-all" />
                         </div>
                       </div>
                       <div className="pt-6 flex gap-4">

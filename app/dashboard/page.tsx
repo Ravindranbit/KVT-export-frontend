@@ -8,12 +8,9 @@ import { useRouter } from 'next/navigation';
 import { useWishlistStore } from '../../store/useWishlistStore';
 import { useProductStore } from '../../store/useProductStore';
 import { useCartStore } from '../../store/useCartStore';
+import { useOrderStore } from '../../store/useOrderStore';
 
-const MOCK_ORDERS = [
-  { id: 'KVT-84920', date: 'Oct 24, 2026', total: 6450, status: 'Delivered', items: 3 },
-  { id: 'KVT-71029', date: 'Nov 12, 2026', total: 1250, status: 'In Transit', items: 1 },
-  { id: 'KVT-92304', date: 'Dec 05, 2026', total: 8900, status: 'Processing', items: 4 },
-];
+// Removed MOCK_ORDERS as they are now replaced by persistence store
 
 interface Address { id: string; label: string; name: string; line1: string; line2: string; city: string; zip: string; country: string; phone: string; isDefault: boolean; }
 interface Card { id: string; brand: string; last4: string; expiry: string; isPrimary: boolean; }
@@ -93,6 +90,8 @@ export default function Dashboard() {
   const [showAddCard, setShowAddCard] = useState(false);
   const { user, logout } = useAuthStore();
   const router = useRouter();
+  const { orders } = useOrderStore();
+  const myOrders = user ? orders.filter(o => o.customerId === user.id) : orders.filter(o => o.customerId === 'guest');
 
   const [addresses, setAddresses] = useState<Address[]>([
     { id: 'a1', label: 'Home (Primary)', name: '', line1: '8th floor, 379 Hudson St', line2: '', city: 'New York', zip: 'NY 10018', country: 'India', phone: '+91 96716 68790', isDefault: true },
@@ -217,13 +216,22 @@ export default function Dashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200 bg-white">
-                      {MOCK_ORDERS.map(order => (
+                      {myOrders.length === 0 ? (
+                        <tr>
+                          <td colSpan={5} className="px-8 py-20 text-center text-gray-500 font-medium">No orders found. Start shopping to see your history!</td>
+                        </tr>
+                      ) : (
+                        myOrders.map(order => (
                         <Fragment key={order.id}>
                           <tr className="hover:bg-gray-50 transition-colors cursor-pointer" onClick={() => setTrackingId(trackingId === order.id ? null : order.id)}>
                             <td className="px-8 py-4 font-medium text-gray-900">{order.id}</td>
                             <td className="px-8 py-4 text-gray-500">{order.date}</td>
                             <td className="px-8 py-4">
-                              <span className="text-sm font-medium text-gray-900 uppercase">
+                              <span className={`text-[10px] font-bold px-2 py-1 rounded-full border uppercase ${
+                                order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                                order.status === 'Processing' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                'bg-blue-50 text-blue-600 border-blue-100'
+                              }`}>
                                 {order.status}
                               </span>
                             </td>
@@ -277,7 +285,7 @@ export default function Dashboard() {
                           )}
                           </AnimatePresence>
                         </Fragment>
-                      ))}
+                      )))}
                     </tbody>
                   </table>
                 </div>

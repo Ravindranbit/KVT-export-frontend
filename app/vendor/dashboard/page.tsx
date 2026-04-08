@@ -6,14 +6,9 @@ import { useRouter } from 'next/navigation';
 import Header from '../../../components/layout/Header';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useProductStore } from '../../../store/useProductStore';
+import { useOrderStore } from '../../../store/useOrderStore';
 
-const MOCK_ORDERS = [
-  { id: 'ORD-7821', customer: 'Arjun Mehta', date: 'Apr 05, 2026', total: 3450, status: 'Processing', items: 2 },
-  { id: 'ORD-7819', customer: 'Priya Sharma', date: 'Apr 04, 2026', total: 1200, status: 'Shipped', items: 1 },
-  { id: 'ORD-7815', customer: 'Vikram Patel', date: 'Apr 03, 2026', total: 8900, status: 'Delivered', items: 3 },
-  { id: 'ORD-7810', customer: 'Sneha Reddy', date: 'Apr 02, 2026', total: 2750, status: 'Delivered', items: 1 },
-  { id: 'ORD-7806', customer: 'Ravi Kumar', date: 'Apr 01, 2026', total: 5600, status: 'Delivered', items: 4 },
-];
+// Removed MOCK_ORDERS as they are now replaced by persistence store
 
 const MOCK_PAYOUTS = [
   { id: 'PAY-301', date: 'Apr 01, 2026', amount: 34200, status: 'Completed', method: 'Bank Transfer' },
@@ -42,6 +37,10 @@ export default function VendorDashboard() {
       return () => clearTimeout(t);
     }
   }, [message]);
+
+  const { orders, updateOrderStatus } = useOrderStore();
+  const vendorOrders = user ? orders.filter(o => o.items.some(item => item.vendorId === 'v1')) : []; // Assuming 'v1' for now as mock vendor id
+  // Note: In real app, we should use user.vendorId once implemented in useAuthStore
 
   useEffect(() => {
     if (editingProduct) {
@@ -76,8 +75,8 @@ export default function VendorDashboard() {
   if (!mounted) return null;
 
   const stats = {
-    revenue: 124500,
-    orders: 86,
+    revenue: vendorOrders.reduce((sum, o) => sum + o.total, 0),
+    orders: vendorOrders.filter(o => o.status !== 'Delivered').length,
     views: 12540,
     rating: 4.8
   };
@@ -205,18 +204,18 @@ export default function VendorDashboard() {
           ))}
         </nav>
 
-        {/* View Store - Fixed at Bottom */}
+        {/* View Website - Fixed at Bottom */}
         <div className="p-4 border-t border-gray-100">
           <Link
-            href={`/vendor/${user?.id || 'v1'}`}
+            href="/"
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors group"
           >
             <span className="text-gray-400 group-hover:text-gray-600 transition-colors">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
             </span>
-            View Store
+            View Website
           </Link>
         </div>
       </aside>
@@ -428,20 +427,26 @@ export default function VendorDashboard() {
                     <button onClick={() => setActiveTab('orders')} className="text-[10px] font-bold text-red-500 hover:text-red-700 uppercase tracking-wider transition-colors">View All →</button>
                   </div>
                   <div className="divide-y divide-gray-50">
-                    {MOCK_ORDERS.slice(0, 3).map(order => (
+                    {vendorOrders.slice(0, 3).map(order => (
                       <div key={order.id} className="px-6 py-4 flex items-center justify-between hover:bg-gray-50/50 transition-colors">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
                           </div>
                           <div>
-                            <p className="text-sm font-semibold text-gray-900">{order.customer}</p>
-                            <p className="text-[10px] text-gray-400 font-medium">{order.id} · {order.items} items</p>
+                            <p className="text-sm font-semibold text-gray-900">{order.customerName}</p>
+                            <p className="text-[10px] text-gray-400 font-medium">{order.id} · {order.items.length} items</p>
                           </div>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-bold text-gray-900">₹{order.total.toLocaleString()}</p>
-                          <span className="text-sm font-medium text-gray-900">{order.status}</span>
+                          <span className={`text-[10px] font-bold px-2 py-1 rounded-lg border uppercase tracking-wider ${
+                                order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                                order.status === 'Processing' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                'bg-blue-50 text-blue-600 border-blue-100'
+                              }`}>
+                              {order.status}
+                            </span>
                         </div>
                       </div>
                     ))}
@@ -555,23 +560,43 @@ export default function VendorDashboard() {
                         <th className="px-6 py-4">Items</th>
                         <th className="px-6 py-4">Total</th>
                         <th className="px-6 py-4">Status</th>
+                        <th className="px-6 py-4 text-right">Action</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
-                      {MOCK_ORDERS.map(order => (
+                      {vendorOrders.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="px-6 py-20 text-center text-gray-500 font-medium">No orders found for your shop yet.</td>
+                        </tr>
+                      ) : (
+                        vendorOrders.map(order => (
                         <tr key={order.id} className="hover:bg-gray-50/50 transition-colors">
                           <td className="px-6 py-4 font-bold text-sm text-gray-900">{order.id}</td>
-                          <td className="px-6 py-4 text-sm font-medium text-gray-700">{order.customer}</td>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-700">{order.customerName}</td>
                           <td className="px-6 py-4 text-sm text-gray-500">{order.date}</td>
-                          <td className="px-6 py-4 text-sm text-gray-500">{order.items}</td>
+                          <td className="px-6 py-4 text-sm text-gray-500">{order.items.length}</td>
                           <td className="px-6 py-4 font-bold text-sm text-gray-900">₹{order.total.toLocaleString()}</td>
                           <td className="px-6 py-4">
-                            <span className="text-sm font-medium text-gray-700">
+                            <span className={`text-[10px] font-bold px-2 py-1 rounded-lg border uppercase tracking-wider ${
+                                order.status === 'Delivered' ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 
+                                order.status === 'Processing' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                                'bg-blue-50 text-blue-600 border-blue-100'
+                              }`}>
                               {order.status}
                             </span>
                           </td>
+                          <td className="px-6 py-4 text-right">
+                            <div className="flex gap-2 justify-end">
+                              {order.status === 'Processing' && (
+                                <button onClick={() => { updateOrderStatus(order.id, 'Shipped'); setMessage('Order marked as Shipped'); }} className="bg-blue-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-700 transition">Ship</button>
+                              )}
+                              {order.status === 'Shipped' && (
+                                <button onClick={() => { updateOrderStatus(order.id, 'Delivered'); setMessage('Order marked as Delivered'); }} className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-emerald-700 transition">Deliver</button>
+                              )}
+                            </div>
+                          </td>
                         </tr>
-                      ))}
+                      )))}
                     </tbody>
                   </table>
                 </div>

@@ -8,6 +8,7 @@ export interface User {
   storeName?: string;
   storeDescription?: string;
   role: 'buyer' | 'seller' | 'admin';
+  vendorId?: string;
   avatar?: string;
   phone?: string;
   joinedDate?: string;
