@@ -1,11 +1,15 @@
+'use client';
+
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { useWishlistStore } from '../../store/useWishlistStore';
 import { useCartStore } from '../../store/useCartStore';
 import { useAuthStore } from '../../store/useAuthStore';
+import { useProductStore } from '../../store/useProductStore';
 import { PRODUCTS } from '../../lib/mockData';
 import MegaMenu from './MegaMenu';
 import { useRouter } from 'next/navigation';
+import { useAdminStore } from '../../store/useAdminStore';
 
 export default function Header() {
   const [mounted, setMounted] = useState(false);
@@ -19,8 +23,17 @@ export default function Header() {
   const { user } = useAuthStore();
   
   const cart = useCartStore((state) => state.getTotalItems());
-  const isCartOpen = useCartStore((state) => state.isOpen);
-  const setIsCartOpen = useCartStore((state) => state.setIsOpen);
+  const { products } = useProductStore();
+  const { settings, categories: adminCategories } = useAdminStore();
+  const productCategories = Array.from(new Set(products.map(p => p.category.toLowerCase())));
+  const categories = adminCategories.filter(c => c.visible && (c.showInHeader !== false)).map(c => c.name.toLowerCase());
+  
+  // Merge categories if needed, but primarily follow Admin
+  const finalCategories = categories.length > 0 ? categories : productCategories;
+
+  const siteNameParts = settings.siteName ? settings.siteName.split(' ') : ['KVT', 'exports'];
+  const firstPart = siteNameParts[0];
+  const restParts = siteNameParts.slice(1).join(' ');
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -67,9 +80,19 @@ export default function Header() {
         </button>
 
         {/* Logo */}
-        <Link href="/" className="flex items-baseline gap-0.5 flex-shrink-0" style={{ fontFamily: 'var(--font-kumar-one)' }}>
-          <span className="text-xl md:text-2xl font-black text-gray-900 tracking-tight">KVT</span>
-          <span className="text-xl md:text-2xl font-bold text-gray-400 tracking-tight">exports</span>
+        <Link href="/" className="flex items-center gap-0.5 flex-shrink-0" style={{ fontFamily: 'var(--font-arvo)' }}>
+          {settings.logoUrl ? (
+            <img 
+              src={settings.logoUrl} 
+              alt={settings.siteName} 
+              className="h-10 w-auto object-contain max-w-[200px]" 
+            />
+          ) : (
+            <div className="flex items-baseline gap-0.5 select-none">
+              <span className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">{firstPart}</span>
+              <span className="text-xl md:text-2xl font-normal text-gray-400 tracking-tight">{restParts}</span>
+            </div>
+          )}
         </Link>
 
         {/* Desktop Mega Menu */}
@@ -130,18 +153,23 @@ export default function Header() {
           </Link>
 
           {/* Cart Icon */}
-          <button onClick={() => setIsCartOpen(!isCartOpen)} className="relative text-gray-600 hover:text-red-500 p-2 rounded-full hover:bg-gray-100 transition-all duration-200">
+          <Link href="/cart" className="relative text-gray-600 hover:text-red-500 p-2 rounded-full hover:bg-gray-100 transition-all duration-200">
             <svg className="w-5 h-5 md:w-[22px] md:h-[22px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
             {mounted && cart > 0 && <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] rounded-full w-4 h-4 md:w-[18px] md:h-[18px] flex items-center justify-center font-bold ring-2 ring-white">{cart}</span>}
-          </button>
+          </Link>
 
-          {/* Desktop Only: Become Seller / Vendor Dashboard */}
           <div className="hidden md:flex items-center gap-3 ml-1 pl-3 border-l border-gray-200">
-            {user && user.role === 'seller' ? (
+            {user && user.role === 'seller' && (
               <Link href="/vendor/dashboard" className="px-4 py-2 text-sm font-bold text-gray-900 hover:text-red-600 transition-colors duration-200 tracking-wide">Vendor Dashboard</Link>
-            ) : (
+            )}
+            
+            {user && user.role === 'admin' && (
+              <Link href="/admin" className="px-4 py-2 text-sm font-bold text-gray-900 hover:text-red-600 transition-colors duration-200 tracking-wide">Admin Dashboard</Link>
+            )}
+
+            {(!user || user.role === 'buyer') && (
               <Link href="/become-seller" className="px-4 py-2 text-sm font-bold text-gray-900 hover:text-red-600 transition-colors duration-200 tracking-wide">Become a Seller</Link>
             )}
 
@@ -214,17 +242,21 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white">
           <nav className="px-4 py-4 space-y-1">
-            {['Electronics', 'Fashion', 'Home', 'Sports & Beauty'].map(cat => (
-              <Link key={cat} href={`/?category=${cat.split(' ')[0].toLowerCase()}`} onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-900 font-bold hover:bg-gray-50 rounded-xl transition-all duration-200">
+            {finalCategories.map(cat => (
+              <Link key={cat} href={`/?category=${cat}`} onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-900 font-bold hover:bg-gray-50 rounded-xl transition-all duration-200 capitalize">
                 {cat}
               </Link>
             ))}
             <div className="border-t border-gray-100 my-2"></div>
             <Link href="/about" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-500 font-medium hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">About</Link>
             <Link href="/contact" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-500 font-medium hover:bg-gray-50 hover:text-gray-900 rounded-xl transition-all duration-200">Contact</Link>
-            {user && user.role === 'seller' ? (
-              <Link href="/vendor/dashboard" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-700 font-medium hover:bg-gray-50 rounded-xl transition">Vendor Dashboard</Link>
-            ) : (
+            {user && user.role === 'seller' && (
+              <Link href="/vendor/dashboard" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-700 font-bold hover:bg-gray-50 rounded-xl transition">Vendor Dashboard</Link>
+            )}
+            {user && user.role === 'admin' && (
+              <Link href="/admin" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-700 font-bold hover:bg-gray-50 rounded-xl transition">Admin Dashboard</Link>
+            )}
+            {(!user || user.role === 'buyer') && (
               <Link href="/become-seller" onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-red-600 font-bold hover:bg-red-50 rounded-xl transition">Become a Seller</Link>
             )}
           </nav>

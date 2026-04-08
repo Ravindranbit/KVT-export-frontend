@@ -8,12 +8,10 @@ export interface CartItem {
 
 interface CartStore {
   items: CartItem[];
-  isOpen: boolean;
   addItem: (id: number, quantity?: number) => void;
   removeItem: (id: number) => void;
   updateQuantity: (id: number, quantity: number) => void;
   clearCart: () => void;
-  setIsOpen: (isOpen: boolean) => void;
   getTotalItems: () => number;
 }
 
@@ -21,7 +19,6 @@ export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
-      isOpen: false,
       
       addItem: (id: number, quantity: number = 1) => {
         set((state) => {
@@ -54,8 +51,6 @@ export const useCartStore = create<CartStore>()(
       },
       
       clearCart: () => set({ items: [] }),
-      
-      setIsOpen: (isOpen: boolean) => set({ isOpen }),
       
       getTotalItems: () => {
         return get().items.reduce((total, item) => total + item.quantity, 0);

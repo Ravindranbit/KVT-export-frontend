@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useProductStore, Feedback } from '../../store/useProductStore';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProductReviewFormProps {
   productId: number;
@@ -10,14 +11,16 @@ interface ProductReviewFormProps {
 
 export default function ProductReviewForm({ productId }: ProductReviewFormProps) {
   const { user } = useAuthStore();
-  const { addFeedback, getProductById } = useProductStore();
+  const { addFeedback, updateFeedback, removeFeedback, getProductById } = useProductStore();
   const product = getProductById(productId);
   
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [showForm, setShowForm] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   useEffect(() => {
     if (error) {
@@ -26,33 +29,64 @@ export default function ProductReviewForm({ productId }: ProductReviewFormProps)
     }
   }, [error]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     if (!user) {
       setError('Please sign in to leave a review');
       return;
     }
 
-    const newFeedback: Feedback = {
-      id: Math.random().toString(36).substring(7),
-      userName: user.name,
-      rating,
-      comment,
-      date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
-    };
+    if (rating === 0) {
+      setError('Please select a star rating before submitting.');
+      return;
+    }
 
-    addFeedback(productId, newFeedback);
+    if (!comment.trim()) {
+      setError('Please share your thoughts in the comment section.');
+      return;
+    }
+
+    if (editingId) {
+      updateFeedback(productId, editingId, { rating, comment });
+      setMessage('Review updated successfully!');
+    } else {
+      const newFeedback: Feedback = {
+        id: Math.random().toString(36).substring(7),
+        userName: user.name,
+        rating,
+        comment,
+        date: new Date().toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })
+      };
+      addFeedback(productId, newFeedback);
+      setMessage('Review submitted successfully!');
+    }
+
+    setIsSubmitting(false);
     setSubmitted(true);
     setComment('');
-    setRating(5);
+    setRating(0);
+    setEditingId(null);
+    setShowForm(false);
+    
     setTimeout(() => {
       setSubmitted(false);
-      setShowForm(false);
-    }, 3000);
+    }, 4000);
+  };
+
+  const [message, setMessage] = useState('');
+
+  const handleEdit = (f: Feedback) => {
+    setEditingId(f.id);
+    setRating(f.rating);
+    setComment(f.comment);
+    setShowForm(true);
+    const formElement = document.getElementById('review-form-top');
+    if (formElement) formElement.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <div className="mt-12 pt-12 border-t border-gray-100">
+    <div className="mt-12 pt-12 border-t border-gray-100" id="review-form-top">
       <div className="flex items-center justify-between mb-8">
         <div>
           <h2 className="text-2xl font-bold text-gray-900 mb-2">Customer Reviews</h2>
@@ -90,8 +124,17 @@ export default function ProductReviewForm({ productId }: ProductReviewFormProps)
       </div>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="bg-gray-50 rounded-xl p-8 mb-12 border border-gray-100 shadow-sm transition-all animate-fade-in">
-          <h3 className="text-lg font-bold text-gray-900 mb-6">Your Feedback</h3>
+        <form onSubmit={handleSubmit} className="bg-gray-50 rounded-xl p-8 mb-12 border border-gray-100 shadow-sm transition-all animate-fade-in text-left">
+          <h3 className="text-lg font-bold text-gray-900 mb-6">{editingId ? 'Edit Your Feedback' : 'Your Feedback'}</h3>
+          
+          {error && (
+            <div className="mb-6 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm font-bold flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {error}
+            </div>
+          )}
           
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-700 mb-3">Overall Rating</label>
@@ -130,9 +173,18 @@ export default function ProductReviewForm({ productId }: ProductReviewFormProps)
           <div className="flex gap-4">
             <button
               type="submit"
-              className="px-8 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition shadow-lg shadow-red-200"
+              disabled={isSubmitting}
+              className={`px-8 py-3 bg-red-600 text-white rounded-lg font-bold hover:bg-red-700 transition shadow-lg shadow-red-200 flex items-center gap-2 ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
-              Submit Review
+              {isSubmitting ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Submitting...
+                </>
+              ) : 'Submit Review'}
             </button>
             <button
               type="button"
@@ -145,14 +197,34 @@ export default function ProductReviewForm({ productId }: ProductReviewFormProps)
         </form>
       )}
 
-      {submitted && (
-        <div className="bg-green-50 border border-green-100 text-green-700 p-4 rounded-lg mb-12 flex items-center gap-3 animate-fade-in">
-          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-          </svg>
-          <p className="font-semibold">Thank you! Your review has been submitted successfully.</p>
-        </div>
-      )}
+      <AnimatePresence>
+        {submitted && (
+          <motion.div 
+            initial={{ opacity: 0, y: -40, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -40, scale: 0.8 }}
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-[200]"
+          >
+            <div className="bg-gray-900/95 backdrop-blur-md text-white px-8 py-4 rounded-full flex items-center gap-4 shadow-[0_20px_40px_rgba(0,0,0,0.2)] border border-white/10">
+              <div className="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(16,185,129,0.4)] animate-pulse">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div className="flex flex-col pr-2">
+                <span className="text-sm font-black tracking-wider uppercase text-emerald-400 leading-none mb-1">Success</span>
+                <span className="text-base font-bold text-gray-100 whitespace-nowrap leading-none">
+                  {message.includes('updated') ? 'Review Updated' : 'Review Published'}
+                </span>
+              </div>
+              <div className="w-px h-8 bg-white/10 mx-2" />
+              <button onClick={() => setSubmitted(false)} className="hover:text-emerald-400 transition-colors p-1">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Reviews List */}
       <div className="space-y-8">
@@ -181,7 +253,19 @@ export default function ProductReviewForm({ productId }: ProductReviewFormProps)
                   ))}
                 </div>
               </div>
-              <p className="text-gray-600 leading-relaxed text-base italic">"{f.comment}"</p>
+              <div className="flex items-center gap-4">
+                <p className="text-gray-600 leading-relaxed text-base italic flex-1">"{f.comment}"</p>
+                {user && user.name === f.userName && (
+                  <div className="flex gap-2 shrink-0">
+                    <button onClick={() => handleEdit(f)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Edit Review">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                    </button>
+                    <button onClick={() => removeFeedback(productId, f.id)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Delete Review">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )).reverse()
         ) : (

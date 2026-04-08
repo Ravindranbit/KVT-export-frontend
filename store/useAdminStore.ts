@@ -74,6 +74,8 @@ export interface Category {
   description: string;
   productCount: number;
   visible: boolean;
+  showInHeader: boolean;
+  showInFilters: boolean;
   order: number;
 }
 
@@ -265,13 +267,13 @@ const MOCK_VENDORS: Vendor[] = [
 ];
 
 const MOCK_CATEGORIES: Category[] = [
-  { id: 'cat1', name: 'Electronics', slug: 'electronics', description: 'Gadgets, headphones, cameras & more', productCount: 4, visible: true, order: 1 },
-  { id: 'cat2', name: 'Fashion', slug: 'fashion', description: 'Clothing, shoes, bags & accessories', productCount: 4, visible: true, order: 2 },
-  { id: 'cat3', name: 'Home', slug: 'home', description: 'Furniture, decor, lighting & more', productCount: 3, visible: true, order: 3 },
-  { id: 'cat4', name: 'Sports', slug: 'sports', description: 'Fitness equipment & activewear', productCount: 2, visible: true, order: 4 },
-  { id: 'cat5', name: 'Beauty', slug: 'beauty', description: 'Skincare, makeup & wellness', productCount: 2, visible: true, order: 5 },
-  { id: 'cat6', name: 'Books', slug: 'books', description: 'Notebooks, novels & stationery', productCount: 1, visible: true, order: 6 },
-  { id: 'cat7', name: 'Toys', slug: 'toys', description: 'Games, puzzles & kids items', productCount: 0, visible: true, order: 7 },
+  { id: 'cat1', name: 'Electronics', slug: 'electronics', description: 'Gadgets, headphones, cameras & more', productCount: 4, visible: true, showInHeader: true, showInFilters: true, order: 1 },
+  { id: 'cat2', name: 'Fashion', slug: 'fashion', description: 'Clothing, shoes, bags & accessories', productCount: 4, visible: true, showInHeader: true, showInFilters: true, order: 2 },
+  { id: 'cat3', name: 'Home', slug: 'home', description: 'Furniture, decor, lighting & more', productCount: 3, visible: true, showInHeader: true, showInFilters: true, order: 3 },
+  { id: 'cat4', name: 'Sports', slug: 'sports', description: 'Fitness equipment & activewear', productCount: 2, visible: true, showInHeader: true, showInFilters: true, order: 4 },
+  { id: 'cat5', name: 'Beauty', slug: 'beauty', description: 'Skincare, makeup & wellness', productCount: 2, visible: true, showInHeader: true, showInFilters: true, order: 5 },
+  { id: 'cat6', name: 'Books', slug: 'books', description: 'Notebooks, novels & stationery', productCount: 1, visible: true, showInHeader: false, showInFilters: true, order: 6 },
+  { id: 'cat7', name: 'Toys', slug: 'toys', description: 'Games, puzzles & kids items', productCount: 0, visible: true, showInHeader: false, showInFilters: true, order: 7 },
 ];
 
 const MOCK_BANNERS: BannerSlide[] = [

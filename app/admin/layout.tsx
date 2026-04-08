@@ -45,7 +45,7 @@ function NavItem({ item, isActive }: { item: { label: string; href: string; icon
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, hasHydrated, logout } = useAuthStore();
-  const { orders, vendors } = useAdminStore();
+  const { orders, vendors, settings } = useAdminStore();
   const { products } = useProductStore();
   const router = useRouter();
   const pathname = usePathname();
@@ -74,7 +74,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Logo */}
       <div className="px-5 h-[57px] flex items-center border-b border-gray-200">
         <Link href="/admin" className="flex items-baseline gap-1.5" onClick={() => setSidebarOpen(false)}>
-          <span className="text-[22px] font-black text-gray-900 tracking-tight">KVT</span>
+          <span className="text-[22px] font-black text-gray-900 tracking-tight">{settings.siteName ? settings.siteName.split(' ')[0] : 'KVT'}</span>
           <span className="text-[13px] text-gray-400 font-medium">admin panel</span>
         </Link>
       </div>
@@ -251,7 +251,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] font-black text-red-600 hover:bg-red-50 rounded-xl transition-all"
                   >
                     <Lock size={16} />
-                    Terminate Session
+                    Log Out
                   </button>
                 </div>
               </div>

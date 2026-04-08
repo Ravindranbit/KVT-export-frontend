@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Kumar_One } from "next/font/google";
+import { Geist, Geist_Mono, Kumar_One, Arvo } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -9,6 +9,12 @@ const geistSans = Geist({
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
+
+const arvo = Arvo({
+  weight: ["400", "700"],
+  variable: "--font-arvo",
   subsets: ["latin"],
 });
 
@@ -27,6 +33,8 @@ export const metadata: Metadata = {
 };
 
 import ThemeSync from "../components/ThemeSync";
+import Footer from "../components/layout/Footer";
+import DynamicFavicon from "../components/DynamicFavicon";
 
 export default function RootLayout({
   children,
@@ -36,10 +44,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${kumarOne.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${kumarOne.variable} ${arvo.variable} antialiased`}
       >
         <ThemeSync />
+        <DynamicFavicon />
         {children}
+        <Footer />
       </body>
     </html>
   );

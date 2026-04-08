@@ -22,7 +22,7 @@ export default function AdminCategories() {
   const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   
-  const defaultForm = { name: '', slug: '', description: '', visible: true };
+  const defaultForm = { name: '', slug: '', description: '', visible: true, showInHeader: true, showInFilters: true };
   const [form, setForm] = useState(defaultForm);
 
   const filteredCategories = categories.filter(cat => 
@@ -56,7 +56,9 @@ export default function AdminCategories() {
       name: cat.name, 
       slug: cat.slug, 
       description: cat.description, 
-      visible: cat.visible 
+      visible: cat.visible,
+      showInHeader: cat.showInHeader ?? true,
+      showInFilters: cat.showInFilters ?? true
     });
     setEditingId(cat.id);
     setShowModal(true);
@@ -117,11 +119,23 @@ export default function AdminCategories() {
             <div className="flex-1">
               <h3 className="text-xl font-black text-gray-900 tracking-tight leading-none group-hover:text-primary transition-colors">{cat.name}</h3>
               
-              <div className="mt-3.5 mb-4">
+              <div className="mt-3.5 mb-4 flex items-center gap-2 flex-wrap">
                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg">
                    <Package size={12} className="text-gray-400" />
                    <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{cat.productCount} Items</span>
                  </div>
+                 {cat.showInHeader && (
+                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-100 rounded-lg text-blue-600">
+                     <Folder size={11} className="stroke-[3]" />
+                     <span className="text-[9px] font-black uppercase tracking-tight">Header</span>
+                   </div>
+                 )}
+                 {cat.showInFilters && (
+                   <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-100 rounded-lg text-blue-600">
+                     <Search size={11} className="stroke-[3]" />
+                     <span className="text-[9px] font-black uppercase tracking-tight">Filters</span>
+                   </div>
+                 )}
               </div>
  
               <p className="text-[12px] text-gray-500 font-bold leading-relaxed opacity-80 line-clamp-2">
@@ -191,6 +205,35 @@ export default function AdminCategories() {
                   className="w-full border border-gray-100 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary transition-all font-medium bg-gray-50/50 resize-none" 
                   placeholder="Additional context for this category..."
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => setForm({...form, showInHeader: !form.showInHeader})}
+                  className={`p-5 rounded-3xl border-2 transition-all duration-300 flex flex-col items-center gap-3 shadow-sm ${
+                    form.showInHeader 
+                      ? 'bg-[#1976d2] border-[#1976d2] text-white shadow-blue-100' 
+                      : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className={`p-2 rounded-xl ${form.showInHeader ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                    <Folder size={20} className="stroke-[2.5]" />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-[0.1em]">Navigation</span>
+                </button>
+                <button
+                  onClick={() => setForm({...form, showInFilters: !form.showInFilters})}
+                  className={`p-5 rounded-3xl border-2 transition-all duration-300 flex flex-col items-center gap-3 shadow-sm ${
+                    form.showInFilters 
+                      ? 'bg-[#1976d2] border-[#1976d2] text-white shadow-blue-100' 
+                      : 'bg-white border-gray-200 text-gray-400 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className={`p-2 rounded-xl ${form.showInFilters ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                    <Search size={20} className="stroke-[2.5]" />
+                  </div>
+                  <span className="text-[11px] font-black uppercase tracking-[0.1em]">Filters Bar</span>
+                </button>
               </div>
             </div>
 

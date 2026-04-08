@@ -5,14 +5,16 @@ import { useState, useEffect, Suspense } from 'react';
 import { useWishlistStore } from '../store/useWishlistStore';
 import { useCartStore } from '../store/useCartStore';
 import Header from '../components/layout/Header';
-import CartDrawer from '../components/cart/CartDrawer';
 import BannerCarousel from '../components/home/BannerCarousel';
 import { useSearchParams } from 'next/navigation';
 import { useProductStore } from '../store/useProductStore';
+import { useAdminStore } from '../store/useAdminStore';
+import GlobalLoading from '../components/layout/GlobalLoading';
+import Skeleton from '../components/ui/Skeleton';
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+    <Suspense fallback={<GlobalLoading />}>
       <HomeContent />
     </Suspense>
   );
@@ -30,12 +32,27 @@ function HomeContent() {
   const [selectedSort, setSelectedSort] = useState('Recommended');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [cartMessage, setCartMessage] = useState<string | null>(null);
+  const [isChangingCategory, setIsChangingCategory] = useState(false);
+
+  const { categories: adminCategories } = useAdminStore();
+  const categories = ['all', ...adminCategories.filter(c => c.visible && (c.showInFilters !== false)).map(c => c.name.toLowerCase())];
+  // If no admin categories are marked for filters, fallback to product categories
+  const finalCategories = categories.length > 1 ? categories : ['all', ...Array.from(new Set(products.map(p => p.category.toLowerCase())))];
 
   useEffect(() => {
     if (catParam) {
+      setIsChangingCategory(true);
       setSelectedCategory(catParam);
+      setTimeout(() => setIsChangingCategory(false), 600);
     }
   }, [catParam]);
+
+  const handleCategoryChange = (cat: string) => {
+    setIsChangingCategory(true);
+    setSelectedCategory(cat);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(() => setIsChangingCategory(false), 600);
+  };
   
   const wishlist = useWishlistStore((state) => state.items);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
@@ -83,7 +100,6 @@ function HomeContent() {
     <div className="min-h-screen bg-white">
       {/* Header */}
       <Header />
-      <CartDrawer getProductDetails={getProductDetails} />
 
       {/* Cart Toast Notification */}
       {cartMessage && (
@@ -116,10 +132,10 @@ function HomeContent() {
       <section className="max-w-7xl mx-auto px-4 pt-12 pb-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-4">
           <div className="flex overflow-x-auto [&::-webkit-scrollbar]:hidden w-full md:w-auto flex-1 min-w-0 gap-2 pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 scroll-smooth">
-            {['all', 'electronics', 'fashion', 'home', 'sports', 'beauty', 'books', 'toys'].map((cat) => (
+            {finalCategories.map((cat) => (
               <button 
                 key={cat}
-                onClick={() => setSelectedCategory(cat)} 
+                onClick={() => handleCategoryChange(cat)} 
                 className={`relative whitespace-nowrap px-6 py-3 rounded-md text-sm font-medium transition-all duration-300 cursor-pointer ${
                   selectedCategory === cat 
                     ? 'text-white bg-gray-900 shadow-md shadow-gray-200' 
@@ -270,7 +286,18 @@ function HomeContent() {
 
         {/* Products Grid */}
         <div id="products-section" className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {sortedProducts.slice(0, visibleCount).map((product) => (
+          {isChangingCategory ? (
+            // Loading State Grid
+            Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="space-y-4">
+                <Skeleton className="aspect-square w-full rounded-[32px]" />
+                <div className="space-y-2 px-2">
+                  <Skeleton className="h-4 w-3/4" variant="text" />
+                  <Skeleton className="h-4 w-1/2" variant="text" />
+                </div>
+              </div>
+            ))
+          ) : sortedProducts.slice(0, visibleCount).map((product) => (
             <div
               key={product.id}
               className="group rounded-xl border border-gray-100 bg-white overflow-hidden hover:shadow-xl hover:shadow-gray-200/60 hover:-translate-y-1.5 transition-all duration-300 relative block"
@@ -348,75 +375,6 @@ function HomeContent() {
         )}
       </section>
 
-      {/* Footer */}
-      <footer className="bg-[#222222] text-white mt-20">
-        <div className="max-w-7xl mx-auto px-6 py-14">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-10">
-            {/* Categories */}
-            <div>
-              <h4 className="font-bold mb-5 text-sm tracking-wide">CATEGORIES</h4>
-              <ul className="space-y-3 text-gray-300 text-sm">
-                <li><Link href="/?category=electronics" className="hover:text-white transition">Electronics</Link></li>
-                <li><Link href="/?category=fashion" className="hover:text-white transition">Fashion</Link></li>
-                <li><Link href="/?category=home" className="hover:text-white transition">Home</Link></li>
-                <li><Link href="/?category=sports" className="hover:text-white transition">Sports</Link></li>
-                <li><Link href="/?category=beauty" className="hover:text-white transition">Beauty</Link></li>
-                <li><Link href="/?category=books" className="hover:text-white transition">Books</Link></li>
-                <li><Link href="/?category=toys" className="hover:text-white transition">Toys</Link></li>
-              </ul>
-            </div>
-
-            {/* Help */}
-            <div>
-              <h4 className="font-bold mb-5 text-sm tracking-wide">HELP</h4>
-              <ul className="space-y-3 text-gray-300 text-sm">
-                <li><a href="#" className="hover:text-white transition">Track Order</a></li>
-                <li><a href="#" className="hover:text-white transition">Returns</a></li>
-                <li><a href="#" className="hover:text-white transition">Shipping</a></li>
-                <li><a href="#" className="hover:text-white transition">FAQs</a></li>
-              </ul>
-            </div>
-
-            {/* Contact */}
-            <div>
-              <h4 className="font-bold mb-5 text-sm tracking-wide">GET IN TOUCH</h4>
-              <p className="text-gray-300 text-sm leading-relaxed mb-4">
-                Any questions? Let us know in store at 8th floor, 379 Hudson St, New York, NY 10018 or call us on (+1) 96 716 6879
-              </p>
-              <div className="flex items-center gap-4 text-gray-300">
-                <a href="#" className="hover:text-white" aria-label="Facebook">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M18 2h-3a4 4 0 00-4 4v3H8v4h3v9h4v-9h3l1-4h-4V6a1 1 0 011-1h3z" /></svg>
-                </a>
-                <a href="#" className="hover:text-white" aria-label="Instagram">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" strokeWidth="1.6" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M17.5 6.5h.01" /></svg>
-                </a>
-                <a href="#" className="hover:text-white" aria-label="Twitter">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.657l-5.214-6.817L5.769 21.75H2.462l7.726-8.835L1.54 2.25h6.826l4.853 6.093 5.825-6.093zM16.369 19.25h1.836L8.71 4.1H6.748l9.621 15.15z" /></svg>
-                </a>
-              </div>
-            </div>
-
-            {/* Newsletter */}
-            <div>
-              <h4 className="font-bold mb-5 text-sm tracking-wide">NEWSLETTER</h4>
-              <div className="flex flex-col gap-4 max-w-xs">
-                <input
-                  type="email"
-                  placeholder="email@example.com"
-                  className="w-full bg-transparent border-b border-gray-500 text-gray-200 placeholder-gray-500 focus:outline-none pb-2 text-sm"
-                />
-                <button className="w-full max-w-[220px] bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full text-sm font-semibold transition">
-                  SUBSCRIBE
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-700 pt-8 text-center text-gray-400 text-sm">
-            <p>Copyright ©2026 KVT exports. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -37,6 +37,8 @@ interface ProductState {
   updateProduct: (id: number, product: Partial<Product>) => void;
   removeProduct: (id: number) => void;
   addFeedback: (productId: number, feedback: Feedback) => void;
+  updateFeedback: (productId: number, feedbackId: string, updates: Partial<Feedback>) => void;
+  removeFeedback: (productId: number, feedbackId: string) => void;
   getProductsByVendor: (vendorId: string) => Product[];
   getProductById: (id: number) => Product | undefined;
 }
@@ -61,11 +63,44 @@ export const useProductStore = create<ProductState>()(
                 ...p, 
                 feedbacks: [...(p.feedbacks || []), feedback],
                 reviews: p.reviews + 1,
-                // Simple rating recalculation (can be more sophisticated later)
                 rating: Number(((p.rating * p.reviews + feedback.rating) / (p.reviews + 1)).toFixed(1))
               } 
             : p
         )
+      })),
+      updateFeedback: (productId, feedbackId, updates) => set((state) => ({
+        products: state.products.map(p => 
+          p.id === productId 
+            ? { 
+                ...p, 
+                feedbacks: p.feedbacks?.map(f => {
+                  if (f.id === feedbackId) {
+                    const updatedFeedback = { ...f, ...updates };
+                    // Recalculate rating if rating changed
+                    if (updates.rating !== undefined && updates.rating !== f.rating) {
+                      const otherRatingsTotal = p.rating * p.reviews - f.rating;
+                      p.rating = Number(((otherRatingsTotal + updates.rating) / p.reviews).toFixed(1));
+                    }
+                    return updatedFeedback;
+                  }
+                  return f;
+                })
+              } 
+            : p
+        )
+      })),
+      removeFeedback: (productId, feedbackId) => set((state) => ({
+        products: state.products.map(p => {
+          if (p.id === productId) {
+            const feedbackToRemove = p.feedbacks?.find(f => f.id === feedbackId);
+            if (!feedbackToRemove) return p;
+            const updatedFeedbacks = p.feedbacks?.filter(f => f.id !== feedbackId) || [];
+            const newReviews = Math.max(0, p.reviews - 1);
+            const newRating = newReviews === 0 ? 0 : Number(((p.rating * p.reviews - feedbackToRemove.rating) / newReviews).toFixed(1));
+            return { ...p, feedbacks: updatedFeedbacks, reviews: newReviews, rating: newRating };
+          }
+          return p;
+        })
       })),
       getProductsByVendor: (vendorId) => {
         return get().products.filter(p => p.vendorId === vendorId);

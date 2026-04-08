@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useCartStore } from '../../../store/useCartStore';
 import Header from '../../../components/layout/Header';
-import CartDrawer from '../../../components/cart/CartDrawer';
 import ProductGallery from '../../../components/product/ProductGallery';
 import VariantSelector from '../../../components/product/VariantSelector';
 import ProductReviewForm from '../../../components/product/ProductReviewForm';
@@ -61,7 +60,6 @@ export default function ProductDetail() {
   return (
     <div className="min-h-screen bg-white">
       <Header />
-      <CartDrawer getProductDetails={(id) => products.find(p => p.id === id)} />
 
       {/* Product Detail */}
       <section className="max-w-7xl mx-auto px-4 py-16">

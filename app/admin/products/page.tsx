@@ -16,10 +16,9 @@ export default function AdminProducts() {
   const categories = ['all', ...new Set(products.map(p => p.category))];
 
   const filtered = products.filter(p => {
-    const isByAdmin = p.vendorId === 'admin';
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toString().includes(search);
     const matchCat = filterCategory === 'all' || p.category === filterCategory;
-    return isByAdmin && matchSearch && matchCat;
+    return matchSearch && matchCat;
   });
 
   const handleAdd = () => {

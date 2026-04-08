@@ -7,6 +7,7 @@ import Header from '../../../components/layout/Header';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useProductStore } from '../../../store/useProductStore';
 import { useOrderStore } from '../../../store/useOrderStore';
+import { useAdminStore } from '../../../store/useAdminStore';
 
 // Removed MOCK_ORDERS as they are now replaced by persistence store
 
@@ -20,11 +21,13 @@ export default function VendorDashboard() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { products, addProduct, removeProduct, updateProduct } = useProductStore();
+  const { settings } = useAdminStore();
 
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
-  const [selectedCategory, setSelectedCategory] = useState('fashion');
+  const [selectedCategory, setSelectedCategory] = useState(editingProduct?.category || 'fashion');
+  const availableCategories = Array.from(new Set(products.map(p => p.category.toLowerCase())));
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -236,7 +239,7 @@ export default function VendorDashboard() {
           )}
           <div className="px-8 py-4 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/" className="text-xl font-bold text-gray-900 tracking-tighter" style={{ fontFamily: 'var(--font-kumar-one)' }}>KVT exports</Link>
+              <Link href="/" className="text-xl font-bold text-gray-900 tracking-tighter" style={{ fontFamily: 'var(--font-kumar-one)' }}>{settings.siteName || 'KVT exports'}</Link>
               <div className="h-4 w-px bg-gray-300" />
               <span className="font-semibold text-gray-500 text-sm uppercase tracking-wide">Seller Dashboard</span>
             </div>
@@ -693,17 +696,20 @@ export default function VendorDashboard() {
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Category</label>
-                    <select
+                    <input
                       name="category"
+                      list="category-list"
                       value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 outline-none font-bold transition-all"
-                    >
-                      <option value="fashion">Fashion</option>
-                      <option value="electronics">Electronics</option>
-                      <option value="home">Home</option>
-                      <option value="beauty">Beauty</option>
-                    </select>
+                      onChange={(e) => setSelectedCategory(e.target.value.toLowerCase())}
+                      required
+                      placeholder="Type or select category..."
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all"
+                    />
+                    <datalist id="category-list">
+                      {availableCategories.map(cat => (
+                        <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                      ))}
+                    </datalist>
                   </div>
                 </div>
 

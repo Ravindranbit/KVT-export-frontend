@@ -31,7 +31,8 @@ import {
   UploadCloud,
   ChevronRight,
   Plus,
-  Check
+  Check,
+  X
 } from 'lucide-react';
 
 const COLOR_PALETTE = [
@@ -79,7 +80,7 @@ export default function AdminSettings() {
     return { ...defaults, ...settings };
   });
 
-  const isDirty = JSON.stringify(form) !== JSON.stringify({ ...form, ...settings });
+  const isDirty = JSON.stringify(form) !== JSON.stringify(settings);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -230,36 +231,83 @@ export default function AdminSettings() {
 
                 <div className="grid grid-cols-1 gap-6">
                   {[
-                    { label: ' Logo', icon: <ImageIcon size={22} />, desc: 'SVG or High-Res PNG', fieldLabel: 'Master Brand Identity' },
-                    { label: 'System Favicon', icon: <UploadCloud size={22} />, desc: 'ICO, PNG or SVG', fieldLabel: 'Browser Interface Icon' }
-                  ].map((u, i) => (
-                    <div key={i} className="space-y-2">
-                      <label className="block text-[11px] font-black text-gray-600 uppercase tracking-[0.1em] ml-1">{u.fieldLabel}</label>
-                      <motion.div
-                        whileHover={{ y: -4 }}
-                        className="group relative p-6 border-2 border-dashed border-gray-200 hover:border-primary hover:bg-primary/5 rounded-[24px] bg-gray-50/20 transition-all duration-500 cursor-pointer overflow-hidden border-spacing-4"
-                      >
-                        <div className="flex items-center gap-6">
-                          <div className="w-16 h-16 rounded-[20px] bg-white border border-gray-100 shadow-sm flex items-center justify-center text-gray-300 group-hover:text-primary group-hover:scale-105 transition-all duration-500">
-                            {u.icon}
+                    { label: 'Logo', id: 'logoUrl', icon: <ImageIcon size={22} />, desc: 'SVG or High-Res PNG', fieldLabel: 'Master Brand Identity' },
+                    { label: 'Favicon', id: 'faviconUrl', icon: <UploadCloud size={22} />, desc: 'ICO, PNG or SVG', fieldLabel: 'Browser Interface Icon' }
+                  ].map((u, i) => {
+                    const previewUrl = form[u.id as keyof typeof form] as string;
+                    return (
+                      <div key={i} className="space-y-2">
+                        <label className="block text-[11px] font-black text-gray-600 uppercase tracking-[0.1em] ml-1">{u.fieldLabel}</label>
+                        <motion.div
+                          whileHover={{ y: -4 }}
+                          className="group relative p-6 border-2 border-dashed border-gray-200 hover:border-primary hover:bg-primary/5 rounded-[24px] bg-gray-50/20 transition-all duration-500 cursor-pointer overflow-hidden border-spacing-4"
+                        >
+                          <input 
+                            type="file" 
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  setForm({ ...form, [u.id]: reader.result as string });
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                            className="absolute inset-0 opacity-0 cursor-pointer z-10" 
+                          />
+                          <div className="flex items-center gap-6 relative z-20 pointer-events-none">
+                            <div className="w-16 h-16 rounded-[20px] bg-white border border-gray-100 shadow-sm flex items-center justify-center text-gray-300 group-hover:text-primary group-hover:scale-105 transition-all duration-500 overflow-hidden relative pointer-events-auto">
+                              {previewUrl ? (
+                                <>
+                                  <img src={previewUrl} alt={u.label} className="w-full h-full object-contain p-2" />
+                                  <button 
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setForm({ ...form, [u.id]: '' });
+                                    }}
+                                    className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white z-30"
+                                  >
+                                    <X size={18} />
+                                  </button>
+                                </>
+                              ) : (
+                                u.icon
+                              )}
+                            </div>
+                            <div className="flex-1 pointer-events-none">
+                              <p className="text-base font-black text-gray-900 tracking-tight flex items-center gap-2">
+                                {u.label}
+                                <ChevronRight size={14} className="opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-primary" />
+                              </p>
+                              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1 mb-2 opacity-70">
+                                📁 {previewUrl ? 'Click to replace file' : 'Drop your file here or click to browse'}
+                              </p>
+                              <div className="flex items-center gap-3">
+                                <span className="text-[9px] font-black text-primary/60 uppercase tracking-widest bg-white/80 px-3 py-1.5 rounded-full border border-gray-100 shadow-sm group-hover:bg-primary group-hover:text-white transition-all">
+                                  {u.desc}
+                                </span>
+                                {previewUrl && (
+                                  <button 
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      setForm({ ...form, [u.id]: '' });
+                                    }}
+                                    className="text-[9px] font-black text-red-500 uppercase tracking-widest hover:underline pointer-events-auto relative z-30"
+                                  >
+                                    Remove Logo
+                                  </button>
+                                )}
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex-1">
-                            <p className="text-base font-black text-gray-900 tracking-tight flex items-center gap-2">
-                              {u.label}
-                              <ChevronRight size={14} className="opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-primary" />
-                            </p>
-                            <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-1 mb-2 opacity-70">
-                              📁 Drop your file here or click to browse
-                            </p>
-                            <span className="text-[9px] font-black text-primary/60 uppercase tracking-widest bg-white/80 px-3 py-1.5 rounded-full border border-gray-100 shadow-sm group-hover:bg-primary group-hover:text-white transition-all">
-                              {u.desc}
-                            </span>
-                          </div>
-                        </div>
-                        <input type="file" className="absolute inset-0 opacity-0 cursor-pointer" />
-                      </motion.div>
-                    </div>
-                  ))}
+                        </motion.div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 

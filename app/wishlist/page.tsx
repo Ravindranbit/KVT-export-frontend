@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { useWishlistStore } from '../../store/useWishlistStore';
 import { useCartStore } from '../../store/useCartStore';
 import Header from '../../components/layout/Header';
-import CartDrawer from '../../components/cart/CartDrawer';
 
 import { useProductStore } from '../../store/useProductStore';
 
@@ -27,7 +26,6 @@ export default function Wishlist() {
   return (
     <div className="min-h-screen bg-white">
       <Header />
-      <CartDrawer getProductDetails={getProductDetails} />
 
       {/* Wishlist Content */}
       <section className="max-w-7xl mx-auto px-4 py-12">
@@ -88,72 +86,6 @@ export default function Wishlist() {
         )}
       </section>
 
-      {/* Footer */}
-      <footer className="bg-[#222222] text-white mt-20">
-        <div className="max-w-7xl mx-auto px-6 py-14">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-10">
-            {/* Categories */}
-            <div>
-              <h4 className="font-bold mb-5 text-sm tracking-wide">CATEGORIES</h4>
-              <ul className="space-y-3 text-gray-300 text-sm">
-                <li><a href="#" className="hover:text-white transition">Women</a></li>
-                <li><a href="#" className="hover:text-white transition">Men</a></li>
-                <li><a href="#" className="hover:text-white transition">Shoes</a></li>
-                <li><a href="#" className="hover:text-white transition">Watches</a></li>
-              </ul>
-            </div>
-
-            {/* Help */}
-            <div>
-              <h4 className="font-bold mb-5 text-sm tracking-wide">HELP</h4>
-              <ul className="space-y-3 text-gray-300 text-sm">
-                <li><a href="#" className="hover:text-white transition">Track Order</a></li>
-                <li><a href="#" className="hover:text-white transition">Returns</a></li>
-                <li><a href="#" className="hover:text-white transition">Shipping</a></li>
-                <li><a href="#" className="hover:text-white transition">FAQs</a></li>
-              </ul>
-            </div>
-
-            {/* Contact */}
-            <div>
-              <h4 className="font-bold mb-5 text-sm tracking-wide">GET IN TOUCH</h4>
-              <p className="text-gray-300 text-sm leading-relaxed mb-4">
-                Any questions? Let us know in store at 8th floor, 379 Hudson St, New York, NY 10018 or call us on (+1) 96 716 6879
-              </p>
-              <div className="flex items-center gap-4 text-gray-300">
-                <a href="#" className="hover:text-white" aria-label="Facebook">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M18 2h-3a4 4 0 00-4 4v3H8v4h3v9h4v-9h3l1-4h-4V6a1 1 0 011-1h3z" /></svg>
-                </a>
-                <a href="#" className="hover:text-white" aria-label="Instagram">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" strokeWidth="1.6" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M17.5 6.5h.01" /></svg>
-                </a>
-                <a href="#" className="hover:text-white" aria-label="Twitter">
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.657l-5.214-6.817L5.769 21.75H2.462l7.726-8.835L1.54 2.25h6.826l4.853 6.093 5.825-6.093zM16.369 19.25h1.836L8.71 4.1H6.748l9.621 15.15z" /></svg>
-                </a>
-              </div>
-            </div>
-
-            {/* Newsletter */}
-            <div>
-              <h4 className="font-bold mb-5 text-sm tracking-wide">NEWSLETTER</h4>
-              <div className="flex flex-col gap-4 max-w-xs">
-                <input
-                  type="email"
-                  placeholder="email@example.com"
-                  className="w-full bg-transparent border-b border-gray-500 text-gray-200 placeholder-gray-500 focus:outline-none pb-2 text-sm"
-                />
-                <button className="w-full max-w-[220px] bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full text-sm font-semibold transition">
-                  SUBSCRIBE
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-700 pt-8 text-center text-gray-400 text-sm">
-            <p>Copyright ©2026 KVT exports. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

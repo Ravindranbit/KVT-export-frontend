@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useProductStore } from '../../store/useProductStore';
+import { useAdminStore } from '../../store/useAdminStore';
 
 const CATEGORIES = [
   {
@@ -127,11 +129,27 @@ const CATEGORIES = [
   }
 ];
 
-
 export default function MegaMenu() {
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const { products } = useProductStore();
+  const { categories: adminCategories } = useAdminStore();
+  
+  // Strictly follow Admin categories for Header display if they exist, otherwise fallback to product categories
+  const categoriesForHeader = adminCategories.length > 0 
+    ? adminCategories.filter(c => c.visible && (c.showInHeader !== false)).map(c => c.name.toLowerCase())
+    : Array.from(new Set(products.map(p => p.category.toLowerCase())));
+  
+  const allActiveCategories = categoriesForHeader;
+  
+  const dynamicCategories = CATEGORIES.filter(cat => 
+    cat.sections.some(sec => 
+      sec.links.some(link => allActiveCategories.includes(link.category))
+    ) || allActiveCategories.includes(cat.name.toLowerCase())
+  );
 
-  // Small delay to prevent accidental closing when moving mouse slightly off
+  const coveredCategories = new Set(CATEGORIES.flatMap(c => c.sections.flatMap(s => s.links.map(l => l.category))));
+  const otherCategories = allActiveCategories.filter(cat => !coveredCategories.has(cat));
+
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [timeoutId, setTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   const handleMouseEnter = (menuName: string) => {
@@ -146,8 +164,7 @@ export default function MegaMenu() {
 
   return (
     <nav className="hidden md:flex gap-6 flex-1 justify-center relative items-center z-50">
-      {/* Dynamic Mega Menu Dropdowns */}
-      {CATEGORIES.map((cat) => (
+      {dynamicCategories.map((cat) => (
         <div
           key={cat.name}
           className="relative group h-full flex items-center"
@@ -171,7 +188,6 @@ export default function MegaMenu() {
                 className="absolute top-[100%] left-1/2 -translate-x-1/2 w-[800px] bg-white shadow-[0_20px_40px_rgba(0,0,0,0.1)] rounded-b-xl border border-gray-100 overflow-hidden origin-top"
               >
                 <div className="flex p-8 gap-8">
-                  {/* Left Side Links */}
                   <div className="flex-1 grid grid-cols-3 gap-8">
                     {cat.sections.map((section) => (
                       <div key={section.title}>
@@ -191,7 +207,6 @@ export default function MegaMenu() {
                     ))}
                   </div>
                   
-                  {/* Right Side Featured Image */}
                   <div className="w-[250px] shrink-0">
                     <div className="relative h-full min-h-[200px] rounded-lg overflow-hidden bg-gray-100 group/image">
                       <img 
@@ -211,6 +226,11 @@ export default function MegaMenu() {
             )}
           </AnimatePresence>
         </div>
+      ))}
+      {otherCategories.length > 0 && otherCategories.map(cat => (
+        <Link key={cat} href={`/?category=${cat}`} className="text-gray-700 font-medium whitespace-nowrap hover:text-red-500 transition py-4 capitalize">
+          {cat}
+        </Link>
       ))}
 
       <Link href="/about" className="text-gray-700 font-medium whitespace-nowrap hover:text-red-500 transition py-4">About</Link>
