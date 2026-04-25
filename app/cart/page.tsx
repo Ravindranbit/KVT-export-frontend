@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useCartStore } from '../../store/useCartStore';
 import Header from '../../components/layout/Header';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useRouter } from 'next/navigation';
 
 const VENDORS = [
   { id: 'v1', name: 'Artisan Threadsco' },
@@ -13,6 +15,8 @@ const VENDORS = [
 import { useProductStore } from '../../store/useProductStore';
 
 export default function Cart() {
+  const router = useRouter();
+  const { token, user, hasHydrated, getProfile } = useAuthStore();
   const { products } = useProductStore();
   const [mounted, setMounted] = useState(false);
   const cartItems = useCartStore((state) => state.items);
@@ -23,6 +27,21 @@ export default function Cart() {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (!hasHydrated) return;
+
+    if (!token) {
+      router.push('/signin');
+      return;
+    }
+
+    if (!user) {
+      getProfile().catch(() => {
+        router.push('/signin');
+      });
+    }
+  }, [hasHydrated, token, user, getProfile, router]);
+
   const getProductDetails = (id: number) => products.find(p => p.id === id);
 
   const total = cartItems.reduce((sum, item) => {
@@ -30,7 +49,11 @@ export default function Cart() {
     return sum + ((p?.price || 0) * item.quantity);
   }, 0);
 
-  if (!mounted) return null;
+  if (!mounted || !hasHydrated) return null;
+
+  if (!token) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-white">

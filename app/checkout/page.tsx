@@ -1,17 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useCartStore } from '../../store/useCartStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useOrderStore, Order } from '../../store/useOrderStore';
 import Header from '../../components/layout/Header';
+import { useRouter } from 'next/navigation';
 
 import { useProductStore } from '../../store/useProductStore';
 
 const STEPS = ['Contact Details', 'Shipping Address', 'Payment'];
 
 export default function Checkout() {
+  const router = useRouter();
   const { products } = useProductStore();
   const [currentStep, setCurrentStep] = useState(0);
   const cartItems = useCartStore((state) => state.items);
@@ -21,8 +23,23 @@ export default function Checkout() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
   
-  const { user } = useAuthStore();
+  const { user, token, hasHydrated, getProfile } = useAuthStore();
   const { addOrder } = useOrderStore();
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+
+    if (!token) {
+      router.push('/signin');
+      return;
+    }
+
+    if (!user) {
+      getProfile().catch(() => {
+        router.push('/signin');
+      });
+    }
+  }, [hasHydrated, token, user, getProfile, router]);
 
   const [formData, setFormData] = useState({
     email: user?.email || '',
@@ -36,6 +53,10 @@ export default function Checkout() {
 
   const getProductDetails = (id: number) => products.find(p => p.id === id);
   const total = cartItems.reduce((sum, item) => sum + ((getProductDetails(item.id)?.price || 0) * item.quantity), 0);
+
+  if (!hasHydrated || !token) {
+    return null;
+  }
 
   const handleNext = (e: React.FormEvent) => { 
     e.preventDefault(); 

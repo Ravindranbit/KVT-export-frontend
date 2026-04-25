@@ -2,16 +2,27 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import api from '../../src/lib/api';
+import { useAuthStore } from '../../store/useAuthStore';
 
 export default function SignUp() {
+  const router = useRouter();
+  const { registerInitiate, verifyOTP, getProfile } = useAuthStore();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: ''
   });
+  const [otp, setOtp] = useState('');
+  const [otpStep, setOtpStep] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiMessage, setApiMessage] = useState('');
   const [errors, setErrors] = useState({
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
     terms: ''
@@ -29,6 +40,17 @@ export default function SignUp() {
     }
   };
 
+  const validatePhone = (value: string) => {
+    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    if (value && !phoneRegex.test(value)) {
+      setErrors(prev => ({ ...prev, phone: 'Please enter a valid phone number' }));
+      return false;
+    }
+
+    setErrors(prev => ({ ...prev, phone: '' }));
+    return true;
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData({
@@ -41,6 +63,10 @@ export default function SignUp() {
       validateEmail(value);
     }
 
+    if (name === 'phone') {
+      validatePhone(value);
+    }
+
     // Validate password match
     if (name === 'confirmPassword' || name === 'password') {
       if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
@@ -51,8 +77,9 @@ export default function SignUp() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setApiMessage('');
     
     // Validate all fields
     if (!formData.fullName) {
@@ -60,6 +87,10 @@ export default function SignUp() {
     }
     
     if (!validateEmail(formData.email)) {
+      return;
+    }
+
+    if (!validatePhone(formData.phone)) {
       return;
     }
 
@@ -77,8 +108,47 @@ export default function SignUp() {
       return;
     }
 
-    // Add registration logic here
-    console.log('Sign up:', formData);
+    setIsSubmitting(true);
+    try {
+      if (!otpStep) {
+        await registerInitiate({
+          name: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+        });
+        setOtpStep(true);
+        setApiMessage('OTP sent to your phone number');
+      } else {
+        await verifyOTP(formData.phone, otp);
+        await getProfile();
+        router.push('/');
+      }
+    } catch (error: any) {
+      const message = error?.message || 'Registration failed. Please try again.';
+      if (message.toLowerCase().includes('otp')) {
+        setApiMessage('Invalid OTP');
+      } else {
+        setApiMessage(message);
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setApiMessage('');
+    setIsSubmitting(true);
+    try {
+      const response = await api.post('/auth/register/resend-otp', {
+        phone: formData.phone,
+      });
+      setApiMessage(response?.message || 'OTP resent successfully');
+    } catch (error: any) {
+      setApiMessage(error?.message || 'Failed to resend OTP');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -94,6 +164,11 @@ export default function SignUp() {
       <div className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-[400px] bg-white rounded-lg shadow-lg p-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-5 text-center">Create Account</h1>
+          {apiMessage && (
+            <p className={`mb-3 text-xs text-center ${apiMessage.toLowerCase().includes('success') || apiMessage.toLowerCase().includes('sent') ? 'text-green-600' : 'text-red-600'}`}>
+              {apiMessage}
+            </p>
+          )}
           
           <form onSubmit={handleSubmit} className="space-y-3.5">
             <div>
@@ -129,6 +204,25 @@ export default function SignUp() {
                 required
               />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+            </div>
+
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Phone Number <span className="text-red-600">*</span>
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className={`w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 text-gray-900 placeholder-gray-500 text-sm transition ${
+                  errors.phone ? 'border-red-500 focus:ring-red-600' : 'border-gray-300 focus:ring-red-600'
+                }`}
+                placeholder="Enter your phone number"
+                required
+              />
+              {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
             </div>
 
             <div>
@@ -168,6 +262,32 @@ export default function SignUp() {
               {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
             </div>
 
+            {otpStep && (
+              <div>
+                <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  OTP <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="otp"
+                  name="otp"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-600 text-gray-900 placeholder-gray-500 text-sm"
+                  placeholder="Enter OTP"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={isSubmitting}
+                  className="mt-2 text-xs text-red-600 hover:text-red-700 font-semibold disabled:opacity-60"
+                >
+                  Resend OTP
+                </button>
+              </div>
+            )}
+
             <div className="flex items-start">
               <input 
                 type="checkbox" 
@@ -190,9 +310,9 @@ export default function SignUp() {
             <button
               type="submit"
               className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded transition text-sm disabled:cursor-not-allowed"
-              disabled={!formData.fullName || !!errors.email || !formData.email || !formData.password || !formData.confirmPassword || !termsAccepted}
+              disabled={!formData.fullName || !!errors.email || !!errors.phone || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword || !termsAccepted || (otpStep && !otp) || isSubmitting}
             >
-              Create Account
+              {isSubmitting ? 'Please wait...' : otpStep ? 'Verify OTP' : 'Create Account'}
             </button>
           </form>
 

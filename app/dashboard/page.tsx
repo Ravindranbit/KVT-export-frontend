@@ -88,7 +88,7 @@ export default function Dashboard() {
   const [editingAddrId, setEditingAddrId] = useState<string | null>(null);
   const [showAddAddr, setShowAddAddr] = useState(false);
   const [showAddCard, setShowAddCard] = useState(false);
-  const { user, logout } = useAuthStore();
+  const { user, logout, token, hasHydrated, getProfile } = useAuthStore();
   const router = useRouter();
   const { orders } = useOrderStore();
   const myOrders = user ? orders.filter(o => o.customerId === user.id) : orders.filter(o => o.customerId === 'guest');
@@ -103,6 +103,21 @@ export default function Dashboard() {
   const [newAddr, setNewAddr] = useState({ label: '', line1: '', city: '', zip: '', country: '', phone: '' });
   const [newCard, setNewCard] = useState({ brand: 'VISA', last4: '', expiry: '' });
 
+  useEffect(() => {
+    if (!hasHydrated) return;
+
+    if (!token) {
+      router.push('/signin');
+      return;
+    }
+
+    if (!user) {
+      getProfile().catch(() => {
+        router.push('/signin');
+      });
+    }
+  }, [hasHydrated, token, user, getProfile, router]);
+
   useEffect(() => { if (message) { const t = setTimeout(() => setMessage(null), 3000); return () => clearTimeout(t); } }, [message]);
 
   const handleLogout = () => { logout(); router.push('/'); };
@@ -115,6 +130,10 @@ export default function Dashboard() {
   const addCard = () => { if (!newCard.last4 || !newCard.expiry) { show('Please fill card details'); return; } setCards(prev => [...prev, { id: Date.now().toString(), ...newCard, isPrimary: prev.length === 0 }]); setNewCard({ brand: 'VISA', last4: '', expiry: '' }); setShowAddCard(false); show('Card added'); };
 
   const userName = user?.name || 'User';
+
+  if (!hasHydrated || !token) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col h-screen bg-[#F8F9FA] overflow-hidden w-full">
