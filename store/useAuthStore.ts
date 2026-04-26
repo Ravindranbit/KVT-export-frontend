@@ -72,12 +72,13 @@ export const useAuthStore = create<AuthState>()(
           : payload;
 
         const response = await api.post('/auth/register/initiate', registration);
+        const responsePayload = response?.data || {};
 
         set({
           pendingRegistration: registration,
         });
 
-        return { message: response?.message || 'OTP sent successfully' };
+        return { message: response?.message || responsePayload?.message || 'OTP sent successfully' };
       },
       verifyOTP: async (phone, otp) => {
         const pending = get().pendingRegistration;
@@ -94,8 +95,9 @@ export const useAuthStore = create<AuthState>()(
           otp,
         });
 
-        const token = response?.token || null;
-        const backendUser = response?.user;
+        const payload = response?.data || {};
+        const token = payload?.token || null;
+        const backendUser = payload?.user;
 
         if (token) {
           get().setToken(token);
@@ -114,7 +116,7 @@ export const useAuthStore = create<AuthState>()(
           });
         }
 
-        return { message: response?.message || 'Registration successful' };
+        return { message: response?.message || payload?.message || 'Registration successful' };
       },
       login: async (identifier, password) => {
         const response = await api.post('/auth/login', {
@@ -122,8 +124,9 @@ export const useAuthStore = create<AuthState>()(
           password,
         });
 
-        const token = response?.token || null;
-        const backendUser = response?.user;
+        const payload = response?.data || {};
+        const token = payload?.token || null;
+        const backendUser = payload?.user;
 
         if (!token || !backendUser) {
           throw new Error('Invalid login response from server');
@@ -140,11 +143,11 @@ export const useAuthStore = create<AuthState>()(
           },
         });
 
-        return { message: response?.message || 'Login successful' };
+        return { message: response?.message || payload?.message || 'Login successful' };
       },
       getProfile: async () => {
         const response = await api.get('/auth/me');
-        const backendUser = response?.user;
+        const backendUser = response?.data;
 
         if (!backendUser) {
           set({ user: null });

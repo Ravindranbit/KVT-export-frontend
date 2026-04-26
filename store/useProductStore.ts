@@ -83,7 +83,7 @@ export const useProductStore = create<ProductState>()(
         set({ isLoading: true, error: null });
         try {
           const response: any = await api.get('/products');
-          const rawProducts = response?.products || response?.data || [];
+          const rawProducts = response?.data || [];
           const mappedProducts = Array.isArray(rawProducts) ? rawProducts.map(mapProduct) : [];
           set({ products: mappedProducts, isLoading: false });
         } catch (error: any) {
@@ -97,7 +97,7 @@ export const useProductStore = create<ProductState>()(
         set({ isLoading: true, error: null });
         try {
           const response: any = await api.get(`/products/${id}`);
-          const rawProduct = response?.product || response?.data || null;
+          const rawProduct = response?.data || null;
 
           if (!rawProduct) {
             set({ selectedProduct: null, isLoading: false, error: 'Product not found' });
