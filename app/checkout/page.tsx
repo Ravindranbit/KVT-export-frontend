@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCartStore } from '../../store/useCartStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import Header from '../../components/layout/Header';
@@ -23,6 +23,7 @@ export default function Checkout() {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const isProcessingRef = useRef(false);
   
   const { user, token, hasHydrated, getProfile } = useAuthStore();
 
@@ -132,13 +133,22 @@ export default function Checkout() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const setProcessingState = (processing: boolean) => {
+    isProcessingRef.current = processing;
+    setIsProcessing(processing);
+  };
+
   const handlePlaceOrder = async () => {
+    if (isProcessingRef.current) {
+      return;
+    }
+
     if (cartItems.length === 0) {
       setPaymentError('Your cart is empty');
       return;
     }
 
-    setIsProcessing(true);
+    setProcessingState(true);
     setPaymentError(null);
 
     try {
@@ -193,13 +203,13 @@ export default function Checkout() {
             router.push('/orders');
           } catch (error: any) {
             setPaymentError(error?.message || 'Payment verification failed');
-            setIsProcessing(false);
+            setProcessingState(false);
           }
         },
         modal: {
           ondismiss: () => {
             setPaymentError('Payment cancelled');
-            setIsProcessing(false);
+            setProcessingState(false);
           },
         },
       };
@@ -208,13 +218,13 @@ export default function Checkout() {
       const razorpay = new RazorpayCtor(options);
       razorpay.on('payment.failed', (response: any) => {
         setPaymentError(response?.error?.description || 'Payment failed. Please try again.');
-        setIsProcessing(false);
+        setProcessingState(false);
       });
 
       razorpay.open();
     } catch (error: any) {
       setPaymentError(error?.message || 'Unable to initiate payment');
-      setIsProcessing(false);
+      setProcessingState(false);
     }
   };
 
@@ -370,11 +380,7 @@ export default function Checkout() {
                           disabled={isProcessing}
                           className="w-2/3 bg-red-600 relative overflow-hidden flex justify-center items-center hover:bg-red-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-red-500/30 hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0"
                         >
-                          {isProcessing ? (
-                            <svg className="animate-spin h-6 w-6 text-white text-center" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                          ) : (
-                            `Pay ₹${total.toFixed(2)}`
-                          )}
+                          {isProcessing ? 'Processing...' : 'Place Order'}
                         </button>
                       </div>
                     </div>
