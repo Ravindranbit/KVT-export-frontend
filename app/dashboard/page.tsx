@@ -90,7 +90,7 @@ export default function Dashboard() {
   const [showAddCard, setShowAddCard] = useState(false);
   const { user, logout, token, hasHydrated, getProfile } = useAuthStore();
   const router = useRouter();
-  const { orders } = useOrderStore();
+  const { orders, fetchOrders } = useOrderStore();
   const myOrders = user ? orders.filter(o => o.customerId === user.id) : orders.filter(o => o.customerId === 'guest');
 
   const [addresses, setAddresses] = useState<Address[]>([
@@ -117,6 +117,11 @@ export default function Dashboard() {
       });
     }
   }, [hasHydrated, token, user, getProfile, router]);
+
+  useEffect(() => {
+    if (!hasHydrated || !token) return;
+    fetchOrders();
+  }, [hasHydrated, token, fetchOrders]);
 
   useEffect(() => { if (message) { const t = setTimeout(() => setMessage(null), 3000); return () => clearTimeout(t); } }, [message]);
 

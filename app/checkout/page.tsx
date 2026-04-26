@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useCartStore } from '../../store/useCartStore';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useOrderStore, Order } from '../../store/useOrderStore';
 import Header from '../../components/layout/Header';
 import { useRouter } from 'next/navigation';
+import api from '../../src/lib/api';
 
 import { useProductStore } from '../../store/useProductStore';
 
@@ -18,14 +17,11 @@ export default function Checkout() {
   const [currentStep, setCurrentStep] = useState(0);
   const cartItems = useCartStore((state) => state.cart);
   const fetchCart = useCartStore((state) => state.fetchCart);
-  const removeFromCart = useCartStore((state) => state.removeFromCart);
   
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [orderId, setOrderId] = useState('');
+  const [paymentError, setPaymentError] = useState<string | null>(null);
   
   const { user, token, hasHydrated, getProfile } = useAuthStore();
-  const { addOrder } = useOrderStore();
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -61,6 +57,21 @@ export default function Checkout() {
 
   const getProductDetails = (id: string) => products.find(p => p.id === id);
   const getImage = (product: any) => product?.image || product?.imageUrl || '/placeholder.png';
+  const loadRazorpayScript = () =>
+    new Promise<boolean>((resolve) => {
+      if (typeof window !== 'undefined' && (window as any).Razorpay) {
+        resolve(true);
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+
   const total = cartItems.reduce(
     (sum, item) => sum + ((item.product?.price || getProductDetails(item.productId)?.price || item.price || 0) * item.quantity),
     0,
@@ -82,79 +93,90 @@ export default function Checkout() {
   };
 
   const handlePlaceOrder = async () => {
+    if (cartItems.length === 0) {
+      setPaymentError('Your cart is empty');
+      return;
+    }
+
     setIsProcessing(true);
-    const newOrderId = `KVT-${Math.floor(Math.random() * 89999 + 10000)}`;
-    setOrderId(newOrderId);
+    setPaymentError(null);
 
-    setTimeout(async () => {
-      const orderItems = cartItems.map(item => {
-        const product = item.product || getProductDetails(item.productId);
-        return {
-          id: item.productId,
-          name: product?.name || 'Unknown Product',
-          price: product?.price || item.price || 0,
-          image: getImage(product),
-          quantity: item.quantity,
-          vendorId: product?.vendorId || 'v0'
-        };
-      });
+    try {
+      const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY;
+      if (!key) {
+        throw new Error('Razorpay key is not configured');
+      }
 
-      const newOrder: Order = {
-        id: newOrderId,
-        customerId: user?.id || 'guest',
-        customerName: user?.name || formData.firstName + ' ' + formData.lastName,
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        total: total > 4150 ? total : total + 415,
-        status: 'Processing',
-        items: orderItems,
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error('Failed to load payment gateway');
+      }
+
+      const orderResponse: any = await api.post('/payment/create-order', {
         shippingAddress: {
-          line1: formData.address,
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          address: formData.address,
           city: formData.city,
           zip: formData.zip,
-          country: 'India'
-        }
-      };
-
-      orderItems.forEach(item => {
-        const product = getProductDetails(item.id);
-        if (product && product.stock) {
-          useProductStore.getState().updateProduct(item.id, { 
-            stock: Math.max(0, product.stock - item.quantity) 
-          });
-        }
+          email: formData.email,
+          phone: formData.phone,
+        },
       });
 
-      addOrder(newOrder);
-      await Promise.all(cartItems.map((item) => removeFromCart(item.productId)));
-      setIsProcessing(false);
-      setIsSuccess(true);
-    }, 2500);
-  };
+      const { orderId, razorpayOrderId, amount } = orderResponse?.data || {};
+      if (!orderId || !razorpayOrderId || !amount) {
+        throw new Error('Invalid payment order response');
+      }
 
-  if (isSuccess) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-10 rounded-xl shadow-sm border border-gray-200 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-50 border border-green-200 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Order Confirmed</h2>
-          <p className="text-gray-500 mb-8 text-sm leading-relaxed">
-            Your order <span className="font-semibold text-gray-900">#{orderId}</span> has been placed successfully. 
-            We'll send you a shipping confirmation email shortly.
-          </p>
-          <Link href="/dashboard" className="block w-full bg-gray-900 hover:bg-black text-white font-medium py-3 rounded-lg transition-colors mb-3 text-sm">
-            View Order Dashboard
-          </Link>
-          <Link href="/" className="block text-sm text-gray-500 hover:text-gray-900 font-medium transition-colors">
-            Continue Shopping
-          </Link>
-        </div>
-      </div>
-    );
-  }
+      const options = {
+        key,
+        amount,
+        currency: 'INR',
+        order_id: razorpayOrderId,
+        name: 'KVT Exports',
+        description: `Order ${orderId}`,
+        prefill: {
+          name: `${formData.firstName} ${formData.lastName}`.trim(),
+          email: formData.email,
+          contact: formData.phone,
+        },
+        handler: async function (response: any) {
+          try {
+            await api.post('/payment/verify', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            await fetchCart();
+            router.push('/orders');
+          } catch (error: any) {
+            setPaymentError(error?.message || 'Payment verification failed');
+            setIsProcessing(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setPaymentError('Payment cancelled');
+            setIsProcessing(false);
+          },
+        },
+      };
+
+      const RazorpayCtor = (window as any).Razorpay;
+      const razorpay = new RazorpayCtor(options);
+      razorpay.on('payment.failed', (response: any) => {
+        setPaymentError(response?.error?.description || 'Payment failed. Please try again.');
+        setIsProcessing(false);
+      });
+
+      razorpay.open();
+    } catch (error: any) {
+      setPaymentError(error?.message || 'Unable to initiate payment');
+      setIsProcessing(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -258,6 +280,12 @@ export default function Checkout() {
                 {currentStep === 2 && (
                   <div className="animate-in fade-in slide-in-from-right-8 duration-500">
                     <h2 className="text-2xl font-bold text-gray-900 mb-8">Payment Method</h2>
+
+                    {paymentError && (
+                      <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        {paymentError}
+                      </div>
+                    )}
                     
                     <div className="space-y-4 mb-8">
                       <label className="flex items-center p-5 border-2 border-red-600 bg-red-50 rounded-xl cursor-pointer">
