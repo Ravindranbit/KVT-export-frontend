@@ -83,7 +83,7 @@ export default function Dashboard() {
   const wishlistIds = useWishlistStore((state) => state.items);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
   const { products } = useProductStore();
-  const addToCartStore = useCartStore((state) => state.addItem);
+  const addToCartStore = useCartStore((state) => state.addToCart);
   const getProductDetails = (id: string) => products.find(p => p.id === id);
   const [editingAddrId, setEditingAddrId] = useState<string | null>(null);
   const [showAddAddr, setShowAddAddr] = useState(false);
@@ -346,7 +346,19 @@ export default function Dashboard() {
                             </div>
                             <div className="mt-auto pt-4 flex items-center justify-between">
                               <span className="font-semibold text-gray-900">₹{item.price.toFixed(2)}</span>
-                              <button onClick={() => { addToCartStore(item.id); show('Added to cart!'); }} className="text-xs font-semibold bg-gray-900 hover:bg-black text-white px-3 py-1.5 rounded-lg transition-colors">Add to Cart</button>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await addToCartStore(item.id, 1);
+                                    show('Added to cart!');
+                                  } catch {
+                                    router.push('/signin');
+                                  }
+                                }}
+                                className="text-xs font-semibold bg-gray-900 hover:bg-black text-white px-3 py-1.5 rounded-lg transition-colors"
+                              >
+                                Add to Cart
+                              </button>
                             </div>
                           </div>
                         </div>

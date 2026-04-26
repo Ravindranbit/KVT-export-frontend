@@ -12,16 +12,16 @@ const VENDORS = [
   { id: 'v2', name: 'Urban Sole' },
 ];
 
-import { useProductStore } from '../../store/useProductStore';
-
 export default function Cart() {
   const router = useRouter();
   const { token, user, hasHydrated, getProfile } = useAuthStore();
-  const { products } = useProductStore();
   const [mounted, setMounted] = useState(false);
-  const cartItems = useCartStore((state) => state.items);
-  const updateQuantity = useCartStore((state) => state.updateQuantity);
-  const removeItem = useCartStore((state) => state.removeItem);
+  const cartItems = useCartStore((state) => state.cart);
+  const updateCart = useCartStore((state) => state.updateCart);
+  const removeFromCart = useCartStore((state) => state.removeFromCart);
+  const fetchCart = useCartStore((state) => state.fetchCart);
+  const isLoading = useCartStore((state) => state.isLoading);
+  const cartError = useCartStore((state) => state.error);
 
   useEffect(() => {
     setMounted(true);
@@ -39,13 +39,43 @@ export default function Cart() {
       getProfile().catch(() => {
         router.push('/signin');
       });
+      return;
     }
-  }, [hasHydrated, token, user, getProfile, router]);
 
-  const getProductDetails = (id: string) => products.find(p => p.id === id);
+    fetchCart();
+  }, [hasHydrated, token, user, getProfile, fetchCart, router]);
+
+  const getProductDetails = (item: any) => {
+    const p = item.product;
+    if (!p) return null;
+
+    return {
+      id: String(p.id || item.productId),
+      name: p.name || 'Unknown Product',
+      image: p.imageUrl || p.image || '',
+      vendorId: p.vendorId || 'v0',
+      price: typeof p.price === 'number' ? p.price : Number(item.price || 0),
+    };
+  };
+
+  const handleUpdateQuantity = async (productId: string, quantity: number) => {
+    try {
+      await updateCart(productId, quantity);
+    } catch {
+      // Store error state is shown in UI.
+    }
+  };
+
+  const handleRemoveItem = async (productId: string) => {
+    try {
+      await removeFromCart(productId);
+    } catch {
+      // Store error state is shown in UI.
+    }
+  };
 
   const total = cartItems.reduce((sum, item) => {
-    const p = getProductDetails(item.id);
+    const p = getProductDetails(item);
     return sum + ((p?.price || 0) * item.quantity);
   }, 0);
 
@@ -62,6 +92,14 @@ export default function Cart() {
       {/* Cart Content */}
       <section className="max-w-7xl mx-auto px-4 py-12">
         <h1 className="text-4xl font-bold text-gray-900 mb-8">Shopping Cart</h1>
+
+        {isLoading && (
+          <p className="text-sm text-gray-500 mb-6">Loading cart...</p>
+        )}
+
+        {cartError && (
+          <p className="text-sm text-red-600 mb-6">{cartError}</p>
+        )}
 
         {cartItems.length === 0 ? (
           <div className="text-center py-20">
@@ -82,7 +120,7 @@ export default function Cart() {
               <div className="space-y-8">
                 {Object.values(
                   cartItems.reduce((acc, item) => {
-                    const product = getProductDetails(item.id);
+                    const product = getProductDetails(item);
                     if (!product) return acc;
                     const vendor = VENDORS.find(v => v.id === product.vendorId) || { id: 'v0', name: 'KVT Global' };
                     if (!acc[vendor.id]) acc[vendor.id] = { vendorName: vendor.name, items: [] };
@@ -100,10 +138,10 @@ export default function Cart() {
                     
                     <div className="p-6 space-y-8">
                       {group.items.map((item) => {
-                        const product = getProductDetails(item.id);
+                        const product = getProductDetails(item);
                         if (!product) return null;
                         return (
-                          <div key={item.id} className="flex flex-col sm:flex-row gap-6">
+                          <div key={item.productId} className="flex flex-col sm:flex-row gap-6">
                              <div className="w-full sm:w-28 h-28 bg-white border border-gray-100 rounded-xl overflow-hidden p-2 flex items-center justify-center">
                                <img
                                  src={product.image}
@@ -112,17 +150,17 @@ export default function Cart() {
                                />
                              </div>
                             <div className="flex-1">
-                              <Link href={`/products/${item.id}`} className="font-bold text-gray-900 hover:text-red-600 text-lg transition-colors leading-tight block mb-2">
+                              <Link href={`/products/${product.id}`} className="font-bold text-gray-900 hover:text-red-600 text-lg transition-colors leading-tight block mb-2">
                                 {product.name}
                               </Link>
                               
                               <div className="flex items-center justify-between mt-6">
                                 <div className="flex items-center border-2 border-gray-200 rounded-md bg-gray-50 h-10">
-                                  <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="px-3 h-full flex items-center text-gray-500 hover:text-gray-900 transition-colors">−</button>
+                                  <button onClick={() => handleUpdateQuantity(item.productId, item.quantity - 1)} className="px-3 h-full flex items-center text-gray-500 hover:text-gray-900 transition-colors">−</button>
                                   <span className="px-4 h-full border-l-2 border-r-2 border-gray-200 flex items-center text-gray-900 font-bold bg-white">{item.quantity}</span>
-                                  <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="px-3 h-full flex items-center text-gray-500 hover:text-gray-900 transition-colors">+</button>
+                                  <button onClick={() => handleUpdateQuantity(item.productId, item.quantity + 1)} className="px-3 h-full flex items-center text-gray-500 hover:text-gray-900 transition-colors">+</button>
                                 </div>
-                                <button onClick={() => removeItem(item.id)} className="text-gray-400 hover:text-red-600 text-sm font-bold transition-colors underline underline-offset-4">Remove</button>
+                                <button onClick={() => handleRemoveItem(item.productId)} className="text-gray-400 hover:text-red-600 text-sm font-bold transition-colors underline underline-offset-4">Remove</button>
                               </div>
                             </div>
                             <div className="text-right sm:w-32 flex flex-col items-end">

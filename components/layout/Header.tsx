@@ -19,7 +19,8 @@ export default function Header() {
   const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const wishlist = useWishlistStore((state) => state.items);
-  const { user } = useAuthStore();
+  const { user, token, hasHydrated } = useAuthStore();
+  const fetchCart = useCartStore((state) => state.fetchCart);
   
   const cart = useCartStore((state) => state.getTotalItems());
   const { products } = useProductStore();
@@ -45,6 +46,13 @@ export default function Header() {
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
+
+  useEffect(() => {
+    if (!hasHydrated || !token) return;
+    fetchCart().catch(() => {
+      // Ignore here; cart pages/drawer expose error details.
+    });
+  }, [hasHydrated, token, fetchCart]);
 
   const filtered = searchQuery.length > 1
     ? products.filter(p =>

@@ -49,6 +49,17 @@ const api = {
       body: JSON.stringify(body),
       ...options,
     }),
+  patch: (path, body, options = {}) =>
+    request(path, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+      ...options,
+    }),
+  delete: (path, options = {}) =>
+    request(path, {
+      method: "DELETE",
+      ...options,
+    }),
 };
 
 export { TOKEN_KEY, API_BASE_URL, getToken };

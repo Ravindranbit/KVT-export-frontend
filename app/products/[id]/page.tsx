@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { useCartStore } from '../../../store/useCartStore';
 import Header from '../../../components/layout/Header';
 import ProductGallery from '../../../components/product/ProductGallery';
@@ -11,6 +11,7 @@ import ProductReviewForm from '../../../components/product/ProductReviewForm';
 import { useProductStore } from '../../../store/useProductStore';
 
 export default function ProductDetail() {
+  const router = useRouter();
   const params = useParams();
   const productId = String(params.id);
   const { products, selectedProduct, fetchProductById, clearSelectedProduct, isLoading, error } = useProductStore();
@@ -64,13 +65,16 @@ export default function ProductDetail() {
     );
   }
 
-  const addToCart = useCartStore((state) => state.addItem);
+  const addToCart = useCartStore((state) => state.addToCart);
 
-  const handleAddToCart = () => {
-    addToCart(product.id, quantity);
-    
-    setCartMessage(`${quantity} ${product.name} added to cart!`);
-    setTimeout(() => setCartMessage(''), 3000);
+  const handleAddToCart = async () => {
+    try {
+      await addToCart(product.id, quantity);
+      setCartMessage(`${quantity} ${product.name} added to cart!`);
+      setTimeout(() => setCartMessage(''), 3000);
+    } catch {
+      router.push('/signin');
+    }
   };
 
   const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);

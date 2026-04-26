@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Header from '../components/layout/Header';
 import BannerCarousel from '../components/home/BannerCarousel';
 import { useProductStore } from '../store/useProductStore';
@@ -11,6 +12,7 @@ import { useCartStore } from '../store/useCartStore';
 import { useWishlistStore } from '../store/useWishlistStore';
 
 export default function HomePage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const categoryQuery = searchParams.get('category') || 'all';
 
@@ -24,7 +26,7 @@ export default function HomePage() {
     error: categoriesError,
   } = useCategoryStore();
 
-  const addToCart = useCartStore((state) => state.addItem);
+  const addToCart = useCartStore((state) => state.addToCart);
   const wishlistItems = useWishlistStore((state) => state.items);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
 
@@ -102,7 +104,13 @@ export default function HomePage() {
                     <p className="text-red-600 font-bold">₹{product.price.toFixed(2)}</p>
                     <div className="flex items-center justify-between pt-2">
                       <button
-                        onClick={() => addToCart(product.id)}
+                        onClick={async () => {
+                          try {
+                            await addToCart(product.id, 1);
+                          } catch {
+                            router.push('/signin');
+                          }
+                        }}
                         className="text-sm font-semibold bg-gray-900 text-white px-3 py-1.5 rounded-lg"
                       >
                         Add to Cart

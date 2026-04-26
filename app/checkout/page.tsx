@@ -16,8 +16,9 @@ export default function Checkout() {
   const router = useRouter();
   const { products } = useProductStore();
   const [currentStep, setCurrentStep] = useState(0);
-  const cartItems = useCartStore((state) => state.items);
-  const clearCart = useCartStore((state) => state.clearCart);
+  const cartItems = useCartStore((state) => state.cart);
+  const fetchCart = useCartStore((state) => state.fetchCart);
+  const removeFromCart = useCartStore((state) => state.removeFromCart);
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -41,6 +42,13 @@ export default function Checkout() {
     }
   }, [hasHydrated, token, user, getProfile, router]);
 
+  useEffect(() => {
+    if (!hasHydrated || !token) return;
+    fetchCart().catch(() => {
+      // Cart load errors are surfaced from store/UI state when needed.
+    });
+  }, [hasHydrated, token, fetchCart]);
+
   const [formData, setFormData] = useState({
     email: user?.email || '',
     phone: '',
@@ -52,7 +60,11 @@ export default function Checkout() {
   });
 
   const getProductDetails = (id: string) => products.find(p => p.id === id);
-  const total = cartItems.reduce((sum, item) => sum + ((getProductDetails(item.id)?.price || 0) * item.quantity), 0);
+  const getImage = (product: any) => product?.image || product?.imageUrl || '/placeholder.png';
+  const total = cartItems.reduce(
+    (sum, item) => sum + ((item.product?.price || getProductDetails(item.productId)?.price || item.price || 0) * item.quantity),
+    0,
+  );
 
   if (!hasHydrated || !token) {
     return null;
@@ -69,19 +81,19 @@ export default function Checkout() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     setIsProcessing(true);
     const newOrderId = `KVT-${Math.floor(Math.random() * 89999 + 10000)}`;
     setOrderId(newOrderId);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       const orderItems = cartItems.map(item => {
-        const product = getProductDetails(item.id);
+        const product = item.product || getProductDetails(item.productId);
         return {
-          id: item.id,
+          id: item.productId,
           name: product?.name || 'Unknown Product',
-          price: product?.price || 0,
-          image: product?.image || '',
+          price: product?.price || item.price || 0,
+          image: getImage(product),
           quantity: item.quantity,
           vendorId: product?.vendorId || 'v0'
         };
@@ -113,9 +125,9 @@ export default function Checkout() {
       });
 
       addOrder(newOrder);
+      await Promise.all(cartItems.map((item) => removeFromCart(item.productId)));
       setIsProcessing(false);
       setIsSuccess(true);
-      clearCart();
     }, 2500);
   };
 
@@ -311,17 +323,17 @@ export default function Checkout() {
               
               <div className="space-y-6 mb-8 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {cartItems.map(item => {
-                  const product = getProductDetails(item.id);
+                  const product = item.product || getProductDetails(item.productId);
                   if (!product) return null;
                   return (
                     <div key={item.id} className="flex gap-4">
                       <div className="w-20 h-20 bg-white rounded-xl overflow-hidden shrink-0 border border-gray-200 p-2 flex items-center justify-center">
-                        <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
+                        <img src={getImage(product)} alt={product.name} className="w-full h-full object-contain" />
                       </div>
                       <div className="flex-1 py-1">
                         <h4 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug">{product.name}</h4>
                         <p className="text-xs text-gray-500 mt-1">Qty: {item.quantity}</p>
-                        <p className="text-red-600 font-bold mt-2">₹{(product.price * item.quantity).toFixed(2)}</p>
+                        <p className="text-red-600 font-bold mt-2">₹{((product.price || item.price || 0) * item.quantity).toFixed(2)}</p>
                       </div>
                     </div>
                   );
