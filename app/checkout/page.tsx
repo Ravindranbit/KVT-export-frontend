@@ -209,7 +209,7 @@ export default function Checkout() {
             });
 
             await fetchCart();
-            router.push('/orders');
+            router.push(`/order-confirmation?orderId=${orderId}`);
           } catch (error: any) {
             handlePaymentFailure(error?.message || 'Payment verification failed');
           }
