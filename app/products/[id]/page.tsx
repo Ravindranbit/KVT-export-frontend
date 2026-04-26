@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { useCartStore } from '../../../store/useCartStore';
 import Header from '../../../components/layout/Header';
 import ProductGallery from '../../../components/product/ProductGallery';
@@ -19,7 +20,6 @@ export default function ProductDetail() {
     ? selectedProduct
     : products.find((p) => p.id === productId);
   const [quantity, setQuantity] = useState(1);
-  const [cartMessage, setCartMessage] = useState('');
   
   // Variants State
   const [selectedSize, setSelectedSize] = useState(product?.sizes?.[0] || '');
@@ -70,9 +70,9 @@ export default function ProductDetail() {
   const handleAddToCart = async () => {
     try {
       await addToCart(product.id, quantity);
-      setCartMessage(`${quantity} ${product.name} added to cart!`);
-      setTimeout(() => setCartMessage(''), 3000);
+      toast.success(`${product.name} added to cart`);
     } catch {
+      toast.error('Please sign in to add items to your cart');
       router.push('/signin');
     }
   };
@@ -187,28 +187,6 @@ export default function ProductDetail() {
                 </div>
               </div>
             </div>
-
-            {cartMessage && (
-              <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
-                <div className="bg-white text-gray-900 px-6 py-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] border border-gray-100 flex items-center gap-4 min-w-[320px]">
-                  <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
-                    <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-gray-900">Added to Cart</p>
-                    <p className="text-xs text-gray-500 font-medium">{product.name} (Qty: {quantity})</p>
-                  </div>
-                  <Link 
-                    href="/cart" 
-                    className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 px-4 py-2.5 rounded-lg transition-colors whitespace-nowrap"
-                  >
-                    View Cart
-                  </Link>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </section>

@@ -5,6 +5,7 @@ import { useCartStore } from '../../store/useCartStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import Header from '../../components/layout/Header';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import api from '../../src/lib/api';
 
 import { useProductStore } from '../../store/useProductStore';
@@ -140,6 +141,7 @@ export default function Checkout() {
   };
 
   const handlePaymentFailure = (message: string) => {
+    toast.error(message, { id: 'payment-status' });
     setPaymentError(message);
     setShowPaymentRecovery(true);
     setProcessingState(false);
@@ -151,6 +153,7 @@ export default function Checkout() {
     }
 
     if (cartItems.length === 0) {
+      toast.error('Your cart is empty', { id: 'payment-status' });
       setPaymentError('Your cart is empty');
       setShowPaymentRecovery(false);
       return;
@@ -209,6 +212,7 @@ export default function Checkout() {
             });
 
             await fetchCart();
+            toast.success('Payment verified successfully', { id: 'payment-status' });
             router.push(`/order-confirmation?orderId=${orderId}`);
           } catch (error: any) {
             handlePaymentFailure(error?.message || 'Payment verification failed');

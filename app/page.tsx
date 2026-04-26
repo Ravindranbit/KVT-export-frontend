@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import Header from '../components/layout/Header';
 import BannerCarousel from '../components/home/BannerCarousel';
 import { useProductStore } from '../store/useProductStore';
@@ -107,7 +108,9 @@ export default function HomePage() {
                         onClick={async () => {
                           try {
                             await addToCart(product.id, 1);
+                            toast.success('Item added to cart');
                           } catch {
+                            toast.error('Please sign in to add items to your cart');
                             router.push('/signin');
                           }
                         }}

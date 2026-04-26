@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 
 export default function SignIn() {
   const router = useRouter();
@@ -11,7 +12,6 @@ export default function SignIn() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [identifierError, setIdentifierError] = useState('');
-  const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -53,7 +53,6 @@ export default function SignIn() {
       return;
     }
 
-    setSubmitError('');
     setIsSubmitting(true);
 
     try {
@@ -63,9 +62,9 @@ export default function SignIn() {
     } catch (error: any) {
       const message = error?.message || 'Login failed. Please try again.';
       if (message.toLowerCase().includes('invalid')) {
-        setSubmitError('Wrong password or user not found');
+        toast.error('Wrong password or user not found');
       } else {
-        setSubmitError(message);
+        toast.error(message);
       }
     } finally {
       setIsSubmitting(false);
@@ -136,11 +135,6 @@ export default function SignIn() {
                 required
               />
             </div>
-
-            {submitError && (
-              <p className="text-red-600 text-sm text-center">{submitError}</p>
-            )}
-
             <button
               type="submit"
               className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded transition text-sm disabled:cursor-not-allowed disabled:opacity-70"

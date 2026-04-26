@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import api from '../../src/lib/api';
 import { useAuthStore } from '../../store/useAuthStore';
 
@@ -19,7 +20,6 @@ export default function SignUp() {
   const [otp, setOtp] = useState('');
   const [otpStep, setOtpStep] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [apiMessage, setApiMessage] = useState('');
   const [errors, setErrors] = useState({
     email: '',
     phone: '',
@@ -79,7 +79,6 @@ export default function SignUp() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setApiMessage('');
     
     // Validate all fields
     if (!formData.fullName) {
@@ -118,18 +117,19 @@ export default function SignUp() {
           password: formData.password,
         });
         setOtpStep(true);
-        setApiMessage('OTP sent to your phone number');
+        toast.success('OTP sent to your phone number');
       } else {
         await verifyOTP(formData.phone, otp);
         await getProfile();
+        toast.success('Account created successfully');
         router.push('/');
       }
     } catch (error: any) {
       const message = error?.message || 'Registration failed. Please try again.';
       if (message.toLowerCase().includes('otp')) {
-        setApiMessage('Invalid OTP');
+        toast.error('Invalid OTP');
       } else {
-        setApiMessage(message);
+        toast.error(message);
       }
     } finally {
       setIsSubmitting(false);
@@ -137,15 +137,14 @@ export default function SignUp() {
   };
 
   const handleResendOtp = async () => {
-    setApiMessage('');
     setIsSubmitting(true);
     try {
       const response = await api.post('/auth/register/resend-otp', {
         phone: formData.phone,
       });
-      setApiMessage(response?.message || 'OTP resent successfully');
+      toast.success(response?.message || 'OTP resent successfully');
     } catch (error: any) {
-      setApiMessage(error?.message || 'Failed to resend OTP');
+      toast.error(error?.message || 'Failed to resend OTP');
     } finally {
       setIsSubmitting(false);
     }
@@ -164,11 +163,6 @@ export default function SignUp() {
       <div className="flex-1 flex items-center justify-center px-4 py-8">
         <div className="w-full max-w-[400px] bg-white rounded-lg shadow-lg p-6">
           <h1 className="text-3xl font-bold text-gray-900 mb-5 text-center">Create Account</h1>
-          {apiMessage && (
-            <p className={`mb-3 text-xs text-center ${apiMessage.toLowerCase().includes('success') || apiMessage.toLowerCase().includes('sent') ? 'text-green-600' : 'text-red-600'}`}>
-              {apiMessage}
-            </p>
-          )}
           
           <form onSubmit={handleSubmit} className="space-y-3.5">
             <div>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Kumar_One, Arvo } from "next/font/google";
+import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -48,6 +49,7 @@ export default function RootLayout({
       >
         <ThemeSync />
         <DynamicFavicon />
+        <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
         {children}
         <Footer />
       </body>
