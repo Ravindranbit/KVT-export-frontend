@@ -5,7 +5,7 @@ import { useCartStore } from '../../store/useCartStore';
 // We temporarily pass products to the standard cart since we do not have a robust backend or product store yet.
 // In a mature app, this component would fetch from its own product API details hook.
 interface CartDrawerProps {
-  getProductDetails: (id: number) => any;
+  getProductDetails: (id: string) => any;
 }
 
 export default function CartDrawer({ getProductDetails }: CartDrawerProps) {

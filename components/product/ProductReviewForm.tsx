@@ -6,7 +6,7 @@ import { useProductStore, Feedback } from '../../store/useProductStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ProductReviewFormProps {
-  productId: number;
+  productId: string;
 }
 
 export default function ProductReviewForm({ productId }: ProductReviewFormProps) {

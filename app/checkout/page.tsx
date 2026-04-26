@@ -51,7 +51,7 @@ export default function Checkout() {
     zip: '',
   });
 
-  const getProductDetails = (id: number) => products.find(p => p.id === id);
+  const getProductDetails = (id: string) => products.find(p => p.id === id);
   const total = cartItems.reduce((sum, item) => sum + ((getProductDetails(item.id)?.price || 0) * item.quantity), 0);
 
   if (!hasHydrated || !token) {

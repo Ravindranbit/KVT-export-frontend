@@ -12,9 +12,11 @@ import { useProductStore } from '../../../store/useProductStore';
 
 export default function ProductDetail() {
   const params = useParams();
-  const productId = parseInt(params.id as string);
-  const { products } = useProductStore();
-  const product = products.find(p => p.id === productId);
+  const productId = String(params.id);
+  const { products, selectedProduct, fetchProductById, clearSelectedProduct, isLoading, error } = useProductStore();
+  const product = selectedProduct && selectedProduct.id === productId
+    ? selectedProduct
+    : products.find((p) => p.id === productId);
   const [quantity, setQuantity] = useState(1);
   const [cartMessage, setCartMessage] = useState('');
   
@@ -24,11 +26,26 @@ export default function ProductDetail() {
 
   // Update selection if product changes (e.g., navigating between products)
   useEffect(() => {
+    fetchProductById(productId);
+    return () => {
+      clearSelectedProduct();
+    };
+  }, [productId, fetchProductById, clearSelectedProduct]);
+
+  useEffect(() => {
     if (product) {
       if (product.sizes?.length) setSelectedSize(product.sizes[0]);
       if (product.colors?.length) setSelectedColor(product.colors[0].name);
     }
   }, [product]);
+
+  if (isLoading && !product) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center text-gray-500">
+        Loading product...
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -40,6 +57,7 @@ export default function ProductDetail() {
         </header>
         <div className="max-w-7xl mx-auto px-4 py-20 text-center">
           <h1 className="text-3xl font-bold text-gray-900">Product not found</h1>
+          {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
           <Link href="/" className="text-red-600 hover:text-red-700 mt-4 inline-block">Back to Home</Link>
         </div>
       </div>
@@ -155,7 +173,7 @@ export default function ProductDetail() {
                 </div>
                 <div>
                   <p className="text-gray-500 text-sm mb-1">Category</p>
-                  <p className="font-medium text-gray-900 capitalize">{product.category}</p>
+                  <p className="font-medium text-gray-900 capitalize">{product.category || 'Uncategorized'}</p>
                 </div>
                 <div>
                   <p className="text-gray-500 text-sm mb-1">Availability</p>

@@ -2,16 +2,16 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export interface CartItem {
-  id: number;
+  id: string;
   quantity: number;
 }
 
 interface CartStore {
   items: CartItem[];
   isOpen: boolean;
-  addItem: (id: number, quantity?: number) => void;
-  removeItem: (id: number) => void;
-  updateQuantity: (id: number, quantity: number) => void;
+  addItem: (id: string, quantity?: number) => void;
+  removeItem: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
   getTotalItems: () => number;
   setIsOpen: (open: boolean) => void;
@@ -25,7 +25,7 @@ export const useCartStore = create<CartStore>()(
       
       setIsOpen: (open: boolean) => set({ isOpen: open }),
       
-      addItem: (id: number, quantity: number = 1) => {
+      addItem: (id: string, quantity: number = 1) => {
         set((state) => {
           const existingItem = state.items.find((item) => item.id === id);
           if (existingItem) {
@@ -39,13 +39,13 @@ export const useCartStore = create<CartStore>()(
         });
       },
       
-      removeItem: (id: number) => {
+      removeItem: (id: string) => {
         set((state) => ({
           items: state.items.filter((item) => item.id !== id),
         }));
       },
       
-      updateQuantity: (id: number, quantity: number) => {
+      updateQuantity: (id: string, quantity: number) => {
         set((state) => ({
           items: quantity <= 0 
             ? state.items.filter((item) => item.id !== id)

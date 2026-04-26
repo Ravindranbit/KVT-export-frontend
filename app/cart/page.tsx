@@ -42,7 +42,7 @@ export default function Cart() {
     }
   }, [hasHydrated, token, user, getProfile, router]);
 
-  const getProductDetails = (id: number) => products.find(p => p.id === id);
+  const getProductDetails = (id: string) => products.find(p => p.id === id);
 
   const total = cartItems.reduce((sum, item) => {
     const p = getProductDetails(item.id);

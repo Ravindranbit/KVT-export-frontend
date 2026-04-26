@@ -166,7 +166,7 @@ export default function VendorDashboard() {
     setEditingProduct(null);
   };
 
-  const handleDeleteProduct = (id: number) => {
+  const handleDeleteProduct = (id: string) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       removeProduct(id);
       setMessage('Product removed successfully');

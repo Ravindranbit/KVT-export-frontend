@@ -19,7 +19,7 @@ export default function Wishlist() {
     setMounted(true);
   }, []);
 
-  const getProductDetails = (id: number) => products.find(p => p.id === id);
+  const getProductDetails = (id: string) => products.find(p => p.id === id);
 
   if (!mounted) return null;
 

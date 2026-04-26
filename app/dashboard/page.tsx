@@ -84,7 +84,7 @@ export default function Dashboard() {
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
   const { products } = useProductStore();
   const addToCartStore = useCartStore((state) => state.addItem);
-  const getProductDetails = (id: number) => products.find(p => p.id === id);
+  const getProductDetails = (id: string) => products.find(p => p.id === id);
   const [editingAddrId, setEditingAddrId] = useState<string | null>(null);
   const [showAddAddr, setShowAddAddr] = useState(false);
   const [showAddCard, setShowAddCard] = useState(false);

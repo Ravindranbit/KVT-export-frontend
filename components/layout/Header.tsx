@@ -6,7 +6,6 @@ import { useWishlistStore } from '../../store/useWishlistStore';
 import { useCartStore } from '../../store/useCartStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useProductStore } from '../../store/useProductStore';
-import { PRODUCTS } from '../../lib/mockData';
 import MegaMenu from './MegaMenu';
 import { useRouter } from 'next/navigation';
 import { useAdminStore } from '../../store/useAdminStore';
@@ -48,13 +47,13 @@ export default function Header() {
   }, []);
 
   const filtered = searchQuery.length > 1
-    ? PRODUCTS.filter(p =>
+    ? products.filter(p =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.category.toLowerCase().includes(searchQuery.toLowerCase())
       ).slice(0, 6)
     : [];
 
-  const navigateToProduct = (id: number | string) => {
+  const navigateToProduct = (id: string) => {
     router.push(`/products/${id}`);
     setSearchQuery('');
     setSearchFocused(false);

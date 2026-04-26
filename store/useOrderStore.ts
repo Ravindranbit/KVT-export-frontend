@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 export interface OrderItem {
-  id: number;
+  id: string;
   name: string;
   price: number;
   image: string;
