@@ -10,6 +10,9 @@ import api from '../../src/lib/api';
 import { useProductStore } from '../../store/useProductStore';
 
 const STEPS = ['Contact Details', 'Shipping Address', 'Payment'];
+const RAZORPAY_CHECKOUT_SRC = 'https://checkout.razorpay.com/v1/checkout.js';
+
+let razorpayScriptPromise: Promise<boolean> | null = null;
 
 export default function Checkout() {
   const router = useRouter();
@@ -57,20 +60,57 @@ export default function Checkout() {
 
   const getProductDetails = (id: string) => products.find(p => p.id === id);
   const getImage = (product: any) => product?.image || product?.imageUrl || '/placeholder.png';
-  const loadRazorpayScript = () =>
-    new Promise<boolean>((resolve) => {
-      if (typeof window !== 'undefined' && (window as any).Razorpay) {
-        resolve(true);
+  const loadRazorpayScript = () => {
+    if (typeof window === 'undefined') {
+      return Promise.resolve(false);
+    }
+
+    if ((window as any).Razorpay) {
+      return Promise.resolve(true);
+    }
+
+    if (razorpayScriptPromise) {
+      return razorpayScriptPromise;
+    }
+
+    razorpayScriptPromise = new Promise<boolean>((resolve) => {
+      const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${RAZORPAY_CHECKOUT_SRC}"]`);
+
+      if (existingScript) {
+        if ((window as any).Razorpay || existingScript.dataset.loaded === 'true') {
+          resolve(true);
+          return;
+        }
+
+        existingScript.addEventListener('load', () => {
+          existingScript.dataset.loaded = 'true';
+          resolve(true);
+        }, { once: true });
+        existingScript.addEventListener('error', () => {
+          razorpayScriptPromise = null;
+          resolve(false);
+        }, { once: true });
         return;
       }
 
-      const script = document.createElement('script');
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-      script.async = true;
-      script.onload = () => resolve(true);
-      script.onerror = () => resolve(false);
-      document.body.appendChild(script);
+      if (!(window as any).Razorpay) {
+        const script = document.createElement('script');
+        script.src = RAZORPAY_CHECKOUT_SRC;
+        script.async = true;
+        script.onload = () => {
+          script.dataset.loaded = 'true';
+          resolve(true);
+        };
+        script.onerror = () => {
+          razorpayScriptPromise = null;
+          resolve(false);
+        };
+        document.body.appendChild(script);
+      }
     });
+
+    return razorpayScriptPromise;
+  };
 
   const total = cartItems.reduce(
     (sum, item) => sum + ((item.product?.price || getProductDetails(item.productId)?.price || item.price || 0) * item.quantity),
