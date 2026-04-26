@@ -23,6 +23,7 @@ export default function Checkout() {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [showPaymentRecovery, setShowPaymentRecovery] = useState(false);
   const isProcessingRef = useRef(false);
   
   const { user, token, hasHydrated, getProfile } = useAuthStore();
@@ -138,6 +139,12 @@ export default function Checkout() {
     setIsProcessing(processing);
   };
 
+  const handlePaymentFailure = (message: string) => {
+    setPaymentError(message);
+    setShowPaymentRecovery(true);
+    setProcessingState(false);
+  };
+
   const handlePlaceOrder = async () => {
     if (isProcessingRef.current) {
       return;
@@ -145,11 +152,13 @@ export default function Checkout() {
 
     if (cartItems.length === 0) {
       setPaymentError('Your cart is empty');
+      setShowPaymentRecovery(false);
       return;
     }
 
     setProcessingState(true);
     setPaymentError(null);
+    setShowPaymentRecovery(false);
 
     try {
       const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY;
@@ -202,14 +211,12 @@ export default function Checkout() {
             await fetchCart();
             router.push('/orders');
           } catch (error: any) {
-            setPaymentError(error?.message || 'Payment verification failed');
-            setProcessingState(false);
+            handlePaymentFailure(error?.message || 'Payment verification failed');
           }
         },
         modal: {
           ondismiss: () => {
-            setPaymentError('Payment cancelled');
-            setProcessingState(false);
+            handlePaymentFailure('Payment cancelled');
           },
         },
       };
@@ -217,14 +224,12 @@ export default function Checkout() {
       const RazorpayCtor = (window as any).Razorpay;
       const razorpay = new RazorpayCtor(options);
       razorpay.on('payment.failed', (response: any) => {
-        setPaymentError(response?.error?.description || 'Payment failed. Please try again.');
-        setProcessingState(false);
+        handlePaymentFailure(response?.error?.description || 'Payment failed. Please try again.');
       });
 
       razorpay.open();
     } catch (error: any) {
-      setPaymentError(error?.message || 'Unable to initiate payment');
-      setProcessingState(false);
+      handlePaymentFailure(error?.message || 'Unable to initiate payment');
     }
   };
 
@@ -333,7 +338,26 @@ export default function Checkout() {
 
                     {paymentError && (
                       <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                        {paymentError}
+                        <p>{paymentError}</p>
+                        {showPaymentRecovery && (
+                          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                            <button
+                              type="button"
+                              onClick={handlePlaceOrder}
+                              disabled={isProcessing}
+                              className="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+                            >
+                              Retry Payment
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => router.push('/cart')}
+                              className="rounded-lg border border-red-200 px-4 py-2 font-semibold text-red-700 transition-colors hover:bg-red-100"
+                            >
+                              Go to Cart
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                     
