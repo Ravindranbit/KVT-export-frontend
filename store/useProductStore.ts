@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { PRODUCTS as INITIAL_PRODUCTS } from '../lib/mockData';
+import api from '../src/lib/api';
 
 export interface Feedback {
   id: string;
@@ -11,11 +11,12 @@ export interface Feedback {
 }
 
 export interface Product {
-  id: number;
+  id: string;
   name: string;
   price: number;
   image: string;
   category: string;
+  categoryId?: string;
   description: string;
   rating: number;
   reviews: number;
@@ -33,20 +34,96 @@ export interface Product {
 
 interface ProductState {
   products: Product[];
+  selectedProduct: Product | null;
+  isLoading: boolean;
+  error: string | null;
+  fetchProducts: () => Promise<void>;
+  fetchProductById: (id: string) => Promise<Product | null>;
+  clearSelectedProduct: () => void;
   addProduct: (product: Product) => void;
-  updateProduct: (id: number, product: Partial<Product>) => void;
-  removeProduct: (id: number) => void;
-  addFeedback: (productId: number, feedback: Feedback) => void;
-  updateFeedback: (productId: number, feedbackId: string, updates: Partial<Feedback>) => void;
-  removeFeedback: (productId: number, feedbackId: string) => void;
+  updateProduct: (id: string, product: Partial<Product>) => void;
+  removeProduct: (id: string) => void;
+  addFeedback: (productId: string, feedback: Feedback) => void;
+  updateFeedback: (productId: string, feedbackId: string, updates: Partial<Feedback>) => void;
+  removeFeedback: (productId: string, feedbackId: string) => void;
   getProductsByVendor: (vendorId: string) => Product[];
-  getProductById: (id: number) => Product | undefined;
+  getProductById: (id: string) => Product | undefined;
 }
+
+const mapProduct = (raw: any): Product => ({
+  id: String(raw.id),
+  name: raw.name || 'Untitled Product',
+  price: Number(raw.price || 0),
+  image: raw.imageUrl || raw.image || '',
+  category: raw.category?.name || raw.categoryName || raw.category || raw.categoryId || 'uncategorized',
+  categoryId: raw.categoryId || raw.category?.id,
+  description: raw.description || '',
+  rating: Number(raw.rating || 0),
+  reviews: Number(raw.reviews || 0),
+  vendorId: raw.vendorId || 'unknown',
+  stock: typeof raw.stock === 'number' ? raw.stock : undefined,
+  sku: raw.sku,
+  brand: raw.brand,
+  weight: raw.weight,
+  dimensions: raw.dimensions,
+  specifications: raw.specifications,
+  colors: raw.colors,
+  sizes: raw.sizes,
+  feedbacks: raw.feedbacks || [],
+});
 
 export const useProductStore = create<ProductState>()(
   persist(
     (set, get) => ({
-      products: INITIAL_PRODUCTS,
+      products: [],
+      selectedProduct: null,
+      isLoading: false,
+      error: null,
+      fetchProducts: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          const response: any = await api.get('/products');
+          const rawProducts = response?.data || [];
+          const mappedProducts = Array.isArray(rawProducts) ? rawProducts.map(mapProduct) : [];
+          set({ products: mappedProducts, isLoading: false });
+        } catch (error: any) {
+          set({
+            isLoading: false,
+            error: error?.message || 'Failed to load products',
+          });
+        }
+      },
+      fetchProductById: async (id: string) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response: any = await api.get(`/products/${id}`);
+          const rawProduct = response?.data || null;
+
+          if (!rawProduct) {
+            set({ selectedProduct: null, isLoading: false, error: 'Product not found' });
+            return null;
+          }
+
+          const mapped = mapProduct(rawProduct);
+          set((state) => ({
+            selectedProduct: mapped,
+            products: state.products.some((p) => p.id === mapped.id)
+              ? state.products.map((p) => (p.id === mapped.id ? mapped : p))
+              : [mapped, ...state.products],
+            isLoading: false,
+          }));
+
+          return mapped;
+        } catch (error: any) {
+          set({
+            selectedProduct: null,
+            isLoading: false,
+            error: error?.message || 'Failed to load product',
+          });
+          return null;
+        }
+      },
+      clearSelectedProduct: () => set({ selectedProduct: null }),
       addProduct: (product) => set((state) => ({ 
         products: [product, ...state.products] 
       })),
@@ -111,6 +188,9 @@ export const useProductStore = create<ProductState>()(
     }),
     {
       name: 'product-storage',
+      partialize: (state) => ({
+        products: state.products,
+      }),
     }
   )
 );

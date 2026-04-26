@@ -2,8 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 interface WishlistStore {
-  items: number[];
-  toggleItem: (id: number) => void;
+  items: string[];
+  toggleItem: (id: string) => void;
   clearWishlist: () => void;
 }
 
@@ -12,7 +12,7 @@ export const useWishlistStore = create<WishlistStore>()(
     (set) => ({
       items: [],
       
-      toggleItem: (id: number) => {
+      toggleItem: (id: string) => {
         set((state) => {
           if (state.items.includes(id)) {
             return { items: state.items.filter((itemId) => itemId !== id) };

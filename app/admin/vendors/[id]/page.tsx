@@ -23,7 +23,7 @@ import {
 import Link from 'next/link';
 
 export default function VendorDetails() {
-  const [hiddenProducts, setHiddenProducts] = useState<number[]>([]);
+  const [hiddenProducts, setHiddenProducts] = useState<string[]>([]);
   const [showHideModal, setShowHideModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [hideReason, setHideReason] = useState('');

@@ -83,14 +83,14 @@ export default function Dashboard() {
   const wishlistIds = useWishlistStore((state) => state.items);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
   const { products } = useProductStore();
-  const addToCartStore = useCartStore((state) => state.addItem);
-  const getProductDetails = (id: number) => products.find(p => p.id === id);
+  const addToCartStore = useCartStore((state) => state.addToCart);
+  const getProductDetails = (id: string) => products.find(p => p.id === id);
   const [editingAddrId, setEditingAddrId] = useState<string | null>(null);
   const [showAddAddr, setShowAddAddr] = useState(false);
   const [showAddCard, setShowAddCard] = useState(false);
-  const { user, logout } = useAuthStore();
+  const { user, logout, token, hasHydrated, getProfile } = useAuthStore();
   const router = useRouter();
-  const { orders } = useOrderStore();
+  const { orders, fetchOrders } = useOrderStore();
   const myOrders = user ? orders.filter(o => o.customerId === user.id) : orders.filter(o => o.customerId === 'guest');
 
   const [addresses, setAddresses] = useState<Address[]>([
@@ -102,6 +102,26 @@ export default function Dashboard() {
   ]);
   const [newAddr, setNewAddr] = useState({ label: '', line1: '', city: '', zip: '', country: '', phone: '' });
   const [newCard, setNewCard] = useState({ brand: 'VISA', last4: '', expiry: '' });
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+
+    if (!token) {
+      router.push('/signin');
+      return;
+    }
+
+    if (!user) {
+      getProfile().catch(() => {
+        router.push('/signin');
+      });
+    }
+  }, [hasHydrated, token, user, getProfile, router]);
+
+  useEffect(() => {
+    if (!hasHydrated || !token) return;
+    fetchOrders();
+  }, [hasHydrated, token, fetchOrders]);
 
   useEffect(() => { if (message) { const t = setTimeout(() => setMessage(null), 3000); return () => clearTimeout(t); } }, [message]);
 
@@ -115,6 +135,10 @@ export default function Dashboard() {
   const addCard = () => { if (!newCard.last4 || !newCard.expiry) { show('Please fill card details'); return; } setCards(prev => [...prev, { id: Date.now().toString(), ...newCard, isPrimary: prev.length === 0 }]); setNewCard({ brand: 'VISA', last4: '', expiry: '' }); setShowAddCard(false); show('Card added'); };
 
   const userName = user?.name || 'User';
+
+  if (!hasHydrated || !token) {
+    return null;
+  }
 
   return (
     <div className="flex flex-col h-screen bg-[#F8F9FA] overflow-hidden w-full">
@@ -327,7 +351,19 @@ export default function Dashboard() {
                             </div>
                             <div className="mt-auto pt-4 flex items-center justify-between">
                               <span className="font-semibold text-gray-900">₹{item.price.toFixed(2)}</span>
-                              <button onClick={() => { addToCartStore(item.id); show('Added to cart!'); }} className="text-xs font-semibold bg-gray-900 hover:bg-black text-white px-3 py-1.5 rounded-lg transition-colors">Add to Cart</button>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await addToCartStore(item.id, 1);
+                                    show('Added to cart!');
+                                  } catch {
+                                    router.push('/signin');
+                                  }
+                                }}
+                                className="text-xs font-semibold bg-gray-900 hover:bg-black text-white px-3 py-1.5 rounded-lg transition-colors"
+                              >
+                                Add to Cart
+                              </button>
                             </div>
                           </div>
                         </div>

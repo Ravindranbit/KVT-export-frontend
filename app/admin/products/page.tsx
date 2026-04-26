@@ -9,7 +9,7 @@ export default function AdminProducts() {
   const [filterCategory, setFilterCategory] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const [form, setForm] = useState({ name: '', price: '', category: 'fashion', description: '', image: '', vendorId: 'admin', stock: '100', sku: '', brand: '' });
 
@@ -23,7 +23,7 @@ export default function AdminProducts() {
 
   const handleAdd = () => {
     const newProduct: Product = {
-      id: Date.now(),
+      id: String(Date.now()),
       name: form.name,
       price: parseFloat(form.price),
       category: form.category,
@@ -41,7 +41,7 @@ export default function AdminProducts() {
     setForm({ name: '', price: '', category: 'fashion', description: '', image: '', vendorId: 'admin', stock: '100', sku: '', brand: '' });
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     removeProduct(id);
     setDeleteConfirm(null);
   };

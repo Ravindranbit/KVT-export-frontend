@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { useCartStore } from '../../../store/useCartStore';
 import Header from '../../../components/layout/Header';
 import ProductGallery from '../../../components/product/ProductGallery';
@@ -11,12 +12,14 @@ import ProductReviewForm from '../../../components/product/ProductReviewForm';
 import { useProductStore } from '../../../store/useProductStore';
 
 export default function ProductDetail() {
+  const router = useRouter();
   const params = useParams();
-  const productId = parseInt(params.id as string);
-  const { products } = useProductStore();
-  const product = products.find(p => p.id === productId);
+  const productId = String(params.id);
+  const { products, selectedProduct, fetchProductById, clearSelectedProduct, isLoading, error } = useProductStore();
+  const product = selectedProduct && selectedProduct.id === productId
+    ? selectedProduct
+    : products.find((p) => p.id === productId);
   const [quantity, setQuantity] = useState(1);
-  const [cartMessage, setCartMessage] = useState('');
   
   // Variants State
   const [selectedSize, setSelectedSize] = useState(product?.sizes?.[0] || '');
@@ -24,11 +27,26 @@ export default function ProductDetail() {
 
   // Update selection if product changes (e.g., navigating between products)
   useEffect(() => {
+    fetchProductById(productId);
+    return () => {
+      clearSelectedProduct();
+    };
+  }, [productId, fetchProductById, clearSelectedProduct]);
+
+  useEffect(() => {
     if (product) {
       if (product.sizes?.length) setSelectedSize(product.sizes[0]);
       if (product.colors?.length) setSelectedColor(product.colors[0].name);
     }
   }, [product]);
+
+  if (isLoading && !product) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center text-gray-500">
+        Loading product...
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -40,19 +58,23 @@ export default function ProductDetail() {
         </header>
         <div className="max-w-7xl mx-auto px-4 py-20 text-center">
           <h1 className="text-3xl font-bold text-gray-900">Product not found</h1>
+          {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
           <Link href="/" className="text-red-600 hover:text-red-700 mt-4 inline-block">Back to Home</Link>
         </div>
       </div>
     );
   }
 
-  const addToCart = useCartStore((state) => state.addItem);
+  const addToCart = useCartStore((state) => state.addToCart);
 
-  const handleAddToCart = () => {
-    addToCart(product.id, quantity);
-    
-    setCartMessage(`${quantity} ${product.name} added to cart!`);
-    setTimeout(() => setCartMessage(''), 3000);
+  const handleAddToCart = async () => {
+    try {
+      await addToCart(product.id, quantity);
+      toast.success(`${product.name} added to cart`);
+    } catch {
+      toast.error('Please sign in to add items to your cart');
+      router.push('/signin');
+    }
   };
 
   const relatedProducts = products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
@@ -155,7 +177,7 @@ export default function ProductDetail() {
                 </div>
                 <div>
                   <p className="text-gray-500 text-sm mb-1">Category</p>
-                  <p className="font-medium text-gray-900 capitalize">{product.category}</p>
+                  <p className="font-medium text-gray-900 capitalize">{product.category || 'Uncategorized'}</p>
                 </div>
                 <div>
                   <p className="text-gray-500 text-sm mb-1">Availability</p>
@@ -165,28 +187,6 @@ export default function ProductDetail() {
                 </div>
               </div>
             </div>
-
-            {cartMessage && (
-              <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] animate-in fade-in slide-in-from-top-4 duration-300">
-                <div className="bg-white text-gray-900 px-6 py-4 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] border border-gray-100 flex items-center gap-4 min-w-[320px]">
-                  <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
-                    <svg className="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-bold text-gray-900">Added to Cart</p>
-                    <p className="text-xs text-gray-500 font-medium">{product.name} (Qty: {quantity})</p>
-                  </div>
-                  <Link 
-                    href="/cart" 
-                    className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 px-4 py-2.5 rounded-lg transition-colors whitespace-nowrap"
-                  >
-                    View Cart
-                  </Link>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </section>

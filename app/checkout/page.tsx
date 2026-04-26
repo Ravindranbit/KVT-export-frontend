@@ -1,28 +1,55 @@
 'use client';
 
-import { useState } from 'react';
-import Link from 'next/link';
+import { useEffect, useRef, useState } from 'react';
 import { useCartStore } from '../../store/useCartStore';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useOrderStore, Order } from '../../store/useOrderStore';
 import Header from '../../components/layout/Header';
+import { useRouter } from 'next/navigation';
+import toast from 'react-hot-toast';
+import api from '../../src/lib/api';
 
 import { useProductStore } from '../../store/useProductStore';
 
 const STEPS = ['Contact Details', 'Shipping Address', 'Payment'];
+const RAZORPAY_CHECKOUT_SRC = 'https://checkout.razorpay.com/v1/checkout.js';
+
+let razorpayScriptPromise: Promise<boolean> | null = null;
 
 export default function Checkout() {
+  const router = useRouter();
   const { products } = useProductStore();
   const [currentStep, setCurrentStep] = useState(0);
-  const cartItems = useCartStore((state) => state.items);
-  const clearCart = useCartStore((state) => state.clearCart);
+  const cartItems = useCartStore((state) => state.cart);
+  const fetchCart = useCartStore((state) => state.fetchCart);
   
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
-  const [orderId, setOrderId] = useState('');
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [showPaymentRecovery, setShowPaymentRecovery] = useState(false);
+  const isProcessingRef = useRef(false);
   
-  const { user } = useAuthStore();
-  const { addOrder } = useOrderStore();
+  const { user, token, hasHydrated, getProfile } = useAuthStore();
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+
+    if (!token) {
+      router.push('/signin');
+      return;
+    }
+
+    if (!user) {
+      getProfile().catch(() => {
+        router.push('/signin');
+      });
+    }
+  }, [hasHydrated, token, user, getProfile, router]);
+
+  useEffect(() => {
+    if (!hasHydrated || !token) return;
+    fetchCart().catch(() => {
+      // Cart load errors are surfaced from store/UI state when needed.
+    });
+  }, [hasHydrated, token, fetchCart]);
 
   const [formData, setFormData] = useState({
     email: user?.email || '',
@@ -34,8 +61,68 @@ export default function Checkout() {
     zip: '',
   });
 
-  const getProductDetails = (id: number) => products.find(p => p.id === id);
-  const total = cartItems.reduce((sum, item) => sum + ((getProductDetails(item.id)?.price || 0) * item.quantity), 0);
+  const getProductDetails = (id: string) => products.find(p => p.id === id);
+  const getImage = (product: any) => product?.image || product?.imageUrl || '/placeholder.png';
+  const loadRazorpayScript = () => {
+    if (typeof window === 'undefined') {
+      return Promise.resolve(false);
+    }
+
+    if ((window as any).Razorpay) {
+      return Promise.resolve(true);
+    }
+
+    if (razorpayScriptPromise) {
+      return razorpayScriptPromise;
+    }
+
+    razorpayScriptPromise = new Promise<boolean>((resolve) => {
+      const existingScript = document.querySelector<HTMLScriptElement>(`script[src="${RAZORPAY_CHECKOUT_SRC}"]`);
+
+      if (existingScript) {
+        if ((window as any).Razorpay || existingScript.dataset.loaded === 'true') {
+          resolve(true);
+          return;
+        }
+
+        existingScript.addEventListener('load', () => {
+          existingScript.dataset.loaded = 'true';
+          resolve(true);
+        }, { once: true });
+        existingScript.addEventListener('error', () => {
+          razorpayScriptPromise = null;
+          resolve(false);
+        }, { once: true });
+        return;
+      }
+
+      if (!(window as any).Razorpay) {
+        const script = document.createElement('script');
+        script.src = RAZORPAY_CHECKOUT_SRC;
+        script.async = true;
+        script.onload = () => {
+          script.dataset.loaded = 'true';
+          resolve(true);
+        };
+        script.onerror = () => {
+          razorpayScriptPromise = null;
+          resolve(false);
+        };
+        document.body.appendChild(script);
+      }
+    });
+
+    return razorpayScriptPromise;
+  };
+
+  const total = cartItems.reduce(
+    (sum, item) => sum + ((item.product?.price || getProductDetails(item.productId)?.price || item.price || 0) * item.quantity),
+    0,
+  );
+
+  if (!hasHydrated || !token) {
+    return null;
+  }
 
   const handleNext = (e: React.FormEvent) => { 
     e.preventDefault(); 
@@ -48,80 +135,107 @@ export default function Checkout() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handlePlaceOrder = () => {
-    setIsProcessing(true);
-    const newOrderId = `KVT-${Math.floor(Math.random() * 89999 + 10000)}`;
-    setOrderId(newOrderId);
-
-    setTimeout(() => {
-      const orderItems = cartItems.map(item => {
-        const product = getProductDetails(item.id);
-        return {
-          id: item.id,
-          name: product?.name || 'Unknown Product',
-          price: product?.price || 0,
-          image: product?.image || '',
-          quantity: item.quantity,
-          vendorId: product?.vendorId || 'v0'
-        };
-      });
-
-      const newOrder: Order = {
-        id: newOrderId,
-        customerId: user?.id || 'guest',
-        customerName: user?.name || formData.firstName + ' ' + formData.lastName,
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        total: total > 4150 ? total : total + 415,
-        status: 'Processing',
-        items: orderItems,
-        shippingAddress: {
-          line1: formData.address,
-          city: formData.city,
-          zip: formData.zip,
-          country: 'India'
-        }
-      };
-
-      orderItems.forEach(item => {
-        const product = getProductDetails(item.id);
-        if (product && product.stock) {
-          useProductStore.getState().updateProduct(item.id, { 
-            stock: Math.max(0, product.stock - item.quantity) 
-          });
-        }
-      });
-
-      addOrder(newOrder);
-      setIsProcessing(false);
-      setIsSuccess(true);
-      clearCart();
-    }, 2500);
+  const setProcessingState = (processing: boolean) => {
+    isProcessingRef.current = processing;
+    setIsProcessing(processing);
   };
 
-  if (isSuccess) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-        <div className="bg-white p-10 rounded-xl shadow-sm border border-gray-200 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-50 border border-green-200 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Order Confirmed</h2>
-          <p className="text-gray-500 mb-8 text-sm leading-relaxed">
-            Your order <span className="font-semibold text-gray-900">#{orderId}</span> has been placed successfully. 
-            We'll send you a shipping confirmation email shortly.
-          </p>
-          <Link href="/dashboard" className="block w-full bg-gray-900 hover:bg-black text-white font-medium py-3 rounded-lg transition-colors mb-3 text-sm">
-            View Order Dashboard
-          </Link>
-          <Link href="/" className="block text-sm text-gray-500 hover:text-gray-900 font-medium transition-colors">
-            Continue Shopping
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const handlePaymentFailure = (message: string) => {
+    toast.error(message, { id: 'payment-status' });
+    setPaymentError(message);
+    setShowPaymentRecovery(true);
+    setProcessingState(false);
+  };
+
+  const handlePlaceOrder = async () => {
+    if (isProcessingRef.current) {
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      toast.error('Your cart is empty', { id: 'payment-status' });
+      setPaymentError('Your cart is empty');
+      setShowPaymentRecovery(false);
+      return;
+    }
+
+    setProcessingState(true);
+    setPaymentError(null);
+    setShowPaymentRecovery(false);
+
+    try {
+      const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY;
+      if (!key) {
+        throw new Error('Razorpay key is not configured');
+      }
+
+      const scriptLoaded = await loadRazorpayScript();
+      if (!scriptLoaded) {
+        throw new Error('Failed to load payment gateway');
+      }
+
+      const orderResponse: any = await api.post('/payment/create-order', {
+        shippingAddress: {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          address: formData.address,
+          city: formData.city,
+          zip: formData.zip,
+          email: formData.email,
+          phone: formData.phone,
+        },
+      });
+
+      const { orderId, razorpayOrderId, amount } = orderResponse?.data || {};
+      if (!orderId || !razorpayOrderId || !amount) {
+        throw new Error('Invalid payment order response');
+      }
+
+      const options = {
+        key,
+        amount,
+        currency: 'INR',
+        order_id: razorpayOrderId,
+        name: 'KVT Exports',
+        description: `Order ${orderId}`,
+        prefill: {
+          name: `${formData.firstName} ${formData.lastName}`.trim(),
+          email: formData.email,
+          contact: formData.phone,
+        },
+        handler: async function (response: any) {
+          try {
+            await api.post('/payment/verify', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+
+            await fetchCart();
+            toast.success('Payment verified successfully', { id: 'payment-status' });
+            router.push(`/order-confirmation?orderId=${orderId}`);
+          } catch (error: any) {
+            handlePaymentFailure(error?.message || 'Payment verification failed');
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            handlePaymentFailure('Payment cancelled');
+          },
+        },
+      };
+
+      const RazorpayCtor = (window as any).Razorpay;
+      const razorpay = new RazorpayCtor(options);
+      razorpay.on('payment.failed', (response: any) => {
+        handlePaymentFailure(response?.error?.description || 'Payment failed. Please try again.');
+      });
+
+      razorpay.open();
+    } catch (error: any) {
+      handlePaymentFailure(error?.message || 'Unable to initiate payment');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -225,6 +339,31 @@ export default function Checkout() {
                 {currentStep === 2 && (
                   <div className="animate-in fade-in slide-in-from-right-8 duration-500">
                     <h2 className="text-2xl font-bold text-gray-900 mb-8">Payment Method</h2>
+
+                    {paymentError && (
+                      <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                        <p>{paymentError}</p>
+                        {showPaymentRecovery && (
+                          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                            <button
+                              type="button"
+                              onClick={handlePlaceOrder}
+                              disabled={isProcessing}
+                              className="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-70"
+                            >
+                              Retry Payment
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => router.push('/cart')}
+                              className="rounded-lg border border-red-200 px-4 py-2 font-semibold text-red-700 transition-colors hover:bg-red-100"
+                            >
+                              Go to Cart
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
                     
                     <div className="space-y-4 mb-8">
                       <label className="flex items-center p-5 border-2 border-red-600 bg-red-50 rounded-xl cursor-pointer">
@@ -269,11 +408,7 @@ export default function Checkout() {
                           disabled={isProcessing}
                           className="w-2/3 bg-red-600 relative overflow-hidden flex justify-center items-center hover:bg-red-700 text-white font-bold py-4 rounded-xl transition-all shadow-lg hover:shadow-red-500/30 hover:-translate-y-0.5 disabled:opacity-70 disabled:hover:translate-y-0"
                         >
-                          {isProcessing ? (
-                            <svg className="animate-spin h-6 w-6 text-white text-center" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                          ) : (
-                            `Pay ₹${total.toFixed(2)}`
-                          )}
+                          {isProcessing ? 'Processing...' : 'Place Order'}
                         </button>
                       </div>
                     </div>
@@ -290,17 +425,17 @@ export default function Checkout() {
               
               <div className="space-y-6 mb-8 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
                 {cartItems.map(item => {
-                  const product = getProductDetails(item.id);
+                  const product = item.product || getProductDetails(item.productId);
                   if (!product) return null;
                   return (
                     <div key={item.id} className="flex gap-4">
                       <div className="w-20 h-20 bg-white rounded-xl overflow-hidden shrink-0 border border-gray-200 p-2 flex items-center justify-center">
-                        <img src={product.image} alt={product.name} className="w-full h-full object-contain" />
+                        <img src={getImage(product)} alt={product.name} className="w-full h-full object-contain" />
                       </div>
                       <div className="flex-1 py-1">
                         <h4 className="text-sm font-bold text-gray-900 line-clamp-2 leading-snug">{product.name}</h4>
                         <p className="text-xs text-gray-500 mt-1">Qty: {item.quantity}</p>
-                        <p className="text-red-600 font-bold mt-2">₹{(product.price * item.quantity).toFixed(2)}</p>
+                        <p className="text-red-600 font-bold mt-2">₹{((product.price || item.price || 0) * item.quantity).toFixed(2)}</p>
                       </div>
                     </div>
                   );

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useWishlistStore } from '../../store/useWishlistStore';
 import { useCartStore } from '../../store/useCartStore';
 import Header from '../../components/layout/Header';
@@ -9,17 +10,18 @@ import Header from '../../components/layout/Header';
 import { useProductStore } from '../../store/useProductStore';
 
 export default function Wishlist() {
+  const router = useRouter();
   const { products } = useProductStore();
   const [mounted, setMounted] = useState(false);
   const wishlistIds = useWishlistStore((state) => state.items);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
-  const addToCartStore = useCartStore((state) => state.addItem);
+  const addToCartStore = useCartStore((state) => state.addToCart);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const getProductDetails = (id: number) => products.find(p => p.id === id);
+  const getProductDetails = (id: string) => products.find(p => p.id === id);
 
   if (!mounted) return null;
 
@@ -74,7 +76,13 @@ export default function Wishlist() {
                   </div>
                   <p className="mt-2 text-base font-semibold text-[#6b7280]">₹{item.price.toFixed(2)}</p>
                   <button
-                    onClick={() => addToCartStore(item.id)}
+                    onClick={async () => {
+                      try {
+                        await addToCartStore(item.id, 1);
+                      } catch {
+                        router.push('/signin');
+                      }
+                    }}
                     className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white py-2 rounded transition font-medium"
                   >
                     Add to Cart
