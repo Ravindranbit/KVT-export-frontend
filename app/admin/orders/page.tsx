@@ -4,11 +4,34 @@ import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import adminApi from '../../../src/lib/adminApi';
 
+type UiOrderStatus = 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+
+interface AdminOrderItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  price: number;
+  image: string;
+}
+
+interface AdminOrder {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  items: AdminOrderItem[];
+  total: number;
+  status: UiOrderStatus;
+  paymentMethod: string;
+  shippingAddress: string;
+  date: string;
+}
+
 export default function AdminOrders() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -51,7 +74,7 @@ export default function AdminOrders() {
       const response: any = await adminApi.get('/orders');
       const backendOrders = response?.data || [];
 
-      const mapped = backendOrders.map((order: any) => ({
+      const mapped: AdminOrder[] = backendOrders.map((order: any) => ({
         id: String(order.id),
         customerId: String(order.userId || order.user?.id || 'unknown'),
         customerName: order.user?.name || 'Customer',
@@ -90,7 +113,7 @@ export default function AdminOrders() {
     return matchSearch && matchStatus;
   }), [orders, search, filterStatus]);
 
-  const statusColors: Record<string, string> = {
+  const statusColors: Record<UiOrderStatus, string> = {
     pending: 'text-[#cca300]',
     processing: 'text-[#1976d2]',
     shipped: 'text-[#7b1fa2]',

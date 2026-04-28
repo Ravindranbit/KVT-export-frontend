@@ -16,7 +16,7 @@ export default function AdminLogin() {
   useEffect(() => {
     if (!hasHydrated) return;
     if (admin) {
-      router.push('/admin');
+      router.replace('/admin');
     }
   }, [hasHydrated, admin, router]);
 
@@ -30,7 +30,7 @@ export default function AdminLogin() {
       if (result.forcePasswordChange) {
         toast('Password reset required. Update it in your profile.', { icon: '⚠️' });
       }
-      router.push('/admin');
+      router.replace('/admin');
     } catch (error: any) {
       const message = error?.message || 'Admin login failed. Please try again.';
       toast.error(message);

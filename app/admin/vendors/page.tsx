@@ -1,169 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { useAdminStore } from '../../../store/useAdminStore';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { ShoppingBag } from 'lucide-react';
-
 export default function AdminVendors() {
-  const router = useRouter();
-  const { vendors, updateVendorStatus, updateVendorCommission } = useAdminStore();
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [editCommission, setEditCommission] = useState<{ id: string; value: number } | null>(null);
-
-  const filtered = vendors.filter(v => {
-    const matchesStatus = filterStatus === 'all' || v.status === filterStatus;
-    const matchesSearch = v.storeName.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          v.email.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
-
-  const statusColors: Record<string, string> = {
-    pending: 'text-[#cca300]',
-    approved: 'text-[#3b8c41]',
-    suspended: 'text-[#e60000]',
-  };
-
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-xl font-black text-gray-900">Vendor Management</h2>
-          <p className="text-sm text-gray-500">{vendors.length} vendors · {vendors.filter(v => v.status === 'pending').length} pending</p>
-        </div>
-        <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-          {/* Search Bar */}
-          <div className="relative w-full sm:w-64">
-            <input
-              type="text"
-              placeholder="Search vendors..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-primary transition-all"
-            />
-            <svg className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-          </div>
-          {/* Tabs */}
-          <div className="flex gap-2">
-            {['all', 'pending', 'approved', 'suspended'].map(s => (
-              <button key={s} onClick={() => setFilterStatus(s)} className={`px-3 py-2 text-xs font-bold rounded-lg transition-all ${filterStatus === s ? 'bg-gray-900 text-white shadow-sm' : 'bg-white border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-gray-900'}`}>
-                {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
-              </button>
-            ))}
-          </div>
-        </div>
+      <div>
+        <h2 className="text-xl font-black text-gray-900">Vendor Management</h2>
+        <p className="text-sm text-gray-500">No vendor records available</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filtered.map((v) => (
-          <div 
-            key={v.id} 
-            className="bg-white border border-gray-200 rounded-3xl p-0 overflow-hidden hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-500 group hover:-translate-y-1 shadow-sm relative flex flex-col"
-          >
-            {/* Card Content Area */}
-            <div className="block flex-1 group/content">
-              {/* Card Header with Status Overlay */}
-              <div className="relative h-20 bg-gray-50/80 flex items-center px-5 border-b border-gray-100 group-hover/content:bg-gray-100/50 transition-colors">
-
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-white border border-gray-200 rounded-xl flex items-center justify-center text-lg font-black text-gray-400 shadow-sm group-hover:rotate-3 transition-transform duration-500">
-                    {v.storeName.charAt(0)}
-                  </div>
-                  <div>
-                    <h3 className="font-black text-gray-900 text-[15px] leading-tight tracking-tight">{v.storeName}</h3>
-                    <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest mt-1">{v.name}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-5">
-                <div className="flex items-start justify-between mb-4">
-                  <p className="text-[13px] text-gray-500 leading-relaxed line-clamp-1 italic font-medium">
-                    "{v.storeDescription}"
-                  </p>
-
-                </div>
-
-                {/* Stats Grid */}
-                <div className="grid grid-cols-3 gap-0 border border-gray-100 rounded-xl overflow-hidden mb-1 shadow-sm">
-                  <div className="p-2.5 text-center border-r border-gray-100 bg-[#fafafa]">
-                    <p className="text-[15px] font-black text-gray-900">{v.productsCount}</p>
-                    <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest text-center">Products</p>
-                  </div>
-                  <div className="p-2.5 text-center border-r border-gray-100 bg-white">
-                    <p className="text-[15px] font-black text-gray-900">₹{(v.totalRevenue / 1000).toFixed(0)}k</p>
-                    <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest text-center">Revenue</p>
-                  </div>
-                  <div className="p-2.5 text-center bg-[#fafafa]">
-                    <p className="text-[15px] font-black text-blue-600">{v.commission}%</p>
-                    <p className="text-[9px] text-gray-400 font-black uppercase tracking-widest text-center">Fee Rate</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Action Buttons - Outside the Link to avoid nesting but inside the same card */}
-            <div className="px-5 pb-5 pt-0">
-                {v.status === 'pending' && (
-                  <div className="flex gap-2 w-full">
-                    <button 
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateVendorStatus(v.id, 'approved'); }} 
-                      className="flex-1 text-[12px] font-bold capitalize tracking-wide text-white bg-[#3b8c41] py-2.5 rounded-xl hover:bg-[#2e6e33] transition-all active:scale-95 shadow-md shadow-green-500/10"
-                    >
-                      Approve
-                    </button>
-                    <button 
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateVendorStatus(v.id, 'suspended'); }} 
-                      className="flex-1 text-[12px] font-bold capitalize tracking-wide text-white bg-[#e60000] py-2.5 rounded-xl hover:bg-[#cc0000] transition-all active:scale-95 shadow-md shadow-red-500/10"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                )}
-                {(v.status === 'approved' || v.status === 'suspended') && (
-                  <div className="flex gap-2 w-full">
-                    <button 
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); router.push(`/admin/vendors/${v.id}`); }} 
-                      className="flex-1 text-[12px] font-bold capitalize tracking-wide text-white bg-[#1976d2] py-2.5 rounded-xl hover:bg-[#1565c0] transition-all active:scale-95 shadow-md shadow-blue-500/10"
-                    >
-                      Open Store
-                    </button>
-                    <button 
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateVendorStatus(v.id, v.status === 'suspended' ? 'approved' : 'suspended'); }} 
-                      className={`flex-1 text-[12px] font-bold capitalize tracking-wide py-2.5 rounded-xl transition-all active:scale-95 shadow-md ${
-                        v.status === 'suspended' 
-                          ? 'text-white bg-[#3b8c41] hover:bg-[#2e6e33] shadow-green-500/10' 
-                          : 'text-white bg-[#e60000] hover:bg-[#cc0000] shadow-red-500/10'
-                      }`}
-                    >
-                      {v.status === 'suspended' ? 'Activate' : 'Suspend'}
-                    </button>
-                  </div>
-                )}
-            </div>
-          </div>
-        ))}
+      <div className="rounded-3xl border border-dashed border-gray-200 bg-white p-12 text-center shadow-sm">
+        <p className="text-lg font-black text-gray-900">Vendor management is unavailable</p>
+        <p className="mt-3 text-sm text-gray-500">
+          The backend currently has no vendor module. Mock vendor cards were removed, so this page will stay empty until vendor APIs are added.
+        </p>
       </div>
-
-      {/* Commission Modal */}
-      {editCommission && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setEditCommission(null)}>
-          <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-black text-gray-900 mb-4">Edit Commission</h3>
-            <div className="mb-4">
-              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Commission %</label>
-              <input type="number" min={0} max={50} value={editCommission.value} onChange={(e) => setEditCommission({...editCommission, value: parseInt(e.target.value)})} className="w-full border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500" />
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setEditCommission(null)} className="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600">Cancel</button>
-              <button onClick={() => { updateVendorCommission(editCommission.id, editCommission.value); setEditCommission(null); }} className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg text-sm font-bold">Save</button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

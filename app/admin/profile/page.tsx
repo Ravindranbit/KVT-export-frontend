@@ -89,7 +89,7 @@ export default function AdminProfile() {
               </div>
               <div>
                 <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1.5">Member Since</p>
-                <p className="text-xs font-bold text-gray-700">{user.joinedDate || 'Dec 2025'}</p>
+                <p className="text-xs font-bold text-gray-700">Not available from backend</p>
               </div>
             </div>
           </div>

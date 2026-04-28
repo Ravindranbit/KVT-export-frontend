@@ -21,6 +21,13 @@ interface AdminAuthState {
   updateProfile: (updates: Partial<AdminSession>) => void;
 }
 
+const mapAdminSession = (admin: any): AdminSession => ({
+  id: String(admin.id),
+  name: admin.name,
+  email: admin.email,
+  role: admin.role,
+});
+
 export const useAdminAuthStore = create<AdminAuthState>()(
   persist(
     (set, get) => ({
@@ -51,12 +58,7 @@ export const useAdminAuthStore = create<AdminAuthState>()(
 
         get().setToken(token);
         set({
-          admin: {
-            id: admin.id,
-            name: admin.name,
-            email: admin.email,
-            role: admin.role,
-          },
+          admin: mapAdminSession(admin),
         });
 
         return {
@@ -70,16 +72,21 @@ export const useAdminAuthStore = create<AdminAuthState>()(
         }
         set({ admin: null, token: null });
       },
-      updateProfile: (updates) => set((state) => ({
-        admin: state.admin ? { ...state.admin, ...updates } : null,
-      })),
+      updateProfile: (updates) =>
+        set((state) => ({
+          admin: state.admin ? { ...state.admin, ...updates } : null,
+        })),
     }),
     {
       name: 'admin-auth-storage',
+      partialize: (state) => ({
+        admin: state.admin,
+        token: state.token,
+      }),
       onRehydrateStorage: () => (state) => {
         if (typeof window !== 'undefined') {
           const storedToken = localStorage.getItem(ADMIN_TOKEN_KEY);
-          if (storedToken) {
+          if (storedToken && !state?.token) {
             state?.setToken(storedToken);
           }
         }
