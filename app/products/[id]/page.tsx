@@ -20,7 +20,7 @@ export default function ProductDetail() {
     ? selectedProduct
     : products.find((p) => p.id === productId);
   const [quantity, setQuantity] = useState(1);
-  
+
   // Variants State
   const [selectedSize, setSelectedSize] = useState(product?.sizes?.[0] || '');
   const [selectedColor, setSelectedColor] = useState(product?.colors?.[0]?.name || '');
@@ -88,20 +88,20 @@ export default function ProductDetail() {
         <div className="flex flex-col lg:flex-row gap-12 lg:gap-16">
           {/* Product Image Gallery */}
           <div className="lg:w-[55%] w-full">
-            <ProductGallery 
+            <ProductGallery
               images={[
                 product.image,
                 product.image,
                 product.image,
                 product.image
-              ]} 
+              ]}
             />
           </div>
 
           {/* Product Info */}
           <div className="lg:w-[45%] w-full flex flex-col py-4">
             <h1 className="text-4xl font-bold text-gray-900 mb-3">{product.name}</h1>
-            
+
             {/* Rating */}
             <div className="flex items-center mb-6">
               <div className="flex text-yellow-400">
@@ -118,7 +118,7 @@ export default function ProductDetail() {
             <div className="text-3xl font-bold text-gray-900 mb-8">₹{product.price.toFixed(2)}</div>
 
             {/* Variants */}
-            <VariantSelector 
+            <VariantSelector
               sizes={product.sizes}
               colors={product.colors}
               selectedSize={selectedSize}

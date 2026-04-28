@@ -60,6 +60,10 @@ export default function Cart() {
 
   const handleUpdateQuantity = async (productId: string, quantity: number) => {
     try {
+      if (quantity <= 0) {
+        await removeFromCart(productId);
+        return;
+      }
       await updateCart(productId, quantity);
     } catch {
       // Store error state is shown in UI.
