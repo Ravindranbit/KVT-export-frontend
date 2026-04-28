@@ -1,20 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuthStore } from '../../../store/useAuthStore';
+import { useAdminAuthStore } from '../../../store/useAdminAuthStore';
+import adminApi from '../../../src/lib/adminApi';
+import toast from 'react-hot-toast';
 
 export default function AdminProfile() {
-  const { user, updateProfile } = useAuthStore();
+  const { admin, updateProfile } = useAdminAuthStore();
   const [saved, setSaved] = useState(false);
   const [form, setForm] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
+    name: admin?.name || '',
+    email: admin?.email || '',
+    phone: '',
   });
   const [passwordForm, setPasswordForm] = useState({ current: '', newPass: '', confirm: '' });
   const [passMsg, setPassMsg] = useState('');
 
-  if (!user) return null;
+  if (!admin) return null;
 
   const handleSave = () => {
     updateProfile(form);
@@ -22,7 +24,7 @@ export default function AdminProfile() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const handlePasswordChange = () => {
+  const handlePasswordChange = async () => {
     if (passwordForm.newPass !== passwordForm.confirm) {
       setPassMsg('Passwords do not match');
       return;
@@ -31,9 +33,19 @@ export default function AdminProfile() {
       setPassMsg('Password must be at least 6 characters');
       return;
     }
-    setPassMsg('Password updated successfully!');
-    setPasswordForm({ current: '', newPass: '', confirm: '' });
-    setTimeout(() => setPassMsg(''), 2000);
+    try {
+      await adminApi.patch('/admin/change-password', {
+        oldPassword: passwordForm.current,
+        newPassword: passwordForm.newPass,
+      });
+      setPassMsg('Password updated successfully!');
+      setPasswordForm({ current: '', newPass: '', confirm: '' });
+      setTimeout(() => setPassMsg(''), 2000);
+    } catch (error: any) {
+      const message = error?.message || 'Unable to update password';
+      setPassMsg(message);
+      toast.error(message);
+    }
   };
 
   return (
@@ -59,21 +71,21 @@ export default function AdminProfile() {
           {/* Sidebar Left Column */}
           <div className="md:col-span-4 lg:col-span-3 border-r border-gray-100 bg-gray-50/50 p-8 flex flex-col items-center text-center">
             <div className="w-28 h-28 rounded-full bg-gradient-to-tr from-[#e60000] to-orange-500 flex items-center justify-center text-white text-4xl font-black shadow-lg shadow-red-500/20 mb-5 border-4 border-white">
-              {user.name.charAt(0)}
+              {admin.name.charAt(0)}
             </div>
             
-            <h3 className="text-lg font-bold text-gray-900">{user.name}</h3>
-            <p className="text-sm font-medium text-gray-500 mb-5">{user.email}</p>
+            <h3 className="text-lg font-bold text-gray-900">{admin.name}</h3>
+            <p className="text-sm font-medium text-gray-500 mb-5">{admin.email}</p>
             
             <div className="inline-flex items-center gap-2 bg-white px-3.5 py-1.5 rounded-lg border border-gray-200 shadow-sm">
               <div className="w-2 h-2 rounded-full bg-[#3b8c41]" />
-              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-700">Active {user.role}</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-gray-700">Active {admin.role}</span>
             </div>
             
             <div className="w-full mt-10 pt-8 border-t border-gray-200/60 text-left space-y-5">
               <div>
                 <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1.5">Account ID</p>
-                <p className="text-xs font-mono font-bold text-gray-700">{user.id}</p>
+                <p className="text-xs font-mono font-bold text-gray-700">{admin.id}</p>
               </div>
               <div>
                 <p className="text-[10px] uppercase font-bold text-gray-400 tracking-wider mb-1.5">Member Since</p>

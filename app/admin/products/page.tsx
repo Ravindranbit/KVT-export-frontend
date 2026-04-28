@@ -1,49 +1,78 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import adminApi from '../../../src/lib/adminApi';
 import { useProductStore, Product } from '../../../store/useProductStore';
+import { useCategoryStore } from '../../../store/useCategoryStore';
 
 export default function AdminProducts() {
-  const { products, addProduct, removeProduct } = useProductStore();
+  const { products, fetchProducts } = useProductStore();
+  const { categories, fetchCategories, getCategoryNameById } = useCategoryStore();
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  const [form, setForm] = useState({ name: '', price: '', category: 'fashion', description: '', image: '', vendorId: 'admin', stock: '100', sku: '', brand: '' });
+  const [form, setForm] = useState({ name: '', price: '', categoryId: '', description: '', image: '', vendorId: 'admin', stock: '100', sku: '', brand: '' });
 
-  const categories = ['all', ...new Set(products.map(p => p.category))];
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, [fetchProducts, fetchCategories]);
+
+  const flatCategories = useMemo(() => {
+    const walk = (nodes: typeof categories): { id: string; name: string }[] =>
+      nodes.flatMap((node) => [
+        { id: node.id, name: node.name },
+        ...walk(node.children || []),
+      ]);
+    return walk(categories);
+  }, [categories]);
+
+  const categoryOptions = ['all', ...flatCategories.map((category) => category.id)];
 
   const filtered = products.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toString().includes(search);
-    const matchCat = filterCategory === 'all' || p.category === filterCategory;
+    const matchCat = filterCategory === 'all' || p.categoryId === filterCategory;
     return matchSearch && matchCat;
   });
 
-  const handleAdd = () => {
-    const newProduct: Product = {
-      id: String(Date.now()),
-      name: form.name,
-      price: parseFloat(form.price),
-      category: form.category,
-      description: form.description,
-      image: form.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80',
-      vendorId: form.vendorId,
-      rating: 0,
-      reviews: 0,
-      stock: parseInt(form.stock),
-      sku: form.sku,
-      brand: form.brand,
-    };
-    addProduct(newProduct);
-    setShowAddModal(false);
-    setForm({ name: '', price: '', category: 'fashion', description: '', image: '', vendorId: 'admin', stock: '100', sku: '', brand: '' });
+  const handleAdd = async () => {
+    if (!form.categoryId) {
+      toast.error('Select a category');
+      return;
+    }
+
+    try {
+      await adminApi.post('/products', {
+        name: form.name,
+        description: form.description,
+        price: parseFloat(form.price),
+        stock: parseInt(form.stock, 10),
+        imageUrl: form.image || undefined,
+        categoryId: form.categoryId,
+      });
+
+      await fetchProducts();
+      setShowAddModal(false);
+      setForm({ name: '', price: '', categoryId: '', description: '', image: '', vendorId: 'admin', stock: '100', sku: '', brand: '' });
+      toast.success('Product created');
+    } catch (error: any) {
+      toast.error(error?.message || 'Unable to create product');
+    }
   };
 
-  const handleDelete = (id: string) => {
-    removeProduct(id);
-    setDeleteConfirm(null);
+  const handleDelete = async (id: string) => {
+    try {
+      await adminApi.patch(`/products/${id}/deactivate`, {});
+      await fetchProducts();
+      setDeleteConfirm(null);
+      toast.success('Product deactivated');
+    } catch (error: any) {
+      toast.error(error?.message || 'Unable to deactivate product');
+    }
   };
 
   return (
@@ -72,7 +101,11 @@ export default function AdminProducts() {
           />
         </div>
         <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-          {categories.map(c => <option key={c} value={c}>{c === 'all' ? 'All Categories' : c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+          {categoryOptions.map((categoryId) => (
+            <option key={categoryId} value={categoryId}>
+              {categoryId === 'all' ? 'All Categories' : getCategoryNameById(categoryId)}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -102,7 +135,7 @@ export default function AdminProducts() {
                   </div>
                 </td>
                 <td className="px-2 py-3 text-center">
-                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{p.category}</span>
+                  <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{getCategoryNameById(p.categoryId)}</span>
                 </td>
                 <td className="px-2 py-3 text-center text-sm font-black text-gray-900">₹{p.price.toLocaleString()}</td>
                 <td className="px-2 py-3 text-center">
@@ -164,14 +197,13 @@ export default function AdminProducts() {
                 </div>
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Category *</label>
-                  <select value={form.category} onChange={(e) => setForm({...form, category: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white">
-                    <option value="electronics">Electronics</option>
-                    <option value="fashion">Fashion</option>
-                    <option value="home">Home</option>
-                    <option value="sports">Sports</option>
-                    <option value="beauty">Beauty</option>
-                    <option value="books">Books</option>
-                    <option value="toys">Toys</option>
+                  <select value={form.categoryId} onChange={(e) => setForm({...form, categoryId: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white">
+                    <option value="">Select category</option>
+                    {flatCategories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

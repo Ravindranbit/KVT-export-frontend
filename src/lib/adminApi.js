@@ -1,22 +1,22 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001";
-const TOKEN_KEY = "auth-token";
+const ADMIN_TOKEN_KEY = "admin-token";
 
-function getToken() {
+function getAdminToken() {
   if (typeof window === "undefined") {
     return null;
   }
 
-  return localStorage.getItem(TOKEN_KEY);
+  return localStorage.getItem(ADMIN_TOKEN_KEY);
 }
 
 async function request(path, options = {}) {
-  const token = getToken();
+  const token = getAdminToken();
   const headers = {
     "Content-Type": "application/json",
     ...(options.headers || {}),
   };
 
-  if (token) {
+  if (token && !headers.Authorization) {
     headers.Authorization = `Bearer ${token}`;
   }
 
@@ -41,7 +41,7 @@ async function request(path, options = {}) {
   return data;
 }
 
-const api = {
+const adminApi = {
   get: (path, options = {}) => request(path, { method: "GET", ...options }),
   post: (path, body, options = {}) =>
     request(path, {
@@ -55,12 +55,13 @@ const api = {
       body: JSON.stringify(body),
       ...options,
     }),
-  delete: (path, options = {}) =>
+  put: (path, body, options = {}) =>
     request(path, {
-      method: "DELETE",
+      method: "PUT",
+      body: JSON.stringify(body),
       ...options,
     }),
 };
 
-export { TOKEN_KEY, API_BASE_URL, getToken };
-export default api;
+export { ADMIN_TOKEN_KEY, getAdminToken };
+export default adminApi;

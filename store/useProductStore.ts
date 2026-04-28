@@ -124,45 +124,45 @@ export const useProductStore = create<ProductState>()(
         }
       },
       clearSelectedProduct: () => set({ selectedProduct: null }),
-      addProduct: (product) => set((state) => ({ 
-        products: [product, ...state.products] 
+      addProduct: (product) => set((state) => ({
+        products: [product, ...state.products]
       })),
       updateProduct: (id, updatedProduct) => set((state) => ({
         products: state.products.map(p => p.id === id ? { ...p, ...updatedProduct } : p)
       })),
-      removeProduct: (id) => set((state) => ({ 
-        products: state.products.filter(p => p.id !== id) 
+      removeProduct: (id) => set((state) => ({
+        products: state.products.filter(p => p.id !== id)
       })),
       addFeedback: (productId, feedback) => set((state) => ({
-        products: state.products.map(p => 
-          p.id === productId 
-            ? { 
-                ...p, 
-                feedbacks: [...(p.feedbacks || []), feedback],
-                reviews: p.reviews + 1,
-                rating: Number(((p.rating * p.reviews + feedback.rating) / (p.reviews + 1)).toFixed(1))
-              } 
+        products: state.products.map(p =>
+          p.id === productId
+            ? {
+              ...p,
+              feedbacks: [...(p.feedbacks || []), feedback],
+              reviews: p.reviews + 1,
+              rating: Number(((p.rating * p.reviews + feedback.rating) / (p.reviews + 1)).toFixed(1))
+            }
             : p
         )
       })),
       updateFeedback: (productId, feedbackId, updates) => set((state) => ({
-        products: state.products.map(p => 
-          p.id === productId 
-            ? { 
-                ...p, 
-                feedbacks: p.feedbacks?.map(f => {
-                  if (f.id === feedbackId) {
-                    const updatedFeedback = { ...f, ...updates };
-                    // Recalculate rating if rating changed
-                    if (updates.rating !== undefined && updates.rating !== f.rating) {
-                      const otherRatingsTotal = p.rating * p.reviews - f.rating;
-                      p.rating = Number(((otherRatingsTotal + updates.rating) / p.reviews).toFixed(1));
-                    }
-                    return updatedFeedback;
+        products: state.products.map(p =>
+          p.id === productId
+            ? {
+              ...p,
+              feedbacks: p.feedbacks?.map(f => {
+                if (f.id === feedbackId) {
+                  const updatedFeedback = { ...f, ...updates };
+                  // Recalculate rating if rating changed
+                  if (updates.rating !== undefined && updates.rating !== f.rating) {
+                    const otherRatingsTotal = p.rating * p.reviews - f.rating;
+                    p.rating = Number(((otherRatingsTotal + updates.rating) / p.reviews).toFixed(1));
                   }
-                  return f;
-                })
-              } 
+                  return updatedFeedback;
+                }
+                return f;
+              })
+            }
             : p
         )
       })),

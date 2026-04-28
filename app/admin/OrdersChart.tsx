@@ -1,15 +1,10 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
-import { useAdminStore } from '../../store/useAdminStore';
+import adminApi from '../../src/lib/adminApi';
 
-const COLORS: Record<string, string> = {
-  'Pending': '#fbbf24',    // Amber-400 (Alert/Needs Action)
-  'Processing': '#60a5fa', // Blue-400 (Active Work)
-  'Shipped': '#818cf8',    // Indigo-400 (In Transit)
-  'Delivered': '#34d399',  // Emerald-400 (Success/Done)
-  'Cancelled': '#f87171',  // Red-400 (Negative/Stopped)
-};
+const BAR_COLOR = '#60a5fa';
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -30,15 +25,44 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function OrdersChart() {
-  const { orders } = useAdminStore();
+  const [orders, setOrders] = useState<any[]>([]);
 
-  const data = [
-    { name: 'Pending', count: orders.filter(o => o.status === 'pending').length },
-    { name: 'Processing', count: orders.filter(o => o.status === 'processing').length },
-    { name: 'Shipped', count: orders.filter(o => o.status === 'shipped').length },
-    { name: 'Delivered', count: orders.filter(o => o.status === 'delivered').length },
-    { name: 'Cancelled', count: orders.filter(o => o.status === 'cancelled').length },
-  ];
+  useEffect(() => {
+    const loadOrders = async () => {
+      try {
+        const response: any = await adminApi.get('/orders');
+        setOrders(Array.isArray(response?.data) ? response.data : []);
+      } catch {
+        setOrders([]);
+      }
+    };
+
+    loadOrders();
+  }, []);
+
+  const data = useMemo(() => {
+    const counts = new Map<string, { label: string; count: number }>();
+
+    orders.forEach((order) => {
+      if (!order.createdAt) return;
+      const date = new Date(order.createdAt);
+      const key = date.toISOString().slice(0, 10);
+      const label = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const existing = counts.get(key);
+
+      if (existing) {
+        existing.count += 1;
+      } else {
+        counts.set(key, { label, count: 1 });
+      }
+    });
+
+    const sorted = Array.from(counts.entries())
+      .map(([key, value]) => ({ key, name: value.label, count: value.count }))
+      .sort((a, b) => a.key.localeCompare(b.key));
+
+    return sorted.slice(-7);
+  }, [orders]);
 
   const maxCount = Math.max(...data.map(d => d.count), 4);
 
@@ -72,7 +96,7 @@ export default function OrdersChart() {
             barSize={58}
           >
             {data.map((entry) => (
-              <Cell key={entry.name} fill={COLORS[entry.name]} />
+              <Cell key={entry.name} fill={BAR_COLOR} />
             ))}
           </Bar>
         </BarChart>

@@ -140,6 +140,20 @@ export default function Checkout() {
     setIsProcessing(processing);
   };
 
+  const placeOrderDirectly = async (message?: string) => {
+    const response: any = await api.post('/orders/place', {});
+    const { orderId } = response?.data || {};
+
+    if (!orderId) {
+      throw new Error('Unable to place order');
+    }
+
+    await fetchCart();
+    setProcessingState(false);
+    toast.success(message || 'Order placed successfully', { id: 'payment-status' });
+    router.push(`/order-confirmation?orderId=${orderId}`);
+  };
+
   const handlePaymentFailure = (message: string) => {
     toast.error(message, { id: 'payment-status' });
     setPaymentError(message);
@@ -166,7 +180,8 @@ export default function Checkout() {
     try {
       const key = process.env.NEXT_PUBLIC_RAZORPAY_KEY;
       if (!key) {
-        throw new Error('Razorpay key is not configured');
+        await placeOrderDirectly('Payment gateway unavailable. Order placed in dev mode.');
+        return;
       }
 
       const scriptLoaded = await loadRazorpayScript();
@@ -174,17 +189,27 @@ export default function Checkout() {
         throw new Error('Failed to load payment gateway');
       }
 
-      const orderResponse: any = await api.post('/payment/create-order', {
-        shippingAddress: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          address: formData.address,
-          city: formData.city,
-          zip: formData.zip,
-          email: formData.email,
-          phone: formData.phone,
-        },
-      });
+      let orderResponse: any;
+
+      try {
+        orderResponse = await api.post('/payment/create-order', {
+          shippingAddress: {
+            firstName: formData.firstName,
+            lastName: formData.lastName,
+            address: formData.address,
+            city: formData.city,
+            zip: formData.zip,
+            email: formData.email,
+            phone: formData.phone,
+          },
+        });
+      } catch (error: any) {
+        if (error?.status === 503) {
+          await placeOrderDirectly('Payment gateway unavailable. Order placed in dev mode.');
+          return;
+        }
+        throw error;
+      }
 
       const { orderId, razorpayOrderId, amount } = orderResponse?.data || {};
       if (!orderId || !razorpayOrderId || !amount) {

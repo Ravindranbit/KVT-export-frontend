@@ -1,7 +1,10 @@
 'use client';
 
-import { useState } from 'react';
-import { useAdminStore, Category } from '../../../store/useAdminStore';
+import { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import adminApi from '../../../src/lib/adminApi';
+import { useCategoryStore } from '../../../store/useCategoryStore';
+import { useProductStore } from '../../../store/useProductStore';
 import { 
   Plus, 
   Search, 
@@ -17,7 +20,8 @@ import {
 } from 'lucide-react';
 
 export default function AdminCategories() {
-  const { categories, addCategory, updateCategory, deleteCategory } = useAdminStore();
+  const { categories, fetchCategories } = useCategoryStore();
+  const { products, fetchProducts } = useProductStore();
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -25,24 +29,62 @@ export default function AdminCategories() {
   const defaultForm = { name: '', slug: '', description: '', visible: true, showInHeader: true, showInFilters: true };
   const [form, setForm] = useState(defaultForm);
 
-  const filteredCategories = categories.filter(cat => 
-    cat.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    cat.description.toLowerCase().includes(searchQuery.toLowerCase())
+  useEffect(() => {
+    fetchCategories();
+    fetchProducts();
+  }, [fetchCategories, fetchProducts]);
+
+  const flatCategories = useMemo(() => {
+    const walk = (nodes: typeof categories): Array<{ id: string; name: string; slug: string; description?: string | null; isActive?: boolean }> =>
+      nodes.flatMap((node) => [
+        {
+          id: node.id,
+          name: node.name,
+          slug: node.slug,
+          description: node.description,
+          isActive: node.isActive,
+        },
+        ...walk(node.children || []),
+      ]);
+    return walk(categories);
+  }, [categories]);
+
+  const productCountByCategory = useMemo(() => {
+    const counts: Record<string, number> = {};
+    products.forEach((product) => {
+      const categoryId = product.categoryId;
+      if (!categoryId) return;
+      counts[categoryId] = (counts[categoryId] || 0) + 1;
+    });
+    return counts;
+  }, [products]);
+
+  const filteredCategories = flatCategories.filter(cat =>
+    cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (cat.description || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSave = () => {
-    if (editingId) {
-      updateCategory(editingId, form);
-    } else {
-      addCategory({
-        id: `cat_${Date.now()}`,
-        ...form,
-        slug: form.slug || form.name.toLowerCase().replace(/\s+/g, '-'),
-        productCount: 0,
-        order: categories.length + 1,
-      });
+  const handleSave = async () => {
+    try {
+      if (editingId) {
+        await adminApi.put(`/categories/${editingId}`, {
+          name: form.name,
+          description: form.description,
+          isActive: form.visible,
+        });
+        toast.success('Category updated');
+      } else {
+        await adminApi.post('/categories', {
+          name: form.name,
+          description: form.description,
+        });
+        toast.success('Category created');
+      }
+      await fetchCategories();
+      closeModal();
+    } catch (error: any) {
+      toast.error(error?.message || 'Unable to save category');
     }
-    closeModal();
   };
 
   const closeModal = () => {
@@ -51,14 +93,14 @@ export default function AdminCategories() {
     setForm(defaultForm);
   };
 
-  const openEdit = (cat: Category) => {
+  const openEdit = (cat: { id: string; name: string; slug: string; description?: string | null; isActive?: boolean }) => {
     setForm({ 
       name: cat.name, 
       slug: cat.slug, 
-      description: cat.description, 
-      visible: cat.visible,
-      showInHeader: cat.showInHeader ?? true,
-      showInFilters: cat.showInFilters ?? true
+      description: cat.description || '', 
+      visible: cat.isActive !== false,
+      showInHeader: true,
+      showInFilters: true
     });
     setEditingId(cat.id);
     setShowModal(true);
@@ -70,7 +112,7 @@ export default function AdminCategories() {
       <div className="bg-white border border-gray-100 rounded-[28px] p-8 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
         <div>
           <h2 className="text-2xl font-black text-gray-900 tracking-tight leading-none">Categories</h2>
-          <p className="text-sm font-bold text-gray-400 mt-2.5 opacity-80">Manage and group {categories.length} product sections</p>
+          <p className="text-sm font-bold text-gray-400 mt-2.5 opacity-80">Manage and group {flatCategories.length} product sections</p>
         </div>
         
         <div className="flex items-center gap-4">
@@ -96,10 +138,16 @@ export default function AdminCategories() {
  
       {/* Categories Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filteredCategories.sort((a, b) => a.order - b.order).map((cat) => (
+        {filteredCategories.sort((a, b) => a.name.localeCompare(b.name)).map((cat) => {
+          const isVisible = cat.isActive !== false;
+          const productCount = productCountByCategory[cat.id] || 0;
+          const showInHeader = true;
+          const showInFilters = true;
+
+          return (
           <div 
             key={cat.id} 
-            className={`group bg-white border border-gray-100 rounded-[32px] p-6 shadow-sm hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-500 flex flex-col h-full ${!cat.visible ? 'opacity-70 grayscale-[20%]' : ''}`}
+            className={`group bg-white border border-gray-100 rounded-[32px] p-6 shadow-sm hover:shadow-2xl hover:shadow-gray-200/50 transition-all duration-500 flex flex-col h-full ${!isVisible ? 'opacity-70 grayscale-[20%]' : ''}`}
           >
             {/* Header: Layers & Trash */}
             <div className="flex justify-between items-start mb-5">
@@ -107,7 +155,15 @@ export default function AdminCategories() {
                  <Layers size={22} />
               </div>
               <button 
-                onClick={() => deleteCategory(cat.id)}
+                onClick={async () => {
+                  try {
+                    await adminApi.patch(`/categories/${cat.id}/deactivate`, {});
+                    await fetchCategories();
+                    toast.success('Category deactivated');
+                  } catch (error: any) {
+                    toast.error(error?.message || 'Unable to deactivate category');
+                  }
+                }}
                 className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all active:scale-95"
                 title="Delete Category"
               >
@@ -122,15 +178,15 @@ export default function AdminCategories() {
               <div className="mt-3.5 mb-4 flex items-center gap-2 flex-wrap">
                  <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gray-50 border border-gray-100 rounded-lg">
                    <Package size={12} className="text-gray-400" />
-                   <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{cat.productCount} Items</span>
+                   <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{productCount} Items</span>
                  </div>
-                 {cat.showInHeader && (
+                 {showInHeader && (
                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-100 rounded-lg text-blue-600">
                      <Folder size={11} className="stroke-[3]" />
                      <span className="text-[9px] font-black uppercase tracking-tight">Header</span>
                    </div>
                  )}
-                 {cat.showInFilters && (
+                 {showInFilters && (
                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-100 rounded-lg text-blue-600">
                      <Search size={11} className="stroke-[3]" />
                      <span className="text-[9px] font-black uppercase tracking-tight">Filters</span>
@@ -153,19 +209,31 @@ export default function AdminCategories() {
                 Edit
               </button>
               <button 
-                onClick={() => updateCategory(cat.id, { visible: !cat.visible })}
+                type="button"
+                onClick={async () => {
+                  try {
+                    await adminApi.put(`/categories/${cat.id}`, {
+                      name: cat.name,
+                      description: cat.description,
+                      isActive: !isVisible,
+                    });
+                    await fetchCategories();
+                  } catch (error: any) {
+                    toast.error(error?.message || 'Unable to update category');
+                  }
+                }}
                 className={`flex-1 py-3 rounded-[16px] text-[10px] font-black uppercase tracking-[0.15em] transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg brightness-[0.95] hover:brightness-90 ${
-                  cat.visible 
+                  isVisible 
                     ? 'bg-[#ff6b2b] text-white shadow-orange-500/20' 
                     : 'bg-gray-900 text-white shadow-gray-900/20'
                 }`}
               >
-                {cat.visible ? <EyeOff size={13} className="stroke-[3]" /> : <Eye size={13} className="stroke-[3]" />}
-                {cat.visible ? 'Hide' : 'Show'}
+                {isVisible ? <EyeOff size={13} className="stroke-[3]" /> : <Eye size={13} className="stroke-[3]" />}
+                {isVisible ? 'Hide' : 'Show'}
               </button>
             </div>
           </div>
-        ))}
+        )})}
       </div>
 
       {/* Management Modal */}

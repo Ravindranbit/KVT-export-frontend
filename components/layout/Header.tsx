@@ -9,6 +9,7 @@ import { useProductStore } from '../../store/useProductStore';
 import MegaMenu from './MegaMenu';
 import { useRouter } from 'next/navigation';
 import { useAdminStore } from '../../store/useAdminStore';
+import { useCategoryStore } from '../../store/useCategoryStore';
 
 export default function Header() {
   const [mounted, setMounted] = useState(false);
@@ -24,12 +25,18 @@ export default function Header() {
   
   const cart = useCartStore((state) => state.getTotalItems());
   const { products } = useProductStore();
-  const { settings, categories: adminCategories } = useAdminStore();
+  const { settings } = useAdminStore();
+  const { categories, fetchCategories } = useCategoryStore();
   const productCategories = Array.from(new Set(products.map(p => p.category.toLowerCase())));
-  const categories = adminCategories.filter(c => c.visible && (c.showInHeader !== false)).map(c => c.name.toLowerCase());
-  
-  // Merge categories if needed, but primarily follow Admin
-  const finalCategories = categories.length > 0 ? categories : productCategories;
+  const categoryNames = categories.flatMap((category) => {
+    const walk = (node: typeof category): string[] => [
+      node.name.toLowerCase(),
+      ...node.children.flatMap((child) => walk(child)),
+    ];
+    return walk(category);
+  });
+
+  const finalCategories = categoryNames.length > 0 ? categoryNames : productCategories;
 
   const siteNameParts = settings.siteName ? settings.siteName.split(' ') : ['KVT', 'exports'];
   const firstPart = siteNameParts[0];
@@ -53,6 +60,10 @@ export default function Header() {
       // Ignore here; cart pages/drawer expose error details.
     });
   }, [hasHydrated, token, fetchCart]);
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   const filtered = searchQuery.length > 1
     ? products.filter(p =>
