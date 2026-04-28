@@ -1,19 +1,94 @@
 'use client';
 
-import { useState } from 'react';
-import { useAdminStore } from '../../../store/useAdminStore';
+import { useEffect, useMemo, useState } from 'react';
+import toast from 'react-hot-toast';
+import adminApi from '../../../src/lib/adminApi';
 
 export default function AdminOrders() {
-  const { orders, updateOrderStatus } = useAdminStore();
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const filtered = orders.filter(o => {
+  const toUiStatus = (status: string) => {
+    switch (String(status).toUpperCase()) {
+      case 'CONFIRMED':
+        return 'processing';
+      case 'SHIPPED':
+        return 'shipped';
+      case 'DELIVERED':
+        return 'delivered';
+      case 'CANCELLED':
+        return 'cancelled';
+      case 'PENDING':
+      default:
+        return 'pending';
+    }
+  };
+
+  const toApiStatus = (status: string) => {
+    switch (status) {
+      case 'processing':
+        return 'CONFIRMED';
+      case 'shipped':
+        return 'SHIPPED';
+      case 'delivered':
+        return 'DELIVERED';
+      case 'cancelled':
+        return 'CANCELLED';
+      case 'pending':
+      default:
+        return 'PENDING';
+    }
+  };
+
+  const loadOrders = async () => {
+    setIsLoading(true);
+    setLoadError(null);
+    try {
+      const response: any = await adminApi.get('/orders');
+      const backendOrders = response?.data || [];
+
+      const mapped = backendOrders.map((order: any) => ({
+        id: String(order.id),
+        customerId: String(order.userId || order.user?.id || 'unknown'),
+        customerName: order.user?.name || 'Customer',
+        customerEmail: order.user?.email || '-',
+        items: (order.orderItems || order.items || []).map((item: any) => ({
+          productId: item.productId,
+          productName: item.name || 'Product',
+          quantity: Number(item.quantity || 0),
+          price: Number(item.price || 0),
+          image: item.product?.imageUrl || '/placeholder.png',
+        })),
+        total: Number(order.totalAmount || 0),
+        status: toUiStatus(order.status),
+        paymentMethod: order.paymentStatus || 'PENDING',
+        shippingAddress: 'Not provided',
+        date: order.createdAt
+          ? new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          : '-'
+      }));
+
+      setOrders(mapped);
+    } catch (error: any) {
+      setLoadError(error?.message || 'Unable to load orders');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const filtered = useMemo(() => orders.filter(o => {
     const matchSearch = o.id.toLowerCase().includes(search.toLowerCase()) || o.customerName.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === 'all' || o.status === filterStatus;
     return matchSearch && matchStatus;
-  });
+  }), [orders, search, filterStatus]);
 
   const statusColors: Record<string, string> = {
     pending: 'text-[#cca300]',
@@ -23,9 +98,18 @@ export default function AdminOrders() {
     cancelled: 'text-[#e60000]',
   };
 
-  const statusFlow = ['pending', 'processing', 'shipped', 'delivered'];
-
   const orderDetail = selectedOrder ? orders.find(o => o.id === selectedOrder) : null;
+
+  const handleStatusUpdate = async (orderId: string, status: string) => {
+    try {
+      await adminApi.patch(`/orders/${orderId}/status`, {
+        status: toApiStatus(status),
+      });
+      await loadOrders();
+    } catch (error: any) {
+      toast.error(error?.message || 'Unable to update order status');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -53,6 +137,12 @@ export default function AdminOrders() {
 
       {/* Orders Table */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+        {isLoading && (
+          <div className="px-6 py-6 text-sm text-gray-500">Loading orders...</div>
+        )}
+        {!isLoading && loadError && (
+          <div className="px-6 py-6 text-sm text-red-600">{loadError}</div>
+        )}
         <table className="w-full">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
@@ -120,7 +210,7 @@ export default function AdminOrders() {
                     <div className="relative group">
                       <select
                         value={o.status}
-                        onChange={(e) => updateOrderStatus(o.id, e.target.value as any)}
+                        onChange={(e) => handleStatusUpdate(o.id, e.target.value)}
                         className="text-[12px] font-bold capitalize border-2 border-gray-100 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[125px] cursor-pointer hover:border-blue-400 transition-all appearance-none pr-8 text-gray-700"
                       >
                         {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map(s => (
@@ -135,7 +225,9 @@ export default function AdminOrders() {
             ))}
           </tbody>
         </table>
-        {filtered.length === 0 && <div className="text-center py-12 text-gray-400 text-sm">No orders found</div>}
+        {!isLoading && !loadError && filtered.length === 0 && (
+          <div className="text-center py-12 text-gray-400 text-sm">No orders found</div>
+        )}
       </div>
 
       {/* Order Detail Modal */}
