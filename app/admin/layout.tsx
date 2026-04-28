@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAdminAuthStore } from '../../store/useAdminAuthStore';
 import { useAdminStore } from '../../store/useAdminStore';
-import { useProductStore } from '../../store/useProductStore';
+import adminApi from '../../src/lib/adminApi';
 import { ChevronRight, Shield, Settings, Database, Lock, User } from 'lucide-react';
 import Link from 'next/link';
 
@@ -45,25 +45,37 @@ function NavItem({ item, isActive }: { item: { label: string; href: string; icon
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { admin, hasHydrated, logout } = useAdminAuthStore();
-  const { orders, vendors, settings } = useAdminStore();
-  const { products } = useProductStore();
+  const { settings } = useAdminStore();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
+  const [pendingOrders, setPendingOrders] = useState(0);
 
   useEffect(() => {
     if (!hasHydrated) return;
     if (!admin) {
-      router.push('/admin/login');
+      router.replace('/admin/login');
     }
   }, [admin, hasHydrated, router]);
+
+  useEffect(() => {
+    if (!hasHydrated || !admin) return;
+
+    adminApi.get('/orders')
+      .then((response: any) => {
+        const orders = Array.isArray(response?.data) ? response.data : [];
+        setPendingOrders(orders.filter((order: any) => String(order.status).toUpperCase() === 'PENDING').length);
+      })
+      .catch(() => {
+        setPendingOrders(0);
+      });
+  }, [admin, hasHydrated]);
 
   if (!hasHydrated) return <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Restoring system state...</div>;
   if (!admin) return <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Redirecting...</div>;
 
-  const pendingOrders = orders.filter(o => o.status === 'pending').length;
-  const pendingVendors = vendors.filter(v => v.status === 'pending').length;
+  const pendingVendors = 0;
   const notifCount = pendingOrders + pendingVendors;
   const pageTitle = pathname === '/admin' ? 'Dashboard' : pathname.split('/').pop()?.replace(/-/g, ' ') || '';
 
@@ -113,7 +125,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           View Storefront
         </Link>
         <button
-          onClick={() => { logout(); router.push('/admin/login'); }}
+          onClick={() => { logout(); router.replace('/admin/login'); }}
           className="w-full flex items-center gap-2.5 px-3 py-2 text-red-500 hover:text-red-700 transition-colors text-[13px] font-bold rounded-lg hover:bg-red-50 mt-0.5"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
@@ -235,7 +247,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </div>
                 <div className="p-1.5 border-t border-gray-50">
                   <button 
-                    onClick={() => { logout(); router.push('/admin/login'); }}
+                    onClick={() => { logout(); router.replace('/admin/login'); }}
                     className="w-full flex items-center gap-3 px-4 py-2.5 text-[13px] font-black text-red-600 hover:bg-red-50 rounded-xl transition-all"
                   >
                     <Lock size={16} />
