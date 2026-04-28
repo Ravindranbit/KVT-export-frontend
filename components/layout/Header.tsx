@@ -24,19 +24,16 @@ export default function Header() {
   const fetchCart = useCartStore((state) => state.fetchCart);
   
   const cart = useCartStore((state) => state.getTotalItems());
-  const { products } = useProductStore();
+  const { products, fetchProducts } = useProductStore();
   const { settings } = useAdminStore();
-  const { categories, fetchCategories } = useCategoryStore();
-  const productCategories = Array.from(new Set(products.map(p => p.category.toLowerCase())));
-  const categoryNames = categories.flatMap((category) => {
-    const walk = (node: typeof category): string[] => [
-      node.name.toLowerCase(),
+  const { categories, fetchCategories, getCategoryNameById } = useCategoryStore();
+  const mobileCategories = categories.flatMap((category) => {
+    const walk = (node: typeof category): Array<{ slug: string; name: string }> => [
+      { slug: node.slug, name: node.name },
       ...node.children.flatMap((child) => walk(child)),
     ];
     return walk(category);
   });
-
-  const finalCategories = categoryNames.length > 0 ? categoryNames : productCategories;
 
   const siteNameParts = settings.siteName ? settings.siteName.split(' ') : ['KVT', 'exports'];
   const firstPart = siteNameParts[0];
@@ -63,12 +60,13 @@ export default function Header() {
 
   useEffect(() => {
     fetchCategories();
-  }, [fetchCategories]);
+    fetchProducts();
+  }, [fetchCategories, fetchProducts]);
 
   const filtered = searchQuery.length > 1
     ? products.filter(p =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase())
+        getCategoryNameById(p.categoryId).toLowerCase().includes(searchQuery.toLowerCase())
       ).slice(0, 6)
     : [];
 
@@ -142,7 +140,7 @@ export default function Header() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-gray-900 truncate">{p.name}</p>
-                      <p className="text-xs text-gray-500">{p.category} · ₹{p.price.toLocaleString()}</p>
+                      <p className="text-xs text-gray-500">{getCategoryNameById(p.categoryId)} · ₹{p.price.toLocaleString()}</p>
                     </div>
                   </button>
                 )) : (
@@ -245,7 +243,7 @@ export default function Header() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-gray-900 truncate">{p.name}</p>
-                    <p className="text-xs text-gray-500">{p.category} · ₹{p.price.toLocaleString()}</p>
+                    <p className="text-xs text-gray-500">{getCategoryNameById(p.categoryId)} · ₹{p.price.toLocaleString()}</p>
                   </div>
                 </button>
               )) : (
@@ -260,9 +258,9 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white">
           <nav className="px-4 py-4 space-y-1">
-            {finalCategories.map(cat => (
-              <Link key={cat} href={`/?category=${cat}`} onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-900 font-bold hover:bg-gray-50 rounded-xl transition-all duration-200 capitalize">
-                {cat}
+            {mobileCategories.map((category) => (
+              <Link key={category.slug} href={`/?category=${category.slug}`} onClick={() => setMobileMenuOpen(false)} className="block px-4 py-3 text-gray-900 font-bold hover:bg-gray-50 rounded-xl transition-all duration-200 capitalize">
+                {category.name}
               </Link>
             ))}
             <div className="border-t border-gray-100 my-2"></div>

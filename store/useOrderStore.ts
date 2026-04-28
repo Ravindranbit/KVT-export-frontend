@@ -7,7 +7,7 @@ export interface OrderItem {
   price: number;
   image: string;
   quantity: number;
-  vendorId: string;
+  vendorId?: string;
 }
 
 export interface Order {
@@ -73,7 +73,7 @@ export const useOrderStore = create<OrderState>()((set, get) => ({
           price: Number(item.price || 0),
           image: item.image || '/placeholder.png',
           quantity: Number(item.quantity || 0),
-          vendorId: String(item.vendorId || 'v0'),
+          vendorId: item.vendorId ? String(item.vendorId) : undefined,
         }));
 
         return {

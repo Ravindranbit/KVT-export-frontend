@@ -5,15 +5,19 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import api from '../../../src/lib/api';
 import adminApi from '../../../src/lib/adminApi';
-import { useAdminStore } from '../../../store/useAdminStore';
 
 const RevenueChart = dynamic(() => import('../RevenueChart'), { ssr: false, loading: () => <div className="h-[280px] bg-gray-50 rounded-lg animate-pulse" /> });
 const OrdersChart = dynamic(() => import('../OrdersChart'), { ssr: false, loading: () => <div className="h-[280px] bg-gray-50 rounded-lg animate-pulse" /> });
 
+interface AdminRecord {
+  id: string;
+  isActive: boolean;
+}
+
 export default function AdminDashboard() {
-  const { users, vendors } = useAdminStore();
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
+  const [admins, setAdmins] = useState<AdminRecord[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -70,13 +74,26 @@ export default function AdminDashboard() {
       }
     };
 
+    const loadAdmins = async () => {
+      try {
+        const response: any = await adminApi.get('/admin/all');
+        const records = Array.isArray(response?.data) ? response.data : [];
+        setAdmins(records.map((admin: any) => ({
+          id: String(admin.id),
+          isActive: Boolean(admin.isActive),
+        })));
+      } catch {
+        setAdmins([]);
+      }
+    };
+
     loadMetrics();
+    loadAdmins();
   }, []);
 
   const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0);
   const pendingOrders = orders.filter((o) => o.status === 'pending').length;
-  const activeUsers = users.filter((u) => u.status === 'active').length;
-  const pendingVendors = vendors.filter((v) => v.status === 'pending').length;
+  const activeAdmins = admins.filter((admin) => admin.isActive).length;
 
   const recentOrders = useMemo(() => {
     return [...orders]
@@ -134,9 +151,9 @@ export default function AdminDashboard() {
             icon: (<svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>),
           },
           {
-            label: 'Active Users',
-            value: activeUsers.toString(),
-            desc: `${users.length} total registered`,
+            label: 'Admin Accounts',
+            value: activeAdmins.toString(),
+            desc: `${admins.length} total admins`,
             accent: 'border-l-amber-500',
             iconBg: 'bg-amber-50',
             iconColor: 'text-amber-600',

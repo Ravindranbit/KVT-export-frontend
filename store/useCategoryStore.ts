@@ -46,7 +46,7 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response: any = await api.get('/categories');
-      const rawCategories = response?.data || response?.categories || [];
+      const rawCategories = Array.isArray(response?.data) ? response.data : [];
       const categories = Array.isArray(rawCategories) ? rawCategories.map(mapCategory) : [];
       set({ categories, isLoading: false });
     } catch (error: any) {
@@ -60,7 +60,7 @@ export const useCategoryStore = create<CategoryStore>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       const response: any = await api.get(`/categories/${slug}`);
-      const products = response?.data?.products || [];
+      const products = Array.isArray(response?.data?.products) ? response.data.products : [];
       const productIds = Array.isArray(products) ? products.map((p: any) => String(p.id)) : [];
       set({ selectedCategoryProducts: productIds, isLoading: false });
     } catch (error: any) {

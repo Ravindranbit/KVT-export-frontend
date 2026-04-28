@@ -7,11 +7,6 @@ import Header from '../../components/layout/Header';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useRouter } from 'next/navigation';
 
-const VENDORS = [
-  { id: 'v1', name: 'Artisan Threadsco' },
-  { id: 'v2', name: 'Urban Sole' },
-];
-
 export default function Cart() {
   const router = useRouter();
   const { token, user, hasHydrated, getProfile } = useAuthStore();
@@ -53,7 +48,7 @@ export default function Cart() {
       id: String(p.id || item.productId),
       name: p.name || 'Unknown Product',
       image: p.imageUrl || p.image || '',
-      vendorId: p.vendorId || 'v0',
+      vendorId: p.vendorId ? String(p.vendorId) : undefined,
       price: typeof p.price === 'number' ? p.price : Number(item.price || 0),
     };
   };
@@ -126,9 +121,14 @@ export default function Cart() {
                   cartItems.reduce((acc, item) => {
                     const product = getProductDetails(item);
                     if (!product) return acc;
-                    const vendor = VENDORS.find(v => v.id === product.vendorId) || { id: 'v0', name: 'KVT Global' };
-                    if (!acc[vendor.id]) acc[vendor.id] = { vendorName: vendor.name, items: [] };
-                    acc[vendor.id].items.push(item);
+                    const groupKey = product.vendorId || 'storefront';
+                    if (!acc[groupKey]) {
+                      acc[groupKey] = {
+                        vendorName: product.vendorId ? `Vendor ${product.vendorId}` : 'Storefront',
+                        items: [],
+                      };
+                    }
+                    acc[groupKey].items.push(item);
                     return acc;
                   }, {} as Record<string, { vendorName: string, items: typeof cartItems }>)
                 ).map((group, groupIdx) => (

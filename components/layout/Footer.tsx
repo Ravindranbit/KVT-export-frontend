@@ -1,20 +1,33 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useMemo } from 'react';
 import { useAdminStore } from '../../store/useAdminStore';
-import { useProductStore } from '../../store/useProductStore';
 import { usePathname } from 'next/navigation';
+import { useCategoryStore } from '../../store/useCategoryStore';
 
 export default function Footer() {
   const pathname = usePathname();
   const { settings } = useAdminStore();
-  const { products } = useProductStore();
-  const categories = Array.from(new Set(products.map(p => p.category.toLowerCase()))).slice(0, 7);
-  const socialLinks = settings.socialLinks || { facebook: '#', instagram: '#', twitter: '#' };
+  const { categories, fetchCategories } = useCategoryStore();
+  const footerCategories = useMemo(() => {
+    const walk = (nodes: typeof categories): Array<{ slug: string; name: string }> =>
+      nodes.flatMap((node) => [
+        { slug: node.slug, name: node.name },
+        ...walk(node.children),
+      ]);
+
+    return walk(categories).slice(0, 7);
+  }, [categories]);
+  const socialLinks = settings.socialLinks;
   
   if (pathname.startsWith('/admin') || pathname.startsWith('/vendor')) {
     return null;
   }
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
 
   return (
     <footer className="bg-[#222222] text-white mt-20">
@@ -41,18 +54,15 @@ export default function Footer() {
           <div>
             <h4 className="font-bold mb-5 text-sm tracking-wide uppercase">Categories</h4>
             <ul className="space-y-3 text-gray-300 text-sm">
-              {categories.map(cat => (
-                <li key={cat}>
-                  <Link href={`/?category=${cat}`} className="hover:text-white transition capitalize">
-                    {cat}
+              {footerCategories.map((category) => (
+                <li key={category.slug}>
+                  <Link href={`/?category=${category.slug}`} className="hover:text-white transition capitalize">
+                    {category.name}
                   </Link>
                 </li>
               ))}
-              {categories.length === 0 && (
-                <>
-                  <li><Link href="/?category=electronics" className="hover:text-white transition">Electronics</Link></li>
-                  <li><Link href="/?category=fashion" className="hover:text-white transition">Fashion</Link></li>
-                </>
+              {footerCategories.length === 0 && (
+                <li className="text-gray-500">No categories found</li>
               )}
             </ul>
           </div>
@@ -72,7 +82,7 @@ export default function Footer() {
           <div>
             <h4 className="font-bold mb-5 text-sm tracking-wide uppercase">Get In Touch</h4>
             <p className="text-gray-300 text-sm leading-relaxed mb-4">
-              {settings.contactAddress || 'Any questions? Let us know in store or call us.'}
+              {settings.contactAddress || 'Contact details are currently unavailable.'}
             </p>
             <p className="text-gray-300 text-sm mb-4 font-medium">
               {settings.contactPhone && <span>Phone: {settings.contactPhone}</span>}
@@ -80,15 +90,24 @@ export default function Footer() {
               {settings.contactEmail && <span>Email: {settings.contactEmail}</span>}
             </p>
             <div className="flex items-center gap-4 text-gray-300">
-              <a href={socialLinks.facebook} className="hover:text-white transition-colors" aria-label="Facebook">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M18 2h-3a4 4 0 00-4 4v3H8v4h3v9h4v-9h3l1-4h-4V6a1 1 0 011-1h3z" /></svg>
-              </a>
-              <a href={socialLinks.instagram} className="hover:text-white transition-colors" aria-label="Instagram">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" strokeWidth="1.6" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M17.5 6.5h.01" /></svg>
-              </a>
-              <a href={socialLinks.twitter} className="hover:text-white transition-colors" aria-label="Twitter">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.657l-5.214-6.817L5.769 21.75H2.462l7.726-8.835L1.54 2.25h6.826l4.853 6.093 5.825-6.093zM16.369 19.25h1.836L8.71 4.1H6.748l9.621 15.15z" /></svg>
-              </a>
+              {socialLinks.facebook && (
+                <a href={socialLinks.facebook} className="hover:text-white transition-colors" aria-label="Facebook">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M18 2h-3a4 4 0 00-4 4v3H8v4h3v9h4v-9h3l1-4h-4V6a1 1 0 011-1h3z" /></svg>
+                </a>
+              )}
+              {socialLinks.instagram && (
+                <a href={socialLinks.instagram} className="hover:text-white transition-colors" aria-label="Instagram">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" strokeWidth="1.6" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M16 11.37A4 4 0 1112.63 8 4 4 0 0116 11.37z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" d="M17.5 6.5h.01" /></svg>
+                </a>
+              )}
+              {socialLinks.twitter && (
+                <a href={socialLinks.twitter} className="hover:text-white transition-colors" aria-label="Twitter">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.657l-5.214-6.817L5.769 21.75H2.462l7.726-8.835L1.54 2.25h6.826l4.853 6.093 5.825-6.093zM16.369 19.25h1.836L8.71 4.1H6.748l9.621 15.15z" /></svg>
+                </a>
+              )}
+              {!socialLinks.facebook && !socialLinks.instagram && !socialLinks.twitter && (
+                <span className="text-sm text-gray-500">No social links available</span>
+              )}
             </div>
           </div>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
@@ -31,16 +31,10 @@ export default function HomePage() {
   const wishlistItems = useWishlistStore((state) => state.items);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
 
-  const [selectedCategory, setSelectedCategory] = useState(categoryQuery);
-
   useEffect(() => {
     fetchProducts();
     fetchCategories();
   }, [fetchProducts, fetchCategories]);
-
-  useEffect(() => {
-    setSelectedCategory(categoryQuery);
-  }, [categoryQuery]);
 
   const categoryOptions = useMemo(() => {
     const walk = (nodes: typeof categories): { slug: string; name: string }[] =>
@@ -50,10 +44,10 @@ export default function HomePage() {
   }, [categories]);
 
   const filteredProducts = useMemo(() => {
-    if (selectedCategory === 'all') return products;
+    if (categoryQuery === 'all') return products;
 
-    return products.filter((product) => getCategorySlugById(product.categoryId) === selectedCategory);
-  }, [products, selectedCategory, getCategorySlugById]);
+    return products.filter((product) => getCategorySlugById(product.categoryId) === categoryQuery);
+  }, [products, categoryQuery, getCategorySlugById]);
 
   const isLoading = productsLoading || categoriesLoading;
   const loadError = productsError || categoriesError;
@@ -66,16 +60,16 @@ export default function HomePage() {
       <section className="max-w-7xl mx-auto px-4 py-10">
         <div className="flex flex-wrap gap-2 mb-8">
           <button
-            onClick={() => setSelectedCategory('all')}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold ${selectedCategory === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'}`}
+            onClick={() => router.push('/')}
+            className={`px-4 py-2 rounded-lg text-sm font-semibold ${categoryQuery === 'all' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'}`}
           >
             All
           </button>
           {categoryOptions.map((category) => (
             <button
               key={category.slug}
-              onClick={() => setSelectedCategory(category.slug)}
-              className={`px-4 py-2 rounded-lg text-sm font-semibold ${selectedCategory === category.slug ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => router.push(`/?category=${category.slug}`)}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold ${categoryQuery === category.slug ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'}`}
             >
               {category.name}
             </button>
@@ -86,7 +80,7 @@ export default function HomePage() {
         {!isLoading && loadError && <p className="text-red-600 text-sm">{loadError}</p>}
 
         {!isLoading && !loadError && filteredProducts.length === 0 && (
-          <p className="text-gray-500">No products found for this category.</p>
+          <p className="text-gray-500">{categoryOptions.length === 0 ? 'No categories found' : 'No products available'}</p>
         )}
 
         {!isLoading && !loadError && filteredProducts.length > 0 && (

@@ -10,8 +10,6 @@ import { useProductStore } from '../../store/useProductStore';
 import { useCartStore } from '../../store/useCartStore';
 import { useOrderStore } from '../../store/useOrderStore';
 
-// Removed MOCK_ORDERS as they are now replaced by persistence store
-
 interface Address { id: string; label: string; name: string; line1: string; line2: string; city: string; zip: string; country: string; phone: string; isDefault: boolean; }
 interface Card { id: string; brand: string; last4: string; expiry: string; isPrimary: boolean; }
 

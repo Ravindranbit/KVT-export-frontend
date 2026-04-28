@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useAdminStore } from '../../store/useAdminStore';
+import { useProductStore } from '../../store/useProductStore';
+import { useCategoryStore } from '../../store/useCategoryStore';
 
 // Fallback gradient bg based on index when no colour is set
 const BG_GRADIENTS = [
@@ -13,18 +14,28 @@ const BG_GRADIENTS = [
   'from-[#1a1a2e] to-[#2d3561]',
 ];
 
+const ACCENTS = ['#00d4ff', '#ff6b6b', '#fbbf24', '#34d399', '#a78bfa'];
+
 export default function BannerCarousel() {
-  const { banners } = useAdminStore();
-  // Only show active banners
-  const activeBanners = banners.filter(b => b.active !== false);
+  const { products } = useProductStore();
+  const { getCategoryNameById } = useCategoryStore();
+  const activeBanners = products.slice(0, 3).map((product, index) => ({
+    id: product.id,
+    title: product.name,
+    subtitle: getCategoryNameById(product.categoryId),
+    desc: product.description,
+    cta: 'View Product',
+    href: `/products/${product.id}`,
+    accent: ACCENTS[index % ACCENTS.length],
+    image: product.image,
+  }));
 
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
 
-  const next = useCallback(() => setCurrent(c => (c + 1) % Math.max(activeBanners.length, 1)), [activeBanners.length]);
-  const prev = useCallback(() => setCurrent(c => (c - 1 + Math.max(activeBanners.length, 1)) % Math.max(activeBanners.length, 1)), [activeBanners.length]);
+  const next = useCallback(() => setCurrent((value) => (value + 1) % Math.max(activeBanners.length, 1)), [activeBanners.length]);
+  const prev = useCallback(() => setCurrent((value) => (value - 1 + Math.max(activeBanners.length, 1)) % Math.max(activeBanners.length, 1)), [activeBanners.length]);
 
-  // Reset slide index if banners change and current is out of bounds
   useEffect(() => {
     if (current >= activeBanners.length && activeBanners.length > 0) {
       setCurrent(0);
@@ -41,8 +52,8 @@ export default function BannerCarousel() {
     return (
       <div className="w-full flex items-center justify-center bg-gradient-to-br from-gray-900 to-gray-800 text-white" style={{ height: '420px' }}>
         <div className="text-center opacity-40">
-          <p className="text-2xl font-bold">No Active Banners</p>
-          <p className="text-sm mt-2">Add banners in the Admin → Banners section</p>
+          <p className="text-2xl font-bold">No products available</p>
+          <p className="text-sm mt-2">Add products in the backend to populate the storefront</p>
         </div>
       </div>
     );
@@ -57,46 +68,40 @@ export default function BannerCarousel() {
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      {/* Slides */}
-      {activeBanners.map((b, i) => {
-        const bg = BG_GRADIENTS[i % BG_GRADIENTS.length];
-        const accent = b.accent || '#e60000';
+      {activeBanners.map((item, index) => {
+        const bg = BG_GRADIENTS[index % BG_GRADIENTS.length];
+        const accent = item.accent;
         return (
           <div
-            key={b.id}
+            key={item.id}
             className={`absolute inset-0 bg-gradient-to-br ${bg} transition-all duration-700 ease-in-out`}
-            style={{ opacity: i === current ? 1 : 0, zIndex: i === current ? 1 : 0 }}
+            style={{ opacity: index === current ? 1 : 0, zIndex: index === current ? 1 : 0 }}
           >
-            {/* Glow effect */}
             <div className="absolute inset-0 overflow-hidden">
               <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-[500px] h-[500px] rounded-full opacity-20 blur-[120px]" style={{ backgroundColor: accent }} />
               <div className="absolute bottom-0 right-0 w-[300px] h-[300px] rounded-full opacity-10 blur-[80px]" style={{ backgroundColor: accent }} />
             </div>
 
             <div className="max-w-7xl mx-auto h-full flex items-center px-10 gap-10">
-              {/* Left Content */}
               <div className="flex-1 text-white">
-                <h2 className="text-5xl font-extrabold leading-[1.15] mb-2 tracking-tight">{b.title}</h2>
-                <p className="text-xl font-bold mb-4" style={{ color: accent }}>{b.subtitle}</p>
-                {b.desc && <p className="text-gray-300 text-sm font-medium mb-8 max-w-sm leading-relaxed">{b.desc}</p>}
-                {(b.cta || b.href) && (
-                  <div className="flex items-center gap-4">
-                    <Link
-                      href={b.href || '/'}
-                      className="text-white font-extrabold px-8 py-3.5 rounded-lg text-sm transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 shadow-lg active:scale-95 hover:shadow-xl"
-                      style={{ backgroundColor: accent }}
-                    >
-                      {b.cta || 'Shop Now'} →
-                    </Link>
-                  </div>
-                )}
+                <h2 className="text-5xl font-extrabold leading-[1.15] mb-2 tracking-tight">{item.title}</h2>
+                <p className="text-xl font-bold mb-4" style={{ color: accent }}>{item.subtitle}</p>
+                {item.desc && <p className="text-gray-300 text-sm font-medium mb-8 max-w-sm leading-relaxed">{item.desc}</p>}
+                <div className="flex items-center gap-4">
+                  <Link
+                    href={item.href}
+                    className="text-white font-extrabold px-8 py-3.5 rounded-lg text-sm transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 shadow-lg active:scale-95 hover:shadow-xl"
+                    style={{ backgroundColor: accent }}
+                  >
+                    {item.cta} →
+                  </Link>
+                </div>
               </div>
 
-              {/* Right — Product Image */}
-              {b.image && (
+              {item.image && (
                 <div className="relative w-[420px] shrink-0 flex-col items-center justify-center hidden md:flex">
                   <div className="w-[380px] h-[340px] rounded-2xl overflow-hidden shadow-2xl border-4 border-white/10">
-                    <img src={b.image} alt={b.subtitle} className="w-full h-full object-cover object-top" />
+                    <img src={item.image} alt={item.subtitle} className="w-full h-full object-cover object-top" />
                   </div>
                 </div>
               )}
@@ -105,7 +110,6 @@ export default function BannerCarousel() {
         );
       })}
 
-      {/* Left Arrow */}
       {activeBanners.length > 1 && (
         <button
           onClick={prev}
@@ -117,7 +121,6 @@ export default function BannerCarousel() {
         </button>
       )}
 
-      {/* Right Arrow */}
       {activeBanners.length > 1 && (
         <button
           onClick={next}
@@ -129,18 +132,17 @@ export default function BannerCarousel() {
         </button>
       )}
 
-      {/* Dot Indicators */}
       {activeBanners.length > 1 && (
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
-          {activeBanners.map((_, i) => (
+          {activeBanners.map((_, index) => (
             <button
-              key={i}
-              onClick={() => setCurrent(i)}
+              key={index}
+              onClick={() => setCurrent(index)}
               className="transition-all rounded-full"
               style={{
-                width: i === current ? '24px' : '8px',
+                width: index === current ? '24px' : '8px',
                 height: '8px',
-                backgroundColor: i === current ? (banner.accent || '#e60000') : 'rgba(255,255,255,0.4)',
+                backgroundColor: index === current ? banner.accent : 'rgba(255,255,255,0.4)',
               }}
             />
           ))}
