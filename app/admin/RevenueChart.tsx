@@ -1,16 +1,13 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import adminApi from '../../src/lib/adminApi';
 
-const data = [
-  { day: 'Mon', revenue: 12400 },
-  { day: 'Tue', revenue: 8900 },
-  { day: 'Wed', revenue: 15600 },
-  { day: 'Thu', revenue: 11200 },
-  { day: 'Fri', revenue: 18400 },
-  { day: 'Sat', revenue: 22100 },
-  { day: 'Sun', revenue: 16800 },
-];
+interface RevenueData {
+  day: string;
+  revenue: number;
+}
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -25,6 +22,98 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function RevenueChart() {
+  const [data, setData] = useState<RevenueData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRevenueData = async () => {
+      try {
+        const response: any = await adminApi.get('/orders');
+        const orders = response?.data || [];
+
+        // Get last 7 days
+        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const today = new Date();
+        const revenueByDay: Record<string, number> = {};
+
+        // Initialize revenue for last 7 days
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(today);
+          date.setDate(date.getDate() - i);
+          const dayName = days[date.getDay()];
+          revenueByDay[dayName] = 0;
+        }
+
+        // Calculate revenue from orders
+        orders.forEach((order: any) => {
+          const orderDate = new Date(order.createdAt);
+          const dayDiff = Math.floor((today.getTime() - orderDate.getTime()) / (1000 * 60 * 60 * 24));
+          
+          // Only include orders from last 7 days
+          if (dayDiff >= 0 && dayDiff < 7) {
+            const dayName = days[orderDate.getDay()];
+            const revenue = Number(order.totalAmount || 0);
+            revenueByDay[dayName] = (revenueByDay[dayName] || 0) + revenue;
+          }
+        });
+
+        // Convert to array format for chart
+        const chartData = days.map((day) => ({
+          day,
+          revenue: Math.round(revenueByDay[day]),
+        }));
+
+        setData(chartData);
+      } catch (error) {
+        console.error('Failed to fetch revenue data:', error);
+        // Fallback to empty data
+        setData([
+          { day: 'Mon', revenue: 0 },
+          { day: 'Tue', revenue: 0 },
+          { day: 'Wed', revenue: 0 },
+          { day: 'Thu', revenue: 0 },
+          { day: 'Fri', revenue: 0 },
+          { day: 'Sat', revenue: 0 },
+          { day: 'Sun', revenue: 0 },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRevenueData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="w-full h-[220px] flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+        <div className="text-center">
+          <div className="inline-block animate-spin">
+            <div className="w-6 h-6 border-2 border-gray-300 border-t-primary rounded-full"></div>
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Loading revenue data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const totalRevenue = data.reduce((sum, item) => sum + item.revenue, 0);
+
+  if (totalRevenue === 0) {
+    return (
+      <div className="w-full h-[220px] flex flex-col items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 rounded-lg border border-gray-200">
+        <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center mb-3">
+          <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7H5v12h8V7zm0-2h6a1 1 0 011 1v14a1 1 0 01-1 1h-6a1 1 0 01-1-1V6a1 1 0 011-1zm-8 8h.01M5 19h8M5 3h8" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 9l2 2 4-4" />
+          </svg>
+        </div>
+        <p className="text-sm font-bold text-gray-900">No revenue data yet</p>
+        <p className="text-xs text-gray-500 mt-1">Orders will appear here once customers make purchases</p>
+      </div>
+    );
+  }
+
   return (
     <ResponsiveContainer width="100%" height={220}>
       <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>

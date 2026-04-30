@@ -1,0 +1,114 @@
+# Required Backend Endpoints for KVT Export Frontend
+
+Based on the frontend state management (Zustand stores) and data models, the following RESTful API endpoints are necessary to replace the current mock data and make the application fully dynamic.
+
+## 1. Authentication & Users (Profile, Addresses, Payments)
+Handles user login, sessions, and profile management for Buyers, Sellers/Vendors, and Admins.
+
+### 1.1 Auth & General Profile
+- `POST /api/auth/register` : Register a new user account.
+- `POST /api/auth/login` : Authenticate user and return token/session.
+- `POST /api/auth/logout` : Invalidate user session.
+- `GET /api/auth/me` : Retrieve current authenticated user's profile and permissions.
+- `PUT /api/users/profile` : Update current user's profile information.
+- `POST /api/users/profile/deactivate` : Deactivate the current user's account.
+
+### 1.2 Addresses
+- `GET /api/users/addresses` : List all saved addresses for the current user.
+- `POST /api/users/addresses` : Add a new address.
+- `PUT /api/users/addresses/:id` : Update an existing address.
+- `DELETE /api/users/addresses/:id` : Remove an address.
+
+### 1.3 Saved Payments
+- `GET /api/users/payments` : List saved payment methods/cards.
+- `POST /api/users/payments` : Add/tokenize a new payment method.
+- `DELETE /api/users/payments/:id` : Remove a saved payment method.
+
+## 2. Products
+Public endpoints for shoppers, and protected endpoints for Vendors/Admins to manage catalog.
+
+- `GET /api/products` : List products (supports filtering by category, search queries, pagination).
+- `GET /api/products/:id` : Fetch detailed information for a specific product.
+- `GET /api/products/vendor/:vendorId` : List all products created by a specific vendor.
+- `POST /api/products` : Create a new product (Vendor/Admin).
+- `PUT /api/products/:id` : Update an existing product (Vendor/Admin).
+- `DELETE /api/products/:id` : Delete a product (Vendor/Admin).
+
+### 2.1 Product Feedback/Reviews
+- `POST /api/products/:id/feedbacks` : Submit a new product review/rating.
+- `PUT /api/products/:id/feedbacks/:feedbackId` : Update an existing review.
+- `DELETE /api/products/:id/feedbacks/:feedbackId` : Remove a review.
+
+## 3. Orders 
+Endpoints for tracking purchases, buyer history, and vendor fulfillment.
+
+- `POST /api/orders` : Create a new order (Checkout process).
+- `GET /api/orders/:id` : Retrieve specific order details.
+- `GET /api/orders/customer` : Get order history for the currently logged-in buyer.
+- `GET /api/orders/vendor` : Get orders containing items sold by the logged-in vendor.
+- `PUT /api/orders/:id/status` : Update the status of an order (`Processing`, `Shipped`, `Delivered`, etc.) - (Vendor/Admin).
+
+## 4. Vendor Operations & Analytics
+Specific endpoints to power the vendor dashboard efficiently without fetching all raw records.
+
+- `GET /api/vendors/me/stats` : Fetch aggregated statistics for the vendor dashboard (Gross Revenue, Active Pipeline, Views, Expert Rating).
+
+## 5. Media Uploads
+Allows handling multipart/form-data for image uploads.
+
+- `POST /api/upload` : Upload single or multiple images (for products, avatars, banners) and return the hosted URLs.
+
+## 6. Categories (Public View)
+Manages the taxonomy of the marketplace.
+
+- `GET /api/categories` : Fetch all visible categories (Public).
+- `POST /api/categories` : Create a new category (Admin).
+- `PUT /api/categories/:id` : Update category details (Admin).
+- `DELETE /api/categories/:id` : Remove a category (Admin).
+
+## 7. Banners/Promotions (Public View)
+Manages the promotional sliders/banners on the storefront.
+
+- `GET /api/banners` : Fetch active banners for the storefront (Public).
+- `POST /api/banners` : Add a new promotional banner (Admin).
+- `PUT /api/banners/:id` : Update banner details (Admin).
+- `DELETE /api/banners/:id` : Delete a banner (Admin).
+
+## 8. Cart & Wishlist
+While currently managed in local storage, providing backend endpoints ensures sync across customer devices.
+
+- `GET /api/cart` : Fetch current user cart items.
+- `POST /api/cart/items` : Add item or update quantity in cart.
+- `DELETE /api/cart/items/:id` : Remove specific item from cart.
+- `DELETE /api/cart` : Clear the entire cart (e.g., after successful checkout).
+- `GET /api/wishlist` : Fetch current user's wishlist.
+- `POST /api/wishlist/:productId` : Add product to wishlist.
+- `DELETE /api/wishlist/:productId` : Remove product from wishlist.
+
+## 9. Admin Dashboard Control
+Super-admin endpoints to oversee the marketplace, vendors, system settings, etc.
+
+### 9.1 User Management
+- `GET /api/admin/users` : List all registered users (Buyers).
+- `PUT /api/admin/users/:id/status` : Update user status (`active`, `suspended`, `banned`).
+- `PUT /api/admin/users/:id/role` : Change user role (`buyer`, `seller`, `admin`).
+- `DELETE /api/admin/users/:id` : Delete a user entirely.
+- `POST /api/admin/admins` : Add a new administrator.
+- `PUT /api/admin/admins/:id/permissions` : Update granular permissions for an admin.
+- `DELETE /api/admin/admins/:id` : Remove an admin account.
+
+### 9.2 Vendor Management
+- `GET /api/admin/vendors` : List all vendor profiles and their stats.
+- `PUT /api/admin/vendors/:id/status` : Approve, pend, or suspend a vendor.
+- `PUT /api/admin/vendors/:id/commission` : Update the global/custom commission rate for a specific vendor.
+
+### 9.3 General Admin
+- `GET /api/admin/stats` : Fetch aggregated global statistics for the admin overview (total revenue, active users, top products, recent orders).
+- `GET /api/admin/orders` : Overview of all orders platform-wide.
+- `GET /api/admin/subscribers` : Fetch newsletter subscribers list.
+
+## 10. Site Settings
+Global configuration for the marketplace.
+
+- `GET /api/settings` : Fetch global site settings (branding, contact info, SEO, etc.)
+- `PUT /api/settings` : Update site configuration (Admin).

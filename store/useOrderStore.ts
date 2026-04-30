@@ -16,7 +16,7 @@ export interface Order {
   customerName: string;
   date: string;
   total: number;
-  status: 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled';
+  status: 'Processing' | 'Shipped' | 'Arrived at Local Store' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
   items: OrderItem[];
   shippingAddress: {
     line1: string;

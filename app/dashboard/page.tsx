@@ -281,25 +281,41 @@ export default function Dashboard() {
                                       <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">Expedited Shipping</span>
                                     </div>
                                   <div className="space-y-6">
-                                    <div className="flex gap-4">
-                                      <div className="flex flex-col items-center">
-                                        <div className="w-3 h-3 bg-green-500 rounded-full" />
-                                        <div className="w-0.5 h-full bg-gray-200 my-1" />
-                                      </div>
-                                      <div>
-                                        <p className="text-sm font-medium text-gray-900">Arrived at Local Distribution Center</p>
-                                        <p className="text-xs text-gray-500">New York, NY - 10:45 AM</p>
-                                      </div>
-                                    </div>
-                                    <div className="flex gap-4">
-                                      <div className="flex flex-col items-center">
-                                        <div className="w-3 h-3 border-2 border-gray-300 rounded-full bg-white" />
-                                      </div>
-                                      <div>
-                                        <p className="text-sm font-medium text-gray-500">Out for Delivery</p>
-                                        <p className="text-xs text-gray-400 italic">Pending...</p>
-                                      </div>
-                                    </div>
+                                    {(['Processing', 'Shipped', 'Arrived at Local Store', 'Out for Delivery', 'Delivered']).map((step, idx, arr) => {
+                                      const statusIndex = arr.indexOf(order.status);
+                                      const stepIndex = idx;
+                                      const isCompleted = stepIndex < statusIndex || order.status === 'Delivered';
+                                      const isCurrent = stepIndex === statusIndex && order.status !== 'Delivered';
+                                      const isPending = stepIndex > statusIndex && order.status !== 'Delivered';
+
+                                      // Don't show steps beyond 'Delivered' if it's already delivered
+                                      if (order.status === 'Delivered' && step !== 'Delivered' && stepIndex < 4) {
+                                         // we want to show all including delivered
+                                      }
+
+                                      return (
+                                        <div key={step} className="flex gap-4">
+                                          <div className="flex flex-col items-center">
+                                            <div className={`w-3 h-3 rounded-full border-2 transition-colors ${
+                                              isCompleted ? 'bg-green-500 border-green-500' : 
+                                              isCurrent ? 'bg-white border-blue-500 animate-pulse' : 
+                                              'bg-white border-gray-300'
+                                            }`} />
+                                            {idx !== arr.length - 1 && (
+                                              <div className={`w-0.5 h-full my-1 transition-colors ${isCompleted ? 'bg-green-500' : 'bg-gray-100'}`} />
+                                            )}
+                                          </div>
+                                          <div>
+                                            <p className={`text-sm font-medium transition-colors ${isPending ? 'text-gray-400' : 'text-gray-900'}`}>
+                                              {step}
+                                            </p>
+                                            <p className="text-xs text-gray-400">
+                                              {isCompleted ? 'Phase Completed' : isCurrent ? 'Active Location' : 'Pending...'}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
                                     </div>
                                   </div>
                                 </td>

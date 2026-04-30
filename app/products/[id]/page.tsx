@@ -21,7 +21,9 @@ export default function ProductDetail() {
   const product = selectedProduct && selectedProduct.id === productId
     ? selectedProduct
     : products.find((p) => p.id === productId);
+
   const [quantity, setQuantity] = useState(1);
+  const addToCart = useCartStore((state) => state.addToCart);
 
   // Variants State
   const [selectedSize, setSelectedSize] = useState(product?.sizes?.[0] || '');
@@ -42,6 +44,17 @@ export default function ProductDetail() {
       if (product.colors?.length) setSelectedColor(product.colors[0].name);
     }
   }, [product]);
+
+  const handleAddToCart = async () => {
+    if (!product) return;
+    try {
+      await addToCart(product.id, quantity);
+      toast.success(`${product.name} added to cart`);
+    } catch {
+      toast.error('Please sign in to add items to your cart');
+      router.push('/signin');
+    }
+  };
 
   if (isLoading && !product) {
     return (
@@ -67,18 +80,6 @@ export default function ProductDetail() {
       </div>
     );
   }
-
-  const addToCart = useCartStore((state) => state.addToCart);
-
-  const handleAddToCart = async () => {
-    try {
-      await addToCart(product.id, quantity);
-      toast.success(`${product.name} added to cart`);
-    } catch {
-      toast.error('Please sign in to add items to your cart');
-      router.push('/signin');
-    }
-  };
 
   const relatedProducts = products.filter((candidate) => candidate.categoryId === product.categoryId && candidate.id !== product.id).slice(0, 4);
 
@@ -182,12 +183,12 @@ export default function ProductDetail() {
                   <p className="text-gray-500 text-sm mb-1">Category</p>
                   <p className="font-medium text-gray-900 capitalize">{getCategoryNameById(product.categoryId) || 'Uncategorized'}</p>
                 </div>
-                <div>
-                  <p className="text-gray-500 text-sm mb-1">Availability</p>
-                  <p className={`font-medium ${(product.stock === 0) ? 'text-red-600' : 'text-green-600'}`}>
-                    {(product.stock === 0) ? 'Out of Stock' : (product.stock ? `${product.stock} Units In Stock` : 'In Stock')}
-                  </p>
-                </div>
+                {product.stock === 0 && (
+                  <div>
+                    <p className="text-gray-500 text-sm mb-1">Availability</p>
+                    <p className="font-medium text-red-600">Out of Stock</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

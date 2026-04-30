@@ -111,7 +111,7 @@ export default function BecomeSeller() {
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-2">Desired Storefront Name</label>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Store Name</label>
                 <input 
                   type="text" 
                   required 

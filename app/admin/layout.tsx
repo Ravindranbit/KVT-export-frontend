@@ -72,9 +72,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       });
   }, [admin, hasHydrated]);
 
-  if (!hasHydrated) return <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Restoring system state...</div>;
-  if (!admin) return <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Redirecting...</div>;
-
   const pendingVendors = 0;
   const notifCount = pendingOrders + pendingVendors;
   const pageTitle = pathname === '/admin' ? 'Dashboard' : pathname.split('/').pop()?.replace(/-/g, ' ') || '';
@@ -94,28 +91,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Navigation */}
       <nav className="flex-1 px-3 py-5 space-y-0.5 overflow-y-auto">
         {/* Menu Section */}
-        {(() => (
-          <>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] px-3 mb-2">Menu</p>
-            {NAV_ITEMS.map(item => <NavItem key={item.href} item={item} isActive={isItemActive(item.href)} />)}
-          </>
-        ))()}
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] px-3 mb-2">Menu</p>
+        {NAV_ITEMS.map(item => <NavItem key={item.href} item={item} isActive={isItemActive(item.href)} />)}
 
         {/* Content Section */}
-        {(() => (
-          <>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] px-3 mb-2 mt-5">Content</p>
-            {CONTENT_ITEMS.map(item => <NavItem key={item.href} item={item} isActive={isItemActive(item.href)} />)}
-          </>
-        ))()}
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] px-3 mb-2 mt-5">Content</p>
+        {CONTENT_ITEMS.map(item => <NavItem key={item.href} item={item} isActive={isItemActive(item.href)} />)}
 
         {/* System Section */}
-        {(() => (
-          <>
-            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] px-3 mb-2 mt-5">System</p>
-            {SYSTEM_ITEMS.map(item => <NavItem key={item.href} item={item} isActive={isItemActive(item.href)} />)}
-          </>
-        ))()}
+        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.15em] px-3 mb-2 mt-5">System</p>
+        {SYSTEM_ITEMS.map(item => <NavItem key={item.href} item={item} isActive={isItemActive(item.href)} />)}
       </nav>
 
       {/* Bottom */}
@@ -134,6 +119,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </div>
     </>
   );
+
+  // Early returns AFTER all hooks have been called
+  if (!hasHydrated) return <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Restoring system state...</div>;
+  if (!admin) return <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Redirecting...</div>;
 
   return (
     <div className="min-h-screen bg-[#f6f7f9] flex">

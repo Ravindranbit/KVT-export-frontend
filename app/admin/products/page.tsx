@@ -33,7 +33,9 @@ export default function AdminProducts() {
 
   const categoryOptions = ['all', ...flatCategories.map((category) => category.id)];
 
-  const filtered = products.filter(p => {
+  const adminProducts = products.filter(p => p.vendorId === 'admin');
+
+  const filtered = adminProducts.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toString().includes(search);
     const matchCat = filterCategory === 'all' || p.categoryId === filterCategory;
     return matchSearch && matchCat;
@@ -75,20 +77,53 @@ export default function AdminProducts() {
     }
   };
 
+  const [editForm, setEditForm] = useState<any>({ name: '', price: 0, category: '', description: '', image: '', stock: 0, sku: '', brand: '' });
+
+  const handleEditClick = (p: Product) => {
+    setEditProduct(p);
+    setEditForm({
+      name: p.name,
+      price: p.price,
+      category: p.categoryId,
+      description: p.description,
+      image: p.image,
+      stock: p.stock || 0,
+      sku: p.sku || '',
+      brand: p.brand || '',
+    });
+  };
+
+  const handleUpdate = async () => {
+    if (!editProduct) return;
+    try {
+      await adminApi.patch(`/products/${editProduct.id}`, {
+        name: editForm.name,
+        description: editForm.description,
+        price: editForm.price,
+        stock: editForm.stock,
+        imageUrl: editForm.image,
+        categoryId: editForm.category,
+      });
+      await fetchProducts();
+      setEditProduct(null);
+      toast.success('Product updated');
+    } catch (error: any) {
+      toast.error(error?.message || 'Unable to update product');
+    }
+  };
+
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-black text-gray-900">Product Management</h2>
-          <p className="text-sm text-gray-500">{products.length} total products</p>
+          <p className="text-sm text-gray-500">{adminProducts.length} total products</p>
         </div>
         <button onClick={() => setShowAddModal(true)} className="bg-primary hover:opacity-90 text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all shadow-lg shadow-primary/10 border-none">
           + Add Product
         </button>
       </div>
 
-      {/* Filters */}
       <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col md:flex-row gap-3">
         <div className="relative flex-1">
           <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -109,7 +144,6 @@ export default function AdminProducts() {
         </select>
       </div>
 
-      {/* Products Table */}
       <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
         <table className="w-full table-fixed">
           <thead>
@@ -148,7 +182,7 @@ export default function AdminProducts() {
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-center gap-2">
                     <button 
-                      onClick={() => setEditProduct(p)} 
+                      onClick={() => handleEditClick(p)} 
                       className="text-[10px] font-black uppercase tracking-wider text-white bg-[#1976d2] px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm"
                     >
                       Edit
@@ -279,13 +313,69 @@ export default function AdminProducts() {
 
       {/* Edit Product Modal */}
       {editProduct && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setEditProduct(null)}>
-          <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-black text-gray-900 mb-4">Edit Product</h3>
-            <p className="text-sm text-gray-500 mb-4">Editing: <span className="font-bold text-gray-900">{editProduct.name}</span></p>
-            <p className="text-xs text-gray-400 bg-gray-50 p-3 rounded-lg">Full edit functionality will be available with backend integration. For now, you can delete and re-add with updated details.</p>
-            <div className="mt-4 flex justify-end">
-              <button onClick={() => setEditProduct(null)} className="px-5 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors">Close</button>
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setEditProduct(null)}>
+          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-xl font-black text-gray-900 tracking-tight">Edit Product</h3>
+              <button onClick={() => setEditProduct(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            
+            <div className="p-8 overflow-y-auto space-y-6 flex-1">
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Product Name *</label>
+                <input value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Price (₹) *</label>
+                  <input type="number" value={editForm.price} onChange={(e) => setEditForm({...editForm, price: parseFloat(e.target.value)})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Category *</label>
+                  <select value={editForm.category} onChange={(e) => setEditForm({...editForm, category: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white">
+                    <option value="electronics">Electronics</option>
+                    <option value="fashion">Fashion</option>
+                    <option value="home">Home</option>
+                    <option value="sports">Sports</option>
+                    <option value="beauty">Beauty</option>
+                    <option value="books">Books</option>
+                    <option value="toys">Toys</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Description</label>
+                <textarea value={editForm.description} onChange={(e) => setEditForm({...editForm, description: e.target.value})} rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none" />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Stock</label>
+                  <input type="number" value={editForm.stock} onChange={(e) => setEditForm({...editForm, stock: parseInt(e.target.value)})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">SKU</label>
+                  <input value={editForm.sku} onChange={(e) => setEditForm({...editForm, sku: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Brand</label>
+                  <input value={editForm.brand} onChange={(e) => setEditForm({...editForm, brand: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Product Image URL</label>
+                <input value={editForm.image} onChange={(e) => setEditForm({...editForm, image: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+              </div>
+            </div>
+            
+            <div className="px-8 py-5 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 shrink-0">
+              <button onClick={() => setEditProduct(null)} className="px-6 py-3 border border-gray-200 bg-white rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm">Cancel</button>
+              <button onClick={handleUpdate} className="px-6 py-3 bg-primary text-white hover:opacity-90 rounded-xl text-sm font-bold transition-all shadow-lg shadow-primary/10 border-none">Save Changes</button>
             </div>
           </div>
         </div>

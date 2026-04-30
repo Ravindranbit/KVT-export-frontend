@@ -10,6 +10,11 @@ export default function Footer() {
   const pathname = usePathname();
   const { settings } = useAdminStore();
   const { categories, fetchCategories } = useCategoryStore();
+
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
   const footerCategories = useMemo(() => {
     const walk = (nodes: typeof categories): Array<{ slug: string; name: string }> =>
       nodes.flatMap((node) => [
@@ -21,13 +26,10 @@ export default function Footer() {
   }, [categories]);
   const socialLinks = settings.socialLinks;
   
+  // Check after all hooks have been called
   if (pathname.startsWith('/admin') || pathname.startsWith('/vendor')) {
     return null;
   }
-
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
 
   return (
     <footer className="bg-[#222222] text-white mt-20">

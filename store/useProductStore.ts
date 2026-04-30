@@ -14,6 +14,7 @@ export interface Product {
   name: string;
   price: number;
   image: string;
+  images?: string[];
   category: string;
   categoryId?: string;
   description: string;
@@ -40,6 +41,9 @@ interface ProductState {
   fetchProductById: (id: string) => Promise<Product | null>;
   clearSelectedProduct: () => void;
   getProductById: (id: string) => Product | undefined;
+  addProduct: (product: Product) => void;
+  removeProduct: (id: string) => void;
+  updateProduct: (id: string, updates: Partial<Product>) => void;
 }
 
 const mapProduct = (raw: any): Product => ({
@@ -117,4 +121,10 @@ export const useProductStore = create<ProductState>()((set, get) => ({
   getProductById: (id) => {
     return get().products.find((product) => product.id === id);
   },
+  addProduct: (product) => set((state) => ({ products: [product, ...state.products] })),
+  removeProduct: (id) => set((state) => ({ products: state.products.filter((p) => p.id !== id) })),
+  updateProduct: (id, updates) =>
+    set((state) => ({
+      products: state.products.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    })),
 }));
