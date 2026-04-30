@@ -192,7 +192,7 @@ export default function Header() {
             {/* Profile / Sign In */}
             {user ? (
               <Link 
-                href={user.role === 'admin' ? '/admin' : '/dashboard'}
+                href={user.role === 'admin' ? '/admin' : '/profile'}
                 className="w-8 h-8 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold text-xs ring-2 ring-gray-100 uppercase hover:scale-110 transition-transform duration-200 cursor-pointer"
               >
                 {user.name.substring(0, 1)}
@@ -206,7 +206,7 @@ export default function Header() {
           <div className="md:hidden">
             {user ? (
               <Link 
-                href={user.role === 'admin' ? '/admin' : '/dashboard'}
+                href={user.role === 'admin' ? '/admin' : '/profile'}
                 className="w-7 h-7 bg-gray-900 text-white rounded-full flex items-center justify-center font-bold text-[10px] ring-2 ring-gray-100 uppercase"
               >
                 {user.name.substring(0, 1)}

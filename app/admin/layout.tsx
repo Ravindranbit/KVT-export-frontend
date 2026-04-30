@@ -48,16 +48,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const { settings } = useAdminStore();
   const router = useRouter();
   const pathname = usePathname();
+  const isLoginRoute = pathname === '/admin/login';
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showNotif, setShowNotif] = useState(false);
   const [pendingOrders, setPendingOrders] = useState(0);
 
   useEffect(() => {
     if (!hasHydrated) return;
-    if (!admin) {
+    if (!admin && !isLoginRoute) {
       router.replace('/admin/login');
     }
-  }, [admin, hasHydrated, router]);
+  }, [admin, hasHydrated, isLoginRoute, router]);
 
   useEffect(() => {
     if (!hasHydrated || !admin) return;
@@ -122,6 +123,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   // Early returns AFTER all hooks have been called
   if (!hasHydrated) return <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Restoring system state...</div>;
+  if (isLoginRoute) return <>{children}</>;
   if (!admin) return <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Redirecting...</div>;
 
   return (

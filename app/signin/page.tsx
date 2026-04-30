@@ -3,31 +3,23 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '../../store/useAuthStore';
-import { useAdminAuthStore } from '../../store/useAdminAuthStore';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 export default function SignIn() {
   const router = useRouter();
   const { login, token, user, hasHydrated, getProfile } = useAuthStore();
-  const { admin: adminUser, login: adminLogin, hasHydrated: adminHydrated } = useAdminAuthStore();
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [identifierError, setIdentifierError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!hasHydrated || !adminHydrated) return;
+    if (!hasHydrated) return;
 
     // Redirect if user is logged in
     if (user) {
       router.push('/');
-      return;
-    }
-
-    // Redirect if admin is logged in
-    if (adminUser) {
-      router.push('/admin');
       return;
     }
 
@@ -36,7 +28,7 @@ export default function SignIn() {
         // If profile lookup fails, user stays on login page and can retry.
       });
     }
-  }, [hasHydrated, adminHydrated, user, adminUser, token, router, getProfile]);
+  }, [hasHydrated, user, token, router, getProfile]);
 
   const validateIdentifier = (value: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -65,29 +57,9 @@ export default function SignIn() {
     setIsSubmitting(true);
 
     try {
-      // Try user login first
-      try {
-        await login(identifier, password);
-        await getProfile();
-        router.push('/');
-        return;
-      } catch (userError: any) {
-        // If user login fails, try admin login (only if identifier is an email)
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (emailRegex.test(identifier)) {
-          try {
-            await adminLogin(identifier, password);
-            router.push('/admin');
-            return;
-          } catch (adminError) {
-            // Both failed, show error
-            throw userError;
-          }
-        } else {
-          // Phone number can't be admin, so just throw user error
-          throw userError;
-        }
-      }
+      await login(identifier, password);
+      await getProfile();
+      router.push('/');
     } catch (error: any) {
       const message = error?.message || 'Login failed. Please try again.';
       if (message.toLowerCase().includes('invalid')) {
@@ -100,7 +72,7 @@ export default function SignIn() {
     }
   };
 
-  if (!hasHydrated || !adminHydrated) {
+  if (!hasHydrated) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center text-gray-500">
         Loading...
@@ -108,7 +80,7 @@ export default function SignIn() {
     );
   }
 
-  if (user || adminUser) {
+  if (user) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center text-gray-500">
         Redirecting...
