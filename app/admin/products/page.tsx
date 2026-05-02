@@ -2,18 +2,24 @@
 
 import { useState } from 'react';
 import { useProductStore, Product } from '../../../store/useProductStore';
+import { useAdminStore } from '../../../store/useAdminStore';
 
 export default function AdminProducts() {
-  const { products, addProduct, removeProduct } = useProductStore();
+  const { products, addProduct, removeProduct, fetchProducts } = useProductStore();
+  const { categories: adminCategories } = useAdminStore();
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
-  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | number | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const [form, setForm] = useState({ name: '', price: '', category: 'fashion', description: '', image: '', vendorId: 'admin', stock: '100', sku: '', brand: '' });
+  const [form, setForm] = useState<{name: string, price: string, category: string, description: string, images: string[], vendorId: string, stock: string, sku: string, brand: string}>({ name: '', price: '', category: '', description: '', images: [], vendorId: 'admin', stock: '100', sku: '', brand: '' });
 
-  const categories = ['all', ...new Set(products.map(p => p.category))];
+  // Use categories from admin store if available, otherwise fallback to product categories
+  const categoriesList = adminCategories.length > 0 
+    ? adminCategories 
+    : Array.from(new Set(products.map(p => p.category))).map(name => ({ id: name, name }));
 
   const filtered = products.filter(p => {
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.id.toString().includes(search);
@@ -21,29 +27,42 @@ export default function AdminProducts() {
     return matchSearch && matchCat;
   });
 
-  const handleAdd = () => {
-    const newProduct: Product = {
-      id: Date.now(),
-      name: form.name,
-      price: parseFloat(form.price),
-      category: form.category,
-      description: form.description,
-      image: form.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80',
-      vendorId: form.vendorId,
-      rating: 0,
-      reviews: 0,
-      stock: parseInt(form.stock),
-      sku: form.sku,
-      brand: form.brand,
-    };
-    addProduct(newProduct);
-    setShowAddModal(false);
-    setForm({ name: '', price: '', category: 'fashion', description: '', image: '', vendorId: 'admin', stock: '100', sku: '', brand: '' });
+  const handleAdd = async () => {
+    setLoading(true);
+    try {
+      await addProduct({
+        name: form.name,
+        price: parseFloat(form.price),
+        category: form.category || (adminCategories[0]?.id),
+        description: form.description,
+        image: form.images[0] || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80',
+        images: form.images,
+        vendorId: form.vendorId,
+        stock: parseInt(form.stock),
+      });
+      setShowAddModal(false);
+      setForm({ name: '', price: '', category: '', description: '', images: [], vendorId: 'admin', stock: '100', sku: '', brand: '' });
+      // Re-fetch products to be sure
+      fetchProducts();
+    } catch (err) {
+      console.error('Add product error', err);
+      alert('Failed to add product');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = (id: number) => {
-    removeProduct(id);
-    setDeleteConfirm(null);
+  const handleDelete = async (id: string | number) => {
+    setLoading(true);
+    try {
+      await removeProduct(id);
+      setDeleteConfirm(null);
+    } catch (err) {
+      console.error('Delete product error', err);
+      alert('Failed to delete product');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -72,7 +91,8 @@ export default function AdminProducts() {
           />
         </div>
         <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-          {categories.map(c => <option key={c} value={c}>{c === 'all' ? 'All Categories' : c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
+          <option value="all">All Categories</option>
+          {categoriesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </div>
 
@@ -165,13 +185,8 @@ export default function AdminProducts() {
                 <div>
                   <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Category *</label>
                   <select value={form.category} onChange={(e) => setForm({...form, category: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white">
-                    <option value="electronics">Electronics</option>
-                    <option value="fashion">Fashion</option>
-                    <option value="home">Home</option>
-                    <option value="sports">Sports</option>
-                    <option value="beauty">Beauty</option>
-                    <option value="books">Books</option>
-                    <option value="toys">Toys</option>
+                    <option value="">Select Category</option>
+                    {categoriesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
               </div>
@@ -197,32 +212,38 @@ export default function AdminProducts() {
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Upload Product Image</label>
-                <div className="relative group p-4 border-2 border-dashed border-gray-300 hover:border-primary rounded-2xl bg-gray-50 hover:bg-primary/5 transition-colors flex items-center gap-6">
-                  {form.image ? (
-                    <img src={form.image} alt="" className="w-16 h-16 rounded-xl object-cover shadow-md bg-white shrink-0 border border-gray-200" />
-                  ) : (
-                    <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center shrink-0 border border-gray-200 text-gray-400">
-                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Upload Product Images (up to 6)</label>
+                <div className="flex flex-wrap gap-4 mb-4">
+                  {form.images.map((img, i) => (
+                    <div key={i} className="relative group">
+                      <img src={img} alt="" className="w-16 h-16 rounded-xl object-cover shadow-md bg-white border border-gray-200" />
+                      <button 
+                        type="button"
+                        onClick={() => setForm({...form, images: form.images.filter((_, index) => index !== i)})}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  ))}
+                  {form.images.length < 6 && (
+                    <div className="relative group w-16 h-16 border-2 border-dashed border-gray-300 hover:border-primary rounded-xl bg-gray-50 hover:bg-primary/5 transition-colors flex items-center justify-center">
+                      <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
+                      <input type="file" accept="image/*" multiple onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        const newImages = files.slice(0, 6 - form.images.length).map(f => URL.createObjectURL(f));
+                        setForm({...form, images: [...form.images, ...newImages]});
+                      }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                     </div>
                   )}
-                  <input type="file" accept="image/*" onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      setForm({...form, image: URL.createObjectURL(file)});
-                    }
-                  }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
-                  <div>
-                    <p className="text-sm font-bold text-gray-700 group-hover:text-primary transition-colors">Click to upload or drag and drop</p>
-                    <p className="text-xs text-gray-500 mt-1">SVG, PNG, JPG or WEBP (max. 5MB)</p>
-                  </div>
                 </div>
+                <p className="text-xs text-gray-500">SVG, PNG, JPG or WEBP (max. 5MB per image). First image will be the cover.</p>
               </div>
             </div>
             
             <div className="px-8 py-5 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 shrink-0">
               <button onClick={() => setShowAddModal(false)} className="px-6 py-3 border border-gray-200 bg-white rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm">Cancel</button>
-              <button onClick={handleAdd} disabled={!form.name || !form.price} className="px-6 py-3 bg-primary text-white hover:opacity-90 rounded-xl text-sm font-bold disabled:opacity-50 transition-all shadow-lg shadow-primary/10 border-none">Publish Product</button>
+              <button onClick={handleAdd} disabled={!form.name || !form.price || loading} className="px-6 py-3 bg-primary text-white hover:opacity-90 rounded-xl text-sm font-bold disabled:opacity-50 transition-all shadow-lg shadow-primary/10 border-none">{loading ? 'Publishing...' : 'Publish Product'}</button>
             </div>
           </div>
         </div>

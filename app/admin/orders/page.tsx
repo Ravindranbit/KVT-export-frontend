@@ -8,6 +8,8 @@ export default function AdminOrders() {
   const [search, setSearch] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<string | null>(null);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState('');
 
   const filtered = orders.filter(o => {
     const matchSearch = o.id.toLowerCase().includes(search.toLowerCase()) || o.customerName.toLowerCase().includes(search.toLowerCase());
@@ -27,6 +29,18 @@ export default function AdminOrders() {
 
   const orderDetail = selectedOrder ? orders.find(o => o.id === selectedOrder) : null;
 
+  const handleStatusChange = async (orderId: string, status: any) => {
+    try {
+      setActionError('');
+      setUpdatingOrderId(orderId);
+      await updateOrderStatus(orderId, status);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to update order status');
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -42,6 +56,12 @@ export default function AdminOrders() {
           ))}
         </div>
       </div>
+
+      {actionError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+          {actionError}
+        </div>
+      )}
 
       {/* Search */}
       <div className="bg-white border border-gray-200 rounded-xl p-4">
@@ -120,7 +140,8 @@ export default function AdminOrders() {
                     <div className="relative group">
                       <select
                         value={o.status}
-                        onChange={(e) => updateOrderStatus(o.id, e.target.value as any)}
+                        onChange={(e) => { void handleStatusChange(o.id, e.target.value as any); }}
+                        disabled={updatingOrderId === o.id}
                         className="text-[12px] font-bold capitalize border-2 border-gray-100 rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white min-w-[125px] cursor-pointer hover:border-blue-400 transition-all appearance-none pr-8 text-gray-700"
                       >
                         {['pending', 'processing', 'shipped', 'delivered', 'cancelled'].map(s => (

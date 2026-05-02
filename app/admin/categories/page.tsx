@@ -21,6 +21,8 @@ export default function AdminCategories() {
   const [showModal, setShowModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   
   const defaultForm = { name: '', slug: '', description: '', visible: true, showInHeader: true, showInFilters: true };
   const [form, setForm] = useState(defaultForm);
@@ -30,19 +32,45 @@ export default function AdminCategories() {
     cat.description.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSave = () => {
-    if (editingId) {
-      updateCategory(editingId, form);
-    } else {
-      addCategory({
-        id: `cat_${Date.now()}`,
-        ...form,
-        slug: form.slug || form.name.toLowerCase().replace(/\s+/g, '-'),
-        productCount: 0,
-        order: categories.length + 1,
-      });
+  const handleSave = async () => {
+    try {
+      setActionError('');
+      setIsSaving(true);
+      if (editingId) {
+        await updateCategory(editingId, form);
+      } else {
+        await addCategory({
+          id: `cat_${Date.now()}`,
+          ...form,
+          slug: form.slug || form.name.toLowerCase().replace(/\s+/g, '-'),
+          productCount: 0,
+          order: categories.length + 1,
+        });
+      }
+      closeModal();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to save category');
+    } finally {
+      setIsSaving(false);
     }
-    closeModal();
+  };
+
+  const handleDeleteCategory = async (categoryId: string) => {
+    try {
+      setActionError('');
+      await deleteCategory(categoryId);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to delete category');
+    }
+  };
+
+  const handleToggleVisibility = async (categoryId: string, visible: boolean) => {
+    try {
+      setActionError('');
+      await updateCategory(categoryId, { visible });
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to update visibility');
+    }
   };
 
   const closeModal = () => {
@@ -93,6 +121,12 @@ export default function AdminCategories() {
           </button>
         </div>
       </div>
+
+      {actionError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+          {actionError}
+        </div>
+      )}
  
       {/* Categories Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -107,7 +141,7 @@ export default function AdminCategories() {
                  <Layers size={22} />
               </div>
               <button 
-                onClick={() => deleteCategory(cat.id)}
+                onClick={() => { void handleDeleteCategory(cat.id); }}
                 className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all active:scale-95"
                 title="Delete Category"
               >
@@ -153,7 +187,7 @@ export default function AdminCategories() {
                 Edit
               </button>
               <button 
-                onClick={() => updateCategory(cat.id, { visible: !cat.visible })}
+                onClick={() => { void handleToggleVisibility(cat.id, !cat.visible); }}
                 className={`flex-1 py-3 rounded-[16px] text-[10px] font-black uppercase tracking-[0.15em] transition-all active:scale-95 flex items-center justify-center gap-2 shadow-lg brightness-[0.95] hover:brightness-90 ${
                   cat.visible 
                     ? 'bg-[#ff6b2b] text-white shadow-orange-500/20' 
@@ -245,11 +279,11 @@ export default function AdminCategories() {
                 Cancel
               </button>
               <button 
-                onClick={handleSave} 
-                disabled={!form.name} 
+                onClick={() => { void handleSave(); }} 
+                disabled={!form.name || isSaving} 
                 className="px-8 py-3 bg-primary text-white rounded-2xl text-sm hover:opacity-90 transition-all shadow-lg shadow-primary/10 disabled:opacity-50 disabled:shadow-none border-none"
               >
-                {editingId ? 'Save Changes' : 'Confirm Category'}
+                {isSaving ? 'Saving...' : editingId ? 'Save Changes' : 'Confirm Category'}
               </button>
             </div>
           </div>

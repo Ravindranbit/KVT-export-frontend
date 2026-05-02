@@ -10,6 +10,7 @@ export default function AdminUsers() {
   const [showAddAdmin, setShowAddAdmin] = useState(false);
   const [editingAdminId, setEditingAdminId] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [actionError, setActionError] = useState('');
   
   const initialPermissions = {
     dashboard: false,
@@ -41,6 +42,7 @@ export default function AdminUsers() {
   const statusColors: Record<string, string> = {
     active: 'text-[#3b8c41]',
     banned: 'text-[#e60000]',
+    suspended: 'text-[#f59e0b]',
   };
 
   const roleColors: Record<string, string> = {
@@ -67,26 +69,31 @@ export default function AdminUsers() {
     setShowAddAdmin(true);
   };
 
-  const handleAddAdmin = () => {
-    if (editingAdminId) {
-      // Update permissions of existing admin
-      updateAdminPermissions(editingAdminId, adminForm.permissions);
-    } else {
-      // Create new admin
-      const newAdmin = {
-        id: `admin_${Date.now()}`,
-        name: adminForm.name,
-        email: adminForm.email,
-        role: 'admin' as const,
-        status: 'active' as const,
-        joinedDate: new Date().toISOString().split('T')[0],
-        phone: adminForm.phone,
-        permissions: adminForm.permissions,
-      };
-      addAdmin(newAdmin);
+  const handleAddAdmin = async () => {
+    try {
+      setActionError('');
+      if (editingAdminId) {
+        await updateAdminPermissions(editingAdminId, adminForm.permissions);
+      } else {
+        await addAdmin({
+          id: '',
+          name: adminForm.name,
+          email: adminForm.email,
+          role: 'admin',
+          status: 'active',
+          joinedDate: new Date().toISOString().split('T')[0],
+          phone: adminForm.phone,
+          permissions: adminForm.permissions,
+          adminLevel: 'ADMIN',
+          password: adminForm.password,
+        });
+      }
+
+      setShowAddAdmin(false);
+      setAdminForm({ name: '', email: '', password: '', phone: '', permissions: initialPermissions });
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Action failed');
     }
-    setShowAddAdmin(false);
-    setAdminForm({ name: '', email: '', password: '', phone: '', permissions: initialPermissions });
   };
 
   const togglePermission = (key: keyof typeof adminForm.permissions) => {
@@ -96,15 +103,20 @@ export default function AdminUsers() {
     }));
   };
 
-  const handleDelete = (id: string) => {
-    const isAdmin = admins.find(a => a.id === id);
-    if (isAdmin) {
-      if (id === 'admin1') return; // Cannot delete Super Admin
-      removeAdmin(id);
-    } else {
-      deleteUser(id);
+  const handleDelete = async (id: string) => {
+    try {
+      setActionError('');
+      const admin = admins.find(a => a.id === id);
+      if (admin) {
+        if (admin.adminLevel === 'SUPER_ADMIN') return;
+        await removeAdmin(id);
+      } else {
+        await deleteUser(id);
+      }
+      setDeleteConfirm(null);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Delete failed');
     }
-    setDeleteConfirm(null);
   };
 
   return (
@@ -118,6 +130,12 @@ export default function AdminUsers() {
           + Create Admin
         </button>
       </div>
+
+      {actionError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+          {actionError}
+        </div>
+      )}
 
       {/* Filters */}
       <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-col md:flex-row gap-3">
@@ -150,7 +168,7 @@ export default function AdminUsers() {
           <tbody className="divide-y divide-gray-50">
             {filtered.map((u) => {
               const isAdmin = u.role === 'admin';
-              const isSuperAdmin = u.id === 'admin1';
+              const isSuperAdmin = isAdmin && u.adminLevel === 'SUPER_ADMIN';
               return (
                 <tr key={u.id} className="hover:bg-gray-50/80 transition-all group">
                    <td className="px-6 py-4">
@@ -165,9 +183,9 @@ export default function AdminUsers() {
                     </span>
                   </td>
                   <td className="px-4 py-4">
-                    <span className={`flex items-center gap-1.5 text-sm font-black tracking-wide capitalize ${statusColors[u.status === 'suspended' ? 'active' : u.status] || 'text-gray-500'}`}>
+                    <span className={`flex items-center gap-1.5 text-sm font-black tracking-wide capitalize ${statusColors[u.status] || 'text-gray-500'}`}>
                       <span className="w-1.5 h-1.5 rounded-full bg-current animate-pulse" />
-                      {u.status === 'suspended' ? 'active' : u.status}
+                      {u.status}
                     </span>
                   </td>
                   <td className="px-4 py-4 text-xs font-medium text-gray-500">{u.joinedDate}</td>
@@ -185,7 +203,7 @@ export default function AdminUsers() {
 
                       {!isAdmin && u.status !== 'banned' && (
                         <button 
-                          onClick={() => updateUserStatus(u.id, 'banned')} 
+                          onClick={() => { void updateUserStatus(u.id, 'banned').catch((e) => setActionError(e instanceof Error ? e.message : 'Status update failed')); }} 
                           className="w-[85px] py-2 text-[10px] font-black uppercase tracking-wider text-gray-600 bg-white rounded-lg hover:bg-gray-50 transition-all border border-gray-200 shadow-sm"
                         >
                           Ban
@@ -193,7 +211,7 @@ export default function AdminUsers() {
                       )}
                       {!isAdmin && u.status === 'banned' && (
                         <button 
-                          onClick={() => updateUserStatus(u.id, 'active')} 
+                          onClick={() => { void updateUserStatus(u.id, 'active').catch((e) => setActionError(e instanceof Error ? e.message : 'Status update failed')); }} 
                           className="w-[85px] py-2 text-[10px] font-black uppercase tracking-wider text-gray-600 bg-white rounded-lg hover:bg-gray-50 transition-all border border-gray-200"
                         >
                           Unban
@@ -298,10 +316,10 @@ export default function AdminUsers() {
               </button>
               <button 
                 onClick={handleAddAdmin} 
-                disabled={!adminForm.name || !adminForm.email || !adminForm.password} 
+                disabled={editingAdminId ? !adminForm.name || !adminForm.email : !adminForm.name || !adminForm.email || !adminForm.password} 
                 className="px-8 py-3 bg-primary text-white hover:opacity-90 rounded-xl text-sm font-black uppercase tracking-wider disabled:opacity-50 transition-all shadow-lg shadow-primary/20 active:scale-95 border-none"
               >
-                Create Admin
+                {editingAdminId ? 'Save Permissions' : 'Create Admin'}
               </button>
             </div>
           </div>

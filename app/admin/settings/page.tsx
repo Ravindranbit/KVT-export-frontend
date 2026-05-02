@@ -57,6 +57,7 @@ export default function AdminSettings() {
   const { settings, updateSettings } = useAdminStore();
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
   const [activeTab, setActiveTab] = useState('general');
   const [copied, setCopied] = useState(false);
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -83,12 +84,17 @@ export default function AdminSettings() {
   const isDirty = JSON.stringify(form) !== JSON.stringify(settings);
 
   const handleSave = async () => {
-    setIsSaving(true);
-    await new Promise(resolve => setTimeout(resolve, 800));
-    updateSettings(form);
-    setIsSaving(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    try {
+      setSaveError('');
+      setIsSaving(true);
+      await updateSettings(form);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Failed to save settings');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const copyToClipboard = (text: string) => {
@@ -191,6 +197,12 @@ export default function AdminSettings() {
       {/* Main Content Area */}
       <div className="bg-white border border-gray-100 rounded-[32px] p-8 md:p-12 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/10 to-transparent"></div>
+
+        {saveError && (
+          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            {saveError}
+          </div>
+        )}
 
         <AnimatePresence mode="wait">
           {activeTab === 'general' && (

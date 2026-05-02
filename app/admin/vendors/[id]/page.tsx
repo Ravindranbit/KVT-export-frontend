@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import { useAdminStore, Vendor } from '../../../../store/useAdminStore';
-import { useProductStore, Product } from '../../../../store/useProductStore';
+import { Product } from '../../../../store/useProductStore';
 import { useParams, useRouter } from 'next/navigation';
 import { 
   Building2, 
@@ -13,28 +12,115 @@ import {
   TrendingUp, 
   Package, 
   ArrowLeft,
-  Settings,
-  ChevronRight,
-  ExternalLink,
-  ShoppingBag,
-  EyeOff,
-  Eye
+  Settings
 } from 'lucide-react';
 import Link from 'next/link';
+import { apiGet, apiPatch } from '../../../../lib/api';
+
+interface ApiEnvelope<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
+
+type VendorProduct = Product & {
+  hidden?: boolean;
+  hiddenReason?: string;
+};
 
 export default function VendorDetails() {
-  const [hiddenProducts, setHiddenProducts] = useState<number[]>([]);
+  const [hiddenProducts, setHiddenProducts] = useState<Array<string | number>>([]);
   const [showHideModal, setShowHideModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<VendorProduct | null>(null);
   const [hideReason, setHideReason] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [actionError, setActionError] = useState('');
+  const [vendorData, setVendorData] = useState<Vendor | null>(null);
+  const [vendorProducts, setVendorProducts] = useState<VendorProduct[]>([]);
   const params = useParams();
   const router = useRouter();
   const { vendors } = useAdminStore();
-  const { products } = useProductStore();
   const vendorId = params?.id as string;
 
-  const vendor = vendors.find(v => v.id === vendorId);
-  const vendorProducts = products.filter(p => p.vendorId === vendorId);
+  const vendor = vendorData || vendors.find(v => v.id === vendorId) || null;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadVendor = async () => {
+      try {
+        setActionError('');
+        setLoading(true);
+
+        const response = await apiGet<ApiEnvelope<any>>(`/admin/vendors/${vendorId}`, { auth: 'admin' });
+        if (!isMounted) return;
+
+        const payload = response.data || {};
+        const products = Array.isArray(payload.products) ? payload.products : [];
+
+        setVendorData({
+          id: String(payload.id || vendorId),
+          name: payload.name || '',
+          email: payload.email || '',
+          storeName: payload.storeName || '',
+          storeDescription: payload.storeDescription || '',
+          status: payload.status === 'approved' || payload.status === 'suspended' ? payload.status : 'pending',
+          productsCount: Number(payload.productsCount || products.length || 0),
+          totalRevenue: Number(payload.totalRevenue || 0),
+          commission: Number(payload.commission || 0),
+          joinedDate: payload.joinedDate || '',
+          phone: payload.phone || '',
+        });
+
+        setVendorProducts(products);
+        setHiddenProducts(products.filter((item: VendorProduct) => item.hidden).map((item: VendorProduct) => item.id));
+      } catch (error) {
+        if (!isMounted) return;
+        setActionError(error instanceof Error ? error.message : 'Failed to load vendor details');
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    if (vendorId) {
+      void loadVendor();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [vendorId]);
+
+  const handleUnhideProduct = async (productId: string | number) => {
+    try {
+      setActionError('');
+      await apiPatch<ApiEnvelope<any>>(`/admin/vendors/${vendorId}/products/${productId}/show`, {}, { auth: 'admin' });
+      setHiddenProducts((prev) => prev.filter((id) => id !== productId));
+      setVendorProducts((prev) => prev.map((item) => item.id === productId ? { ...item, hidden: false } : item));
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to unhide product');
+    }
+  };
+
+  const handleHideProduct = async () => {
+    if (!selectedProduct) return;
+
+    try {
+      setActionError('');
+      await apiPatch<ApiEnvelope<any>>(`/admin/vendors/${vendorId}/products/${selectedProduct.id}/hide`, { reason: hideReason }, { auth: 'admin' });
+      setHiddenProducts((prev) => [...prev, selectedProduct.id]);
+      setVendorProducts((prev) => prev.map((item) => item.id === selectedProduct.id ? { ...item, hidden: true, hiddenReason: hideReason } : item));
+      setShowHideModal(false);
+      setSelectedProduct(null);
+      setHideReason('');
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to hide product');
+    }
+  };
+
+  if (loading) {
+    return <div className="min-h-[60vh] flex items-center justify-center text-gray-400">Loading vendor details...</div>;
+  }
 
   if (!vendor) {
     return (
@@ -60,6 +146,12 @@ export default function VendorDetails() {
   return (
     <>
       <div className="space-y-8 pb-20">
+        {actionError && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+            {actionError}
+          </div>
+        )}
+
         {/* Navigation */}
         <button 
           onClick={() => router.back()}
@@ -188,7 +280,7 @@ export default function VendorDetails() {
                           <button
                             onClick={() => {
                               if (isHidden) {
-                                setHiddenProducts(prev => prev.filter(id => id !== p.id));
+                                void handleUnhideProduct(p.id);
                               } else {
                                 setSelectedProduct(p);
                                 setHideReason('');
@@ -253,15 +345,7 @@ export default function VendorDetails() {
                 Cancel
               </button>
               <button 
-                onClick={() => {
-                  if (selectedProduct) {
-                    console.log(`Product ${selectedProduct.id} hidden. Reason sent to vendor: ${hideReason}`);
-                    setHiddenProducts(prev => [...prev, selectedProduct.id]);
-                  }
-                  setShowHideModal(false);
-                  setSelectedProduct(null);
-                  setHideReason('');
-                }}
+                onClick={() => { void handleHideProduct(); }}
                 disabled={!hideReason.trim()}
                 className="px-8 py-2.5 bg-primary text-white rounded-xl text-sm hover:opacity-90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50 disabled:shadow-none border-none"
               >

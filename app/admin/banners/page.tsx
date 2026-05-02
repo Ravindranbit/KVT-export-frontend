@@ -12,6 +12,8 @@ export default function AdminBanners() {
   const [showProductSelect, setShowProductSelect] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [actionError, setActionError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const defaultForm = { title: '', subtitle: '', desc: '', cta: '', href: '', accent: '#ff6b6b', image: '', tag: '' };
   const [form, setForm] = useState(defaultForm);
 
@@ -22,7 +24,10 @@ export default function AdminBanners() {
     (b.tag && b.tag.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    try {
+      setActionError('');
+      setIsSaving(true);
     let finalImage = form.image;
     if (!finalImage && form.href) {
       const linkedProd = products.find(p => `/product/${p.id}` === form.href);
@@ -31,15 +36,38 @@ export default function AdminBanners() {
     const finalForm = { ...form, image: finalImage };
 
     if (editingId) {
-      updateBanner(editingId, finalForm);
+      await updateBanner(editingId, finalForm);
     } else {
-      addBanner({
+      await addBanner({
         id: `b_${Date.now()}`,
         ...finalForm,
         active: true,
       });
     }
     closeModal();
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to save banner');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleBanner = async (id: string, active: boolean) => {
+    try {
+      setActionError('');
+      await updateBanner(id, { active });
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to update banner');
+    }
+  };
+
+  const handleDeleteBanner = async (id: string) => {
+    try {
+      setActionError('');
+      await deleteBanner(id);
+    } catch (error) {
+      setActionError(error instanceof Error ? error.message : 'Failed to delete banner');
+    }
   };
 
   const closeModal = () => {
@@ -77,6 +105,12 @@ export default function AdminBanners() {
         </div>
       </div>
 
+      {actionError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
+          {actionError}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filteredBanners.map((b) => (
           <div key={b.id} className={`bg-white border rounded-[20px] flex flex-col overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${b.active ? 'border-gray-200 shadow-sm' : 'border-dashed border-gray-300 opacity-80 grayscale-[20%]'}`}>
@@ -111,10 +145,10 @@ export default function AdminBanners() {
                 <button onClick={() => openEdit(b)} className="flex-1 text-[11px] font-black uppercase tracking-wider text-gray-600 bg-gray-100 border border-gray-200 py-2.5 rounded-xl hover:bg-gray-200 hover:text-gray-900 transition-colors shadow-sm active:scale-95">
                   Edit
                 </button>
-                <button onClick={() => updateBanner(b.id, { active: !b.active })} className={`flex-1 text-[11px] font-black uppercase tracking-wider text-white py-2.5 rounded-xl transition-all shadow-sm active:scale-95 ${b.active ? 'bg-[#ff9800] hover:bg-[#e68a00]' : 'bg-[#3b8c41] hover:bg-[#2e6e33]'}`}>
+                <button onClick={() => { void handleToggleBanner(b.id, !b.active); }} className={`flex-1 text-[11px] font-black uppercase tracking-wider text-white py-2.5 rounded-xl transition-all shadow-sm active:scale-95 ${b.active ? 'bg-[#ff9800] hover:bg-[#e68a00]' : 'bg-[#3b8c41] hover:bg-[#2e6e33]'}`}>
                   {b.active ? 'Disable' : 'Enable'}
                 </button>
-                <button onClick={() => deleteBanner(b.id)} className="p-2.5 text-[#e60000] hover:text-[#cc0000] shrink-0 transition-colors" title="Delete">
+                <button onClick={() => { void handleDeleteBanner(b.id); }} className="p-2.5 text-[#e60000] hover:text-[#cc0000] shrink-0 transition-colors" title="Delete">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                 </button>
               </div>
@@ -268,7 +302,7 @@ export default function AdminBanners() {
             
             <div className="px-8 py-5 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 shrink-0">
               <button onClick={closeModal} className="px-6 py-3 border border-gray-200 bg-white rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm">Cancel</button>
-              <button onClick={handleSave} disabled={!form.title || !form.subtitle} className="px-6 py-3 bg-primary text-white hover:opacity-90 rounded-xl text-sm font-bold disabled:opacity-50 transition-all shadow-lg shadow-primary/10 border-none">{editingId ? 'Save Changes' : 'Publish Banner'}</button>
+              <button onClick={() => { void handleSave(); }} disabled={!form.title || !form.subtitle || isSaving} className="px-6 py-3 bg-primary text-white hover:opacity-90 rounded-xl text-sm font-bold disabled:opacity-50 transition-all shadow-lg shadow-primary/10 border-none">{isSaving ? 'Saving...' : editingId ? 'Save Changes' : 'Publish Banner'}</button>
             </div>
           </div>
         </div>
