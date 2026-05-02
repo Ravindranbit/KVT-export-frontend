@@ -8,6 +8,7 @@ import { useOrderStore, Order } from '../../store/useOrderStore';
 import Header from '../../components/layout/Header';
 
 import { useProductStore } from '../../store/useProductStore';
+import { apiGet, apiPost } from '../../lib/api';
 
 const STEPS = ['Contact Details', 'Shipping Address', 'Payment'];
 
@@ -48,54 +49,99 @@ export default function Checkout() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     setIsProcessing(true);
-    const newOrderId = `KVT-${Math.floor(Math.random() * 89999 + 10000)}`;
-    setOrderId(newOrderId);
-
-    setTimeout(() => {
-      const orderItems = cartItems.map(item => {
-        const product = getProductDetails(item.id);
-        return {
-          id: item.id,
-          name: product?.name || 'Unknown Product',
-          price: product?.price || 0,
-          image: product?.image || '',
-          quantity: item.quantity,
-          vendorId: product?.vendorId || 'v0'
-        };
-      });
-
-      const newOrder: Order = {
-        id: newOrderId,
-        customerId: user?.id || 'guest',
-        customerName: user?.name || formData.firstName + ' ' + formData.lastName,
-        date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        total: total > 4150 ? total : total + 415,
-        status: 'Processing',
-        items: orderItems,
-        shippingAddress: {
-          line1: formData.address,
-          city: formData.city,
-          zip: formData.zip,
-          country: 'India'
-        }
+    
+    try {
+      // 1. Create order on backend and get Razorpay Order ID
+      const orderData = {
+        shippingAddress: formData.address,
+        city: formData.city,
+        zip: formData.zip,
+        phone: formData.phone,
       };
 
-      orderItems.forEach(item => {
-        const product = getProductDetails(item.id);
-        if (product && product.stock) {
-          useProductStore.getState().updateProduct(item.id, { 
-            stock: Math.max(0, product.stock - item.quantity) 
-          });
-        }
+      const response = await apiPost<{ success: boolean; data: { orderId: string; razorpayOrderId: string; amount: number } }>('/payment/create-order', orderData, { auth: 'user' });
+      
+      if (!response || !response.data) {
+        throw new Error('Failed to create payment order');
+      }
+
+      const { razorpayOrderId, amount, orderId: backendOrderId } = response.data;
+
+      // 2. Load Razorpay Script
+      const loadScript = () => {
+        return new Promise((resolve) => {
+          const script = document.createElement('script');
+          script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+          script.onload = () => resolve(true);
+          script.onerror = () => resolve(false);
+          document.body.appendChild(script);
+        });
+      };
+
+      const res = await loadScript();
+
+      if (!res) {
+        alert('Razorpay SDK failed to load. Are you online?');
+        setIsProcessing(false);
+        return;
+      }
+
+      // 3. Open Razorpay Checkout
+      const options = {
+        key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_your_key_id', // Replace with your actual key
+        amount: amount,
+        currency: 'INR',
+        name: 'KVT exports',
+        description: 'Payment for your order',
+        order_id: razorpayOrderId,
+        handler: async function (response: any) {
+          try {
+            // 4. Verify payment on backend
+            const verifyRes = await apiPost<{ success: boolean }>('/payment/verify', {
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }, { auth: 'user' });
+
+            if (verifyRes && verifyRes.success) {
+              setOrderId(backendOrderId);
+              setIsSuccess(true);
+              clearCart();
+            } else {
+              alert('Payment verification failed. Please contact support.');
+            }
+          } catch (err) {
+            console.error('Verification error:', err);
+            alert('Error verifying payment.');
+          } finally {
+            setIsProcessing(false);
+          }
+        },
+        prefill: {
+          name: formData.firstName + ' ' + formData.lastName,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: {
+          color: '#DC2626', // Red-600
+        },
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+      
+      paymentObject.on('payment.failed', function (response: any) {
+        alert('Payment failed: ' + response.error.description);
+        setIsProcessing(false);
       });
 
-      addOrder(newOrder);
+    } catch (err) {
+      console.error('Checkout error:', err);
+      alert('An error occurred during checkout. Please try again.');
       setIsProcessing(false);
-      setIsSuccess(true);
-      clearCart();
-    }, 2500);
+    }
   };
 
   if (isSuccess) {

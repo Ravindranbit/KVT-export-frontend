@@ -6,7 +6,6 @@ import { useWishlistStore } from '../../store/useWishlistStore';
 import { useCartStore } from '../../store/useCartStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useProductStore } from '../../store/useProductStore';
-import { PRODUCTS } from '../../lib/mockData';
 import MegaMenu from './MegaMenu';
 import { useRouter } from 'next/navigation';
 import { useAdminStore } from '../../store/useAdminStore';
@@ -20,13 +19,31 @@ export default function Header() {
   const searchRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const wishlist = useWishlistStore((state) => state.items);
+  const fetchWishlist = useWishlistStore((state) => state.fetchWishlist);
+  const fetchCart = useCartStore((state) => state.fetchCart);
   const { user } = useAuthStore();
+
+  useEffect(() => {
+    if (user && user.role !== 'admin') {
+      void fetchWishlist();
+      void fetchCart();
+    }
+  }, [user, fetchWishlist, fetchCart]);
   
   const cart = useCartStore((state) => state.getTotalItems());
-  const { products } = useProductStore();
+  const { products, categories: storeCategories, fetchProducts, fetchCategories } = useProductStore();
   const { settings, categories: adminCategories } = useAdminStore();
+  
+  useEffect(() => {
+    setMounted(true);
+    void fetchProducts();
+    void fetchCategories();
+  }, [fetchProducts, fetchCategories]);
+
   const productCategories = Array.from(new Set(products.map(p => p.category.toLowerCase())));
-  const categories = adminCategories.filter(c => c.visible && (c.showInHeader !== false)).map(c => c.name.toLowerCase());
+  const categories = storeCategories.length > 0 
+    ? storeCategories.map(c => c.name.toLowerCase())
+    : adminCategories.filter(c => c.visible && (c.showInHeader !== false)).map(c => c.name.toLowerCase());
   
   // Merge categories if needed, but primarily follow Admin
   const finalCategories = categories.length > 0 ? categories : productCategories;
@@ -34,8 +51,6 @@ export default function Header() {
   const siteNameParts = settings.siteName ? settings.siteName.split(' ') : ['KVT', 'exports'];
   const firstPart = siteNameParts[0];
   const restParts = siteNameParts.slice(1).join(' ');
-
-  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
@@ -48,9 +63,9 @@ export default function Header() {
   }, []);
 
   const filtered = searchQuery.length > 1
-    ? PRODUCTS.filter(p =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.category.toLowerCase().includes(searchQuery.toLowerCase())
+    ? products.filter(p =>
+        (p.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.category || '').toLowerCase().includes(searchQuery.toLowerCase())
       ).slice(0, 6)
     : [];
 

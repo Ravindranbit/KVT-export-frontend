@@ -21,7 +21,8 @@ export default function Home() {
 }
 
 function HomeContent() {
-  const { products } = useProductStore();
+  const { products, fetchProducts } = useProductStore();
+  const { fetchAdminData } = useAdminStore();
   const searchParams = useSearchParams();
   const catParam = searchParams.get('category');
   
@@ -35,6 +36,12 @@ function HomeContent() {
   const [isChangingCategory, setIsChangingCategory] = useState(false);
 
   const { categories: adminCategories } = useAdminStore();
+
+  useEffect(() => {
+    fetchProducts();
+    fetchAdminData();
+  }, [fetchProducts, fetchAdminData]);
+
   const categories = ['all', ...adminCategories.filter(c => c.visible && (c.showInFilters !== false)).map(c => c.name.toLowerCase())];
   // If no admin categories are marked for filters, fallback to product categories
   const finalCategories = categories.length > 1 ? categories : ['all', ...Array.from(new Set(products.map(p => p.category.toLowerCase())))];
@@ -58,9 +65,9 @@ function HomeContent() {
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
   const addToCart = useCartStore((state) => state.addItem);
 
-  const handleAddToCart = (productId: number) => {
+  const handleAddToCart = (productId: string | number) => {
     addToCart(productId);
-    const product = products.find(p => p.id === productId);
+    const product = products.find(p => String(p.id) === String(productId));
     setCartMessage(product?.name || 'Product added to cart');
     setTimeout(() => setCartMessage(null), 3000);
   };
@@ -88,7 +95,7 @@ function HomeContent() {
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     if (selectedSort === 'Price: Low to High') return a.price - b.price;
     if (selectedSort === 'Price: High to Low') return b.price - a.price;
-    if (selectedSort === 'Newest Arrivals') return b.id - a.id;
+    if (selectedSort === 'Newest Arrivals') return String(b.id).localeCompare(String(a.id));
     return 0; // Recommended = default order
   });
 
@@ -319,7 +326,7 @@ function HomeContent() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  handleAddToCart(product.id);
+                  handleAddToCart(String(product.id));
                 }}
                 className="absolute bottom-[130px] left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs font-bold px-6 py-2.5 rounded-full opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300 shadow-lg hover:bg-black whitespace-nowrap z-20 cursor-pointer"
               >
@@ -335,13 +342,13 @@ function HomeContent() {
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
-                      toggleWishlist(product.id);
+                      toggleWishlist(String(product.id));
                     }}
                     className={`flex-shrink-0 transition-all duration-200 hover:scale-110 cursor-pointer relative z-20 ${
-                      wishlist.includes(product.id) ? 'text-red-600' : 'text-gray-300 hover:text-red-500'
+                      wishlist.includes(String(product.id)) ? 'text-red-600' : 'text-gray-300 hover:text-red-500'
                     }`}
                   >
-                    <svg className="w-5 h-5" fill={wishlist.includes(product.id) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5" fill={wishlist.includes(String(product.id)) ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 21s-6.75-4.35-9-9.09C1.17 9.23 2.2 6.33 4.62 4.92a5.13 5.13 0 015.89.62L12 6.95l1.49-1.41a5.13 5.13 0 015.89-.62c2.42 1.41 3.45 4.31 1.62 7 0 0-1.62 3.24-9 9.08z" />
                     </svg>
                   </button>

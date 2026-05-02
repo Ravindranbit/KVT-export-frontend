@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useRouter } from 'next/navigation';
+import { apiPost, ApiError } from '../../lib/api';
 
 export default function SignIn() {
   const router = useRouter();
@@ -11,6 +12,8 @@ export default function SignIn() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const validateEmail = (value: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -27,25 +30,38 @@ export default function SignIn() {
     validateEmail(value);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (emailError) {
       return;
     }
-    
-    // Buyer/User Login
-    // TODO: Replace with actual API call to /auth/login
-    const token = `mock-user-jwt-${Date.now()}`;
-    localStorage.setItem('userToken', token);
 
-    setUser({
-      id: 'u1',
-      name: email.split('@')[0],
-      email: email,
-      role: 'buyer'
-    });
-    
-    router.push('/');
+    setLoading(true);
+    setError('');
+
+    try {
+      const response = await apiPost<{ success: boolean; data: { token: string; user: { id: string; name: string; email: string; phone: string } } }>('/auth/login', {
+        identifier: email,
+        password,
+      }, { auth: 'none' });
+
+      const { token, user } = response.data;
+      localStorage.setItem('userToken', token);
+
+      setUser({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: 'buyer',
+      });
+
+      router.push('/');
+    } catch (error) {
+      setError(error instanceof ApiError ? error.message : 'Sign in failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -63,6 +79,11 @@ export default function SignIn() {
           <h1 className="text-3xl font-bold text-gray-900 mb-5 text-center">Sign In</h1>
           
           <form onSubmit={handleSubmit} className="space-y-3.5">
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                {error}
+              </div>
+            )}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Email Address <span className="text-red-600">*</span>
@@ -109,10 +130,10 @@ export default function SignIn() {
 
             <button
               type="submit"
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded transition text-sm disabled:cursor-not-allowed"
-              disabled={!!emailError || !email || !password}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded transition text-sm disabled:cursor-not-allowed disabled:bg-red-400"
+              disabled={!!emailError || !email || !password || loading}
             >
-              Sign In
+              {loading ? 'Signing In...' : 'Sign In'}
             </button>
           </form>
 

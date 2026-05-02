@@ -7,11 +7,15 @@ import { useCartStore } from '../../store/useCartStore';
 import Header from '../../components/layout/Header';
 
 import { useProductStore } from '../../store/useProductStore';
+import { apiDelete, apiGet, apiPost, ApiError } from '../../lib/api';
+
+interface ApiResponse<T> { success: boolean; data: T; message?: string; }
 
 export default function Wishlist() {
   const { products } = useProductStore();
   const [mounted, setMounted] = useState(false);
   const wishlistIds = useWishlistStore((state) => state.items);
+  const fetchWishlist = useWishlistStore((state) => state.fetchWishlist);
   const toggleWishlist = useWishlistStore((state) => state.toggleItem);
   const addToCartStore = useCartStore((state) => state.addItem);
 
@@ -19,7 +23,17 @@ export default function Wishlist() {
     setMounted(true);
   }, []);
 
-  const getProductDetails = (id: number) => products.find(p => p.id === id);
+  useEffect(() => {
+    if (mounted) {
+      void fetchWishlist();
+    }
+  }, [mounted, fetchWishlist]);
+
+  const getProductDetails = (id: string) => products.find(p => String(p.id) === id);
+
+  const handleToggleWishlist = async (productId: string) => {
+    await toggleWishlist(productId);
+  };
 
   if (!mounted) return null;
 
@@ -64,7 +78,9 @@ export default function Wishlist() {
                       <h3 className="text-base font-medium text-[#6b7280] hover:text-red-600">{item.name}</h3>
                     </Link>
                     <button 
-                      onClick={() => toggleWishlist(item.id)}
+                      onClick={() => {
+                        handleToggleWishlist(String(item.id));
+                      }}
                       className="text-red-600 hover:text-red-800 transition"
                     >
                       <svg className="w-6 h-6" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,7 +90,9 @@ export default function Wishlist() {
                   </div>
                   <p className="mt-2 text-base font-semibold text-[#6b7280]">₹{item.price.toFixed(2)}</p>
                   <button
-                    onClick={() => addToCartStore(item.id)}
+                    onClick={() => {
+                      addToCartStore(String(item.id));
+                    }}
                     className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white py-2 rounded transition font-medium"
                   >
                     Add to Cart

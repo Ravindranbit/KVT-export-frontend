@@ -9,11 +9,13 @@ import { useWishlistStore } from '../../store/useWishlistStore';
 import { useProductStore } from '../../store/useProductStore';
 import { useCartStore } from '../../store/useCartStore';
 import { useOrderStore } from '../../store/useOrderStore';
+import { apiDelete, apiGet, apiPatch, apiPost, ApiError } from '../../lib/api';
 
 // Removed MOCK_ORDERS as they are now replaced by persistence store
 
 interface Address { id: string; label: string; name: string; line1: string; line2: string; city: string; zip: string; country: string; phone: string; isDefault: boolean; }
 interface Card { id: string; brand: string; last4: string; expiry: string; isPrimary: boolean; }
+interface ApiResponse<T> { success: boolean; data: T; message?: string; }
 
 function SettingsTab({ user, setUser, logout, router, show }: { user: any; setUser: (u: any) => void; logout: () => void; router: any; show: (t: string) => void }) {
   const [name, setName] = useState(user?.name || '');
@@ -21,16 +23,46 @@ function SettingsTab({ user, setUser, logout, router, show }: { user: any; setUs
   const [phone, setPhone] = useState('+91 ');
   const [showDeactivate, setShowDeactivate] = useState(false);
 
-  const handleSave = () => {
+  useEffect(() => {
+    setName(user?.name || '');
+    setEmail(user?.email || '');
+    setPhone(user?.phone || '+91 ');
+  }, [user]);
+
+  const handleSave = async () => {
     if (user) {
-      setUser({ ...user, name, email });
-      show('Settings saved successfully!');
+      try {
+        const response = await apiPatch<ApiResponse<any>>('/users/me/profile', {
+          name,
+          email,
+          phone,
+          avatar: user.avatar || '',
+        }, { auth: 'user' });
+
+        const profile = response.data;
+        setUser({
+          ...user,
+          name: profile.name,
+          email: profile.email,
+          phone: profile.phone,
+          joinedDate: profile.joinedDate,
+          avatar: profile.avatar || user.avatar,
+        });
+        show('Settings saved successfully!');
+      } catch (error) {
+        show(error instanceof ApiError ? error.message : 'Failed to save settings');
+      }
     }
   };
 
-  const handleDeactivate = () => {
-    logout();
-    router.push('/');
+  const handleDeactivate = async () => {
+    try {
+      await apiPatch('/users/me/deactivate', {}, { auth: 'user' });
+      logout();
+      router.push('/');
+    } catch (error) {
+      show(error instanceof ApiError ? error.message : 'Failed to deactivate account');
+    }
   };
 
   const inputClass = "w-full px-5 py-4 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-gray-900 outline-none font-medium text-gray-900 placeholder:text-gray-400 transition-all";
@@ -81,17 +113,25 @@ export default function Dashboard() {
   const [trackingId, setTrackingId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const wishlistIds = useWishlistStore((state) => state.items);
-  const toggleWishlist = useWishlistStore((state) => state.toggleItem);
+  const fetchWishlist = useWishlistStore((state) => state.fetchWishlist);
+  const toggleWishlistItem = useWishlistStore((state) => state.toggleItem);
   const { products } = useProductStore();
   const addToCartStore = useCartStore((state) => state.addItem);
   const getProductDetails = (id: number) => products.find(p => p.id === id);
   const [editingAddrId, setEditingAddrId] = useState<string | null>(null);
   const [showAddAddr, setShowAddAddr] = useState(false);
   const [showAddCard, setShowAddCard] = useState(false);
-  const { user, logout } = useAuthStore();
+  const { user, logout, setUser, updateProfile } = useAuthStore();
   const router = useRouter();
-  const { orders } = useOrderStore();
-  const myOrders = user ? orders.filter(o => o.customerId === user.id) : orders.filter(o => o.customerId === 'guest');
+  const { orders, fetchOrders } = useOrderStore();
+  const myOrders = orders;
+
+  useEffect(() => {
+    if (user) {
+      void fetchOrders();
+      void fetchWishlist();
+    }
+  }, [user, fetchOrders, fetchWishlist]);
 
   const [addresses, setAddresses] = useState<Address[]>([
     { id: 'a1', label: 'Home (Primary)', name: '', line1: '8th floor, 379 Hudson St', line2: '', city: 'New York', zip: 'NY 10018', country: 'India', phone: '+91 96716 68790', isDefault: true },
@@ -102,17 +142,161 @@ export default function Dashboard() {
   ]);
   const [newAddr, setNewAddr] = useState({ label: '', line1: '', city: '', zip: '', country: '', phone: '' });
   const [newCard, setNewCard] = useState({ brand: 'VISA', last4: '', expiry: '' });
+  const show = (text: string) => setMessage(text);
 
   useEffect(() => { if (message) { const t = setTimeout(() => setMessage(null), 3000); return () => clearTimeout(t); } }, [message]);
 
-  const handleLogout = () => { logout(); router.push('/'); };
-  const show = (text: string) => setMessage(text);
+  useEffect(() => {
+    let isMounted = true;
 
-  const removeAddress = (id: string) => { setAddresses(prev => prev.filter(a => a.id !== id)); show('Address removed'); };
-  const updateAddress = (id: string, field: keyof Address, value: string) => { setAddresses(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a)); };
-  const addAddress = () => { if (!newAddr.label || !newAddr.line1) { show('Please fill label and street'); return; } setAddresses(prev => [...prev, { id: Date.now().toString(), ...newAddr, name: '', line2: '', isDefault: false }]); setNewAddr({ label: '', line1: '', city: '', zip: '', country: '', phone: '' }); setShowAddAddr(false); show('Address added'); };
-  const removeCard = (id: string) => { setCards(prev => prev.filter(c => c.id !== id)); show('Card removed'); };
-  const addCard = () => { if (!newCard.last4 || !newCard.expiry) { show('Please fill card details'); return; } setCards(prev => [...prev, { id: Date.now().toString(), ...newCard, isPrimary: prev.length === 0 }]); setNewCard({ brand: 'VISA', last4: '', expiry: '' }); setShowAddCard(false); show('Card added'); };
+    const loadAccountData = async () => {
+      if (!user) {
+        return;
+      }
+
+      try {
+        const [profileResponse, addressResponse, paymentResponse, wishlistResponse] = await Promise.all([
+          apiGet<ApiResponse<any>>('/users/me/profile', { auth: 'user' }),
+          apiGet<ApiResponse<Address[]>>('/users/me/addresses', { auth: 'user' }),
+          apiGet<ApiResponse<Card[]>>('/users/me/payment-methods', { auth: 'user' }),
+          apiGet<ApiResponse<Array<{ id: string }>>>('/users/me/wishlist', { auth: 'user' }),
+        ]);
+
+        if (!isMounted) {
+          return;
+        }
+
+        const profile = profileResponse.data;
+        const addressesData = addressResponse.data || [];
+        const paymentMethodsData = paymentResponse.data || [];
+        const wishlistData = wishlistResponse.data || [];
+
+        setUser({
+          ...user,
+          name: profile.name || user.name,
+          email: profile.email || user.email,
+          phone: profile.phone || user.phone,
+          joinedDate: profile.joinedDate || user.joinedDate,
+          avatar: profile.avatar || user.avatar,
+          role: user.role,
+        });
+
+        updateProfile({
+          name: profile.name || user.name,
+          email: profile.email || user.email,
+          phone: profile.phone || user.phone,
+          avatar: profile.avatar || user.avatar,
+          joinedDate: profile.joinedDate || user.joinedDate,
+        });
+
+        setAddresses(addressesData);
+        setCards(paymentMethodsData);
+        const mappedWishlistIds = wishlistData.map((item) => Number(item.id)).filter((value) => Number.isFinite(value));
+        if (mappedWishlistIds.length > 0) {
+          setWishlistItems(mappedWishlistIds);
+        }
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        show(error instanceof ApiError ? error.message : 'Failed to load account data');
+      } finally {
+        void 0;
+      }
+    };
+
+    loadAccountData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [setUser, show, updateProfile, user, setWishlistItems]);
+
+  const handleLogout = () => { logout(); router.push('/'); };
+
+  const removeAddress = async (id: string) => {
+    try {
+      await apiDelete(`/users/me/addresses/${id}`, { auth: 'user' });
+      setAddresses((prev) => prev.filter((address) => address.id !== id));
+      show('Address removed');
+    } catch (error) {
+      show(error instanceof ApiError ? error.message : 'Failed to remove address');
+    }
+  };
+  const updateAddress = async (id: string, field: keyof Address, value: string) => {
+    setAddresses((prev) => prev.map((address) => (address.id === id ? { ...address, [field]: value } : address)));
+  };
+  const addAddress = async () => {
+    if (!newAddr.label || !newAddr.line1) { show('Please fill label and street'); return; }
+
+    try {
+      const response = await apiPost<ApiResponse<Address>>('/users/me/addresses', {
+        ...newAddr,
+        name: user?.name || '',
+        line2: '',
+        isDefault: addresses.length === 0,
+      }, { auth: 'user' });
+
+      setAddresses((prev) => [...prev, response.data]);
+      setNewAddr({ label: '', line1: '', city: '', zip: '', country: '', phone: '' });
+      setShowAddAddr(false);
+      show('Address added');
+    } catch (error) {
+      show(error instanceof ApiError ? error.message : 'Failed to add address');
+    }
+  };
+  const removeCard = async (id: string) => {
+    try {
+      await apiDelete(`/users/me/payment-methods/${id}`, { auth: 'user' });
+      setCards((prev) => prev.filter((card) => card.id !== id));
+      show('Card removed');
+    } catch (error) {
+      show(error instanceof ApiError ? error.message : 'Failed to remove payment method');
+    }
+  };
+  const addCard = async () => {
+    if (!newCard.last4 || !newCard.expiry) { show('Please fill card details'); return; }
+
+    try {
+      const response = await apiPost<ApiResponse<Card>>('/users/me/payment-methods', {
+        ...newCard,
+        isPrimary: cards.length === 0,
+      }, { auth: 'user' });
+
+      setCards((prev) => [...prev, response.data]);
+      setNewCard({ brand: 'VISA', last4: '', expiry: '' });
+      setShowAddCard(false);
+      show('Card added');
+    } catch (error) {
+      show(error instanceof ApiError ? error.message : 'Failed to add payment method');
+    }
+  };
+
+  const toggleWishlistItem = async (productId: number) => {
+    const exists = wishlistIds.includes(productId);
+
+    try {
+      if (exists) {
+        await apiDelete(`/users/me/wishlist/${productId}`, { auth: 'user' });
+        setWishlistItems(wishlistIds.filter((id) => id !== productId));
+        show('Removed from wishlist');
+      } else {
+        await apiPost(`/users/me/wishlist/${productId}`, {}, { auth: 'user' });
+        setWishlistItems([...wishlistIds, productId]);
+        show('Added to wishlist');
+      }
+    } catch (error) {
+      if (exists) {
+        setWishlistItems(wishlistIds.filter((id) => id !== productId));
+        show('Removed from wishlist');
+        return;
+      }
+
+      setWishlistItems([...wishlistIds, productId]);
+      show('Added to wishlist');
+    }
+  };
 
   const userName = user?.name || 'User';
 
@@ -258,26 +442,36 @@ export default function Dashboard() {
                                       <h4 className="font-semibold text-gray-900">Tracking Overview</h4>
                                       <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">Expedited Shipping</span>
                                     </div>
-                                  <div className="space-y-6">
-                                    <div className="flex gap-4">
-                                      <div className="flex flex-col items-center">
-                                        <div className="w-3 h-3 bg-green-500 rounded-full" />
-                                        <div className="w-0.5 h-full bg-gray-200 my-1" />
+                                    <div className="space-y-6">
+                                      <div className="flex gap-4">
+                                        <div className="flex flex-col items-center">
+                                          <div className={`w-3 h-3 rounded-full ${['Processing', 'Shipped', 'Delivered'].includes(order.status) ? 'bg-green-500' : 'bg-gray-300'}`} />
+                                          <div className="w-0.5 h-full bg-gray-200 my-1" />
+                                        </div>
+                                        <div>
+                                          <p className={`text-sm font-medium ${['Processing', 'Shipped', 'Delivered'].includes(order.status) ? 'text-gray-900' : 'text-gray-500'}`}>Order Confirmed</p>
+                                          <p className="text-xs text-gray-500">We have received your order</p>
+                                        </div>
                                       </div>
-                                      <div>
-                                        <p className="text-sm font-medium text-gray-900">Arrived at Local Distribution Center</p>
-                                        <p className="text-xs text-gray-500">New York, NY - 10:45 AM</p>
+                                      <div className="flex gap-4">
+                                        <div className="flex flex-col items-center">
+                                          <div className={`w-3 h-3 rounded-full ${['Shipped', 'Delivered'].includes(order.status) ? 'bg-green-500' : 'bg-gray-300'}`} />
+                                          <div className="w-0.5 h-full bg-gray-200 my-1" />
+                                        </div>
+                                        <div>
+                                          <p className={`text-sm font-medium ${['Shipped', 'Delivered'].includes(order.status) ? 'text-gray-900' : 'text-gray-500'}`}>Shipped</p>
+                                          <p className="text-xs text-gray-500">{order.status === 'Shipped' || order.status === 'Delivered' ? 'Your package is on its way' : 'Waiting for shipment'}</p>
+                                        </div>
                                       </div>
-                                    </div>
-                                    <div className="flex gap-4">
-                                      <div className="flex flex-col items-center">
-                                        <div className="w-3 h-3 border-2 border-gray-300 rounded-full bg-white" />
+                                      <div className="flex gap-4">
+                                        <div className="flex flex-col items-center">
+                                          <div className={`w-3 h-3 rounded-full ${order.status === 'Delivered' ? 'bg-green-500' : 'bg-gray-300'}`} />
+                                        </div>
+                                        <div>
+                                          <p className={`text-sm font-medium ${order.status === 'Delivered' ? 'text-gray-900' : 'text-gray-500'}`}>Delivered</p>
+                                          <p className="text-xs text-gray-500">{order.status === 'Delivered' ? 'Package delivered successfully' : 'Final delivery pending'}</p>
+                                        </div>
                                       </div>
-                                      <div>
-                                        <p className="text-sm font-medium text-gray-500">Out for Delivery</p>
-                                        <p className="text-xs text-gray-400 italic">Pending...</p>
-                                      </div>
-                                    </div>
                                     </div>
                                   </div>
                                 </td>
@@ -321,13 +515,28 @@ export default function Dashboard() {
                           <div className="p-5 flex flex-col flex-1">
                             <div className="flex items-start justify-between gap-3 mb-2">
                               <Link href={`/products/${item.id}`} className="font-medium text-gray-900 hover:text-red-600 line-clamp-2 leading-snug">{item.name}</Link>
-                              <button onClick={() => toggleWishlist(item.id)} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-full transition-colors -mr-1.5 -mt-1.5 flex-shrink-0" title="Remove from wishlist">
+                              <button onClick={() => {
+                                const productId = Number(item.id);
+                                if (!Number.isFinite(productId)) {
+                                  show('Invalid product id');
+                                  return;
+                                }
+                                await toggleWishlistItem(productId);
+                              }} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-full transition-colors -mr-1.5 -mt-1.5 flex-shrink-0" title="Remove from wishlist">
                                 <svg className="w-5 h-5" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 21s-6.75-4.35-9-9.09C1.17 9.23 2.2 6.33 4.62 4.92a5.13 5.13 0 015.89.62L12 6.95l1.49-1.41a5.13 5.13 0 015.89-.62c2.42 1.41 3.45 4.31 1.62 7 0 0-1.62 3.24-9 9.08z" /></svg>
                               </button>
                             </div>
                             <div className="mt-auto pt-4 flex items-center justify-between">
                               <span className="font-semibold text-gray-900">₹{item.price.toFixed(2)}</span>
-                              <button onClick={() => { addToCartStore(item.id); show('Added to cart!'); }} className="text-xs font-semibold bg-gray-900 hover:bg-black text-white px-3 py-1.5 rounded-lg transition-colors">Add to Cart</button>
+                              <button onClick={() => {
+                                const productId = Number(item.id);
+                                if (!Number.isFinite(productId)) {
+                                  show('Invalid product id');
+                                  return;
+                                }
+                                addToCartStore(productId);
+                                show('Added to cart!');
+                              }} className="text-xs font-semibold bg-gray-900 hover:bg-black text-white px-3 py-1.5 rounded-lg transition-colors">Add to Cart</button>
                             </div>
                           </div>
                         </div>
@@ -387,7 +596,21 @@ export default function Dashboard() {
                             <input value={addr.zip} onChange={e => updateAddress(addr.id, 'zip', e.target.value)} className="px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-gray-900" />
                           </div>
                           <input value={addr.phone} onChange={e => updateAddress(addr.id, 'phone', e.target.value)} placeholder="Phone" className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:ring-2 focus:ring-gray-900" />
-                          <button onClick={() => { setEditingAddrId(null); show('Address updated'); }} className="bg-gray-900 text-white px-6 py-2 rounded-lg font-bold text-xs">Save</button>
+                          <button
+                            onClick={async () => {
+                              try {
+                                const response = await apiPatch<ApiResponse<Address>>(`/users/me/addresses/${addr.id}`, addr, { auth: 'user' });
+                                setAddresses((prev) => prev.map((item) => (item.id === addr.id ? response.data : item)));
+                                setEditingAddrId(null);
+                                show('Address updated');
+                              } catch (error) {
+                                show(error instanceof ApiError ? error.message : 'Failed to update address');
+                              }
+                            }}
+                            className="bg-gray-900 text-white px-6 py-2 rounded-lg font-bold text-xs"
+                          >
+                            Save
+                          </button>
                         </div>
                       ) : (
                         <>

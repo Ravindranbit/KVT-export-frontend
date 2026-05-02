@@ -2,20 +2,31 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuthStore } from '../../store/useAuthStore';
+import { apiPost, ApiError } from '../../lib/api';
 
 export default function SignUp() {
+  const router = useRouter();
+  const { setUser } = useAuthStore();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: ''
   });
+  const [otp, setOtp] = useState('');
+  const [step, setStep] = useState<'details' | 'otp'>('details');
+  const [pendingPhone, setPendingPhone] = useState('');
+  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({
     email: '',
     password: '',
     confirmPassword: '',
     terms: ''
   });
+  const [error, setError] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   const validateEmail = (value: string) => {
@@ -77,8 +88,50 @@ export default function SignUp() {
       return;
     }
 
-    // Add registration logic here
-    console.log('Sign up:', formData);
+    const submitRegistration = async () => {
+      setLoading(true);
+      setError('');
+
+      try {
+        if (step === 'details') {
+          await apiPost('/auth/register/initiate', {
+            name: formData.fullName,
+            email: formData.email,
+            phone: formData.phone,
+            password: formData.password,
+          }, { auth: 'none' });
+
+          setPendingPhone(formData.phone);
+          setStep('otp');
+          return;
+        }
+
+        const response = await apiPost<{ success: boolean; data: { token: string; user: { id: string; name: string; email: string; phone: string } } }>('/auth/register/verify', {
+          name: formData.fullName,
+          email: formData.email,
+          phone: pendingPhone,
+          password: formData.password,
+          otp,
+        }, { auth: 'none' });
+
+        const { token, user } = response.data;
+        localStorage.setItem('userToken', token);
+        setUser({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone,
+          role: 'buyer',
+        });
+        router.push('/');
+      } catch (requestError) {
+        setError(requestError instanceof ApiError ? requestError.message : 'Registration failed');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void submitRegistration();
   };
 
   return (
@@ -96,6 +149,11 @@ export default function SignUp() {
           <h1 className="text-3xl font-bold text-gray-900 mb-5 text-center">Create Account</h1>
           
           <form onSubmit={handleSubmit} className="space-y-3.5">
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 rounded text-red-700 text-sm">
+                {error}
+              </div>
+            )}
             <div>
               <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Full Name <span className="text-red-600">*</span>
@@ -129,6 +187,22 @@ export default function SignUp() {
                 required
               />
               {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+            </div>
+
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Phone Number <span className="text-red-600">*</span>
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-600 text-gray-900 placeholder-gray-500 text-sm"
+                placeholder="Enter your phone number"
+                required
+              />
             </div>
 
             <div>
@@ -187,12 +261,32 @@ export default function SignUp() {
             </div>
             {errors.terms && <p className="text-red-500 text-xs -mt-2">{errors.terms}</p>}
 
+            {step === 'otp' && (
+              <div>
+                <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  OTP <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="otp"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-red-600 text-gray-900 placeholder-gray-500 text-sm"
+                  placeholder="Enter OTP sent to your phone"
+                  required
+                />
+                <p className="text-xs text-gray-500 mt-1">OTP sent to {pendingPhone || formData.phone}</p>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded transition text-sm disabled:cursor-not-allowed"
-              disabled={!formData.fullName || !!errors.email || !formData.email || !formData.password || !formData.confirmPassword || !termsAccepted}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded transition text-sm disabled:cursor-not-allowed disabled:bg-red-400"
+              disabled={loading || (step === 'details'
+                ? (!formData.fullName || !!errors.email || !formData.email || !formData.phone || !formData.password || !formData.confirmPassword || !termsAccepted)
+                : !otp)}
             >
-              Create Account
+              {loading ? 'Processing...' : step === 'details' ? 'Create Account' : 'Verify OTP'}
             </button>
           </form>
 

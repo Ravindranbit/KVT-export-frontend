@@ -12,15 +12,25 @@ import { useProductStore } from '../../../store/useProductStore';
 
 export default function ProductDetail() {
   const params = useParams();
-  const productId = parseInt(params.id as string);
-  const { products } = useProductStore();
-  const product = products.find(p => p.id === productId);
+  const productId = String(params.id);
+  const { products, fetchProductById, fetchReviews } = useProductStore();
+  const product = products.find(p => String(p.id) === productId);
   const [quantity, setQuantity] = useState(1);
   const [cartMessage, setCartMessage] = useState('');
+  const [loading, setLoading] = useState(!product);
   
   // Variants State
   const [selectedSize, setSelectedSize] = useState(product?.sizes?.[0] || '');
   const [selectedColor, setSelectedColor] = useState(product?.colors?.[0]?.name || '');
+
+  useEffect(() => {
+    if (!product) {
+      setLoading(true);
+      fetchProductById(productId).finally(() => setLoading(false));
+    }
+    // Always fetch reviews to get the latest
+    fetchReviews(productId);
+  }, [productId, product, fetchProductById, fetchReviews]);
 
   // Update selection if product changes (e.g., navigating between products)
   useEffect(() => {
@@ -30,14 +40,22 @@ export default function ProductDetail() {
     }
   }, [product]);
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 py-20 text-center">
+          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500 font-medium">Loading product details...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!product) {
     return (
       <div className="min-h-screen bg-white">
-        <header className="border-b border-gray-200 bg-white">
-          <div className="max-w-7xl mx-auto px-4 py-4">
-            <Link href="/" className="text-2xl font-bold text-gray-900" style={{ fontFamily: 'var(--font-kumar-one)' }}>KVT exports</Link>
-          </div>
-        </header>
+        <Header />
         <div className="max-w-7xl mx-auto px-4 py-20 text-center">
           <h1 className="text-3xl font-bold text-gray-900">Product not found</h1>
           <Link href="/" className="text-red-600 hover:text-red-700 mt-4 inline-block">Back to Home</Link>
@@ -49,7 +67,14 @@ export default function ProductDetail() {
   const addToCart = useCartStore((state) => state.addItem);
 
   const handleAddToCart = () => {
-    addToCart(product.id, quantity);
+    const numericId = Number(product.id);
+    if (!Number.isFinite(numericId)) {
+      setCartMessage('Invalid product id');
+      setTimeout(() => setCartMessage(''), 3000);
+      return;
+    }
+
+    addToCart(numericId, quantity);
     
     setCartMessage(`${quantity} ${product.name} added to cart!`);
     setTimeout(() => setCartMessage(''), 3000);

@@ -9,25 +9,19 @@ import { useProductStore } from '../../../store/useProductStore';
 import { useOrderStore } from '../../../store/useOrderStore';
 import { useAdminStore } from '../../../store/useAdminStore';
 
-// Removed MOCK_ORDERS as they are now replaced by persistence store
-
-const MOCK_PAYOUTS = [
-  { id: 'PAY-301', date: 'Apr 01, 2026', amount: 34200, status: 'Completed', method: 'Bank Transfer' },
-  { id: 'PAY-289', date: 'Mar 15, 2026', amount: 28750, status: 'Completed', method: 'Bank Transfer' },
-  { id: 'PAY-274', date: 'Mar 01, 2026', amount: 41300, status: 'Completed', method: 'Bank Transfer' },
-];
+// Removed inline mocks — use backend data or empty lists until hydrated
+const payouts: any[] = [];
 
 export default function VendorDashboard() {
   const router = useRouter();
   const { user } = useAuthStore();
-  const { products, addProduct, removeProduct, updateProduct } = useProductStore();
+  const { products, categories, addProduct, removeProduct, updateProduct, fetchProducts, fetchCategories } = useProductStore();
   const { settings } = useAdminStore();
 
   const [activeTab, setActiveTab] = useState('overview');
   const [showAddModal, setShowAddModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
-  const [selectedCategory, setSelectedCategory] = useState(editingProduct?.category || 'fashion');
-  const availableCategories = Array.from(new Set(products.map(p => p.category.toLowerCase())));
+  const [selectedCategory, setSelectedCategory] = useState(editingProduct?.category || '');
   const [mounted, setMounted] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showNotifications, setShowNotifications] = useState(false);
@@ -41,17 +35,20 @@ export default function VendorDashboard() {
     }
   }, [message]);
 
-  const { orders, updateOrderStatus } = useOrderStore();
-  const vendorOrders = user ? orders.filter(o => o.items.some(item => item.vendorId === 'v1')) : []; // Assuming 'v1' for now as mock vendor id
-  // Note: In real app, we should use user.vendorId once implemented in useAuthStore
+  const { orders, updateOrderStatus, fetchVendorOrders } = useOrderStore();
+  const vendorOrders = orders;
 
   useEffect(() => {
     if (editingProduct) {
       setImagePreview(editingProduct.image);
+      // Try to find category ID if category name is stored
+      const cat = categories.find(c => c.name.toLowerCase() === editingProduct.category.toLowerCase());
+      setSelectedCategory(cat?.id || '');
     } else {
       setImagePreview(null);
+      setSelectedCategory('');
     }
-  }, [editingProduct]);
+  }, [editingProduct, categories]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -61,19 +58,16 @@ export default function VendorDashboard() {
     }
   };
 
-  const MOCK_NOTIFICATIONS = [
-    { id: 1, title: 'New Order Received', message: 'ORD-7821 is waiting for processing.', time: '2 mins ago', type: 'order', unread: true },
-    { id: 2, title: 'Inventory Alert', message: 'Summer T-Shirt is low on stock (5 left).', time: '1 hour ago', type: 'inventory', unread: true },
-    { id: 3, title: 'Payout Successful', message: '₹34,200 has been credited to your bank.', time: '5 hours ago', type: 'payout', unread: false },
-  ];
-
+  // Notifications come from backend; use empty list until hydrated
+  const notifications: any[] = [];
   useEffect(() => {
     setMounted(true);
-    if (!user || user.role !== 'seller') {
-      // For demo, if no user, we can stay, but in real app we redirect
-      // router.push('/become-seller');
+    if (user) {
+      void fetchProducts({ vendorId: user.id });
+      void fetchVendorOrders();
+      void fetchCategories();
     }
-  }, [user, router]);
+  }, [user, fetchProducts, fetchVendorOrders, fetchCategories]);
 
   if (!mounted) return null;
 
@@ -84,89 +78,48 @@ export default function VendorDashboard() {
     rating: 4.8
   };
 
-  const vendorProducts = products.filter(p => p.vendorId === (user?.id || 'v1'));
+  const vendorProducts = products;
   const filteredProducts = vendorProducts.filter(p =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAddProduct = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddProduct = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     const price = parseFloat(formData.get('price') as string);
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
-    const category = formData.get('category') as string;
+    const categoryId = formData.get('category') as string;
     const stock = parseInt(formData.get('stock') as string) || 0;
     const sku = formData.get('sku') as string;
-    const sizesStr = formData.get('sizes') as string;
-    const colorsStr = formData.get('colors') as string;
-    const imageFile = formData.get('imageFile') as File;
+    const imageUrl = editingProduct?.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800';
 
-    let imageUrl = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800';
-    if (imageFile && imageFile.size > 0) {
-      imageUrl = URL.createObjectURL(imageFile);
-    }
-
-    const brand = formData.get('brand') as string;
-    const weight = formData.get('weight') as string;
-    const l = formData.get('dim_l') as string;
-    const w = formData.get('dim_w') as string;
-    const h = formData.get('dim_h') as string;
-
-    const specs: Record<string, string> = {};
-    if (category === 'fashion') {
-      specs.material = formData.get('material') as string;
-      specs.fit = formData.get('fit') as string;
-    } else if (category === 'electronics') {
-      specs.warranty = formData.get('warranty') as string;
-      specs.battery = formData.get('battery') as string;
-    } else if (category === 'home') {
-      specs.material = formData.get('material') as string;
-      specs.care = formData.get('care') as string;
-    } else if (category === 'beauty') {
-      specs.skinType = formData.get('skinType') as string;
-    }
-
-    const newProduct: any = {
-      id: Math.floor(Math.random() * 1000000),
+    const productData: any = {
       name,
       price,
-      image: imageUrl,
-      category: category || 'fashion',
-      description: description || 'A premium quality product added by our verified vendor.',
-      rating: 5,
-      reviews: 0,
-      vendorId: user?.id || 'v1',
+      description,
+      category: categoryId,
       stock,
       sku,
-      brand,
-      weight,
-      dimensions: { l, w, h },
-      specifications: specs
+      image: imageUrl,
     };
 
-    if (sizesStr) {
-      newProduct.sizes = sizesStr.split(',').map(s => s.trim()).filter(s => s);
+    try {
+      if (editingProduct) {
+        await updateProduct(editingProduct.id, productData);
+        setMessage('Product updated successfully!');
+      } else {
+        await addProduct(productData);
+        setMessage('Product added to inventory!');
+      }
+      setShowAddModal(false);
+      setEditingProduct(null);
+    } catch (err) {
+      setMessage('Failed to save product');
     }
-    if (colorsStr) {
-      newProduct.colors = colorsStr.split(',').map(c => ({
-        name: c.trim(),
-        hex: '#000000'
-      })).filter(c => c.name);
-    }
-
-    if (editingProduct) {
-      updateProduct(editingProduct.id, newProduct);
-      setMessage('Product updated successfully!');
-    } else {
-      addProduct(newProduct);
-      setMessage('Product added to inventory!');
-    }
-    setShowAddModal(false);
-    setEditingProduct(null);
   };
 
-  const handleDeleteProduct = (id: number) => {
+  const handleDeleteProduct = (id: string | number) => {
     if (window.confirm('Are you sure you want to delete this product?')) {
       removeProduct(id);
       setMessage('Product removed successfully');
@@ -194,7 +147,7 @@ export default function VendorDashboard() {
           {([
             { id: 'overview', label: 'Dashboard', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg> },
             { id: 'products', label: 'Products', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>, badge: vendorProducts.length.toString() },
-            { id: 'orders', label: 'Orders', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>, badge: '5' },
+            { id: 'orders', label: 'Orders', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>, badge: vendorOrders.length.toString() },
             { id: 'payouts', label: 'Payouts', icon: <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg> },
           ] as const).map(item => (
             <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === item.id ? 'bg-red-50 text-red-600' : 'text-gray-600 hover:bg-gray-50'}`}>
@@ -261,7 +214,7 @@ export default function VendorDashboard() {
                       <button onClick={() => setShowNotifications(false)} className="text-[10px] font-bold text-red-500 hover:text-red-700 uppercase tracking-widest transition-colors">Mark all as read</button>
                     </div>
                     <div className="max-h-[400px] overflow-y-auto overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:display-none">
-                      {MOCK_NOTIFICATIONS.map(note => (
+                      {notifications.map(note => (
                         <div 
                           key={note.id} 
                           className="px-5 py-4 transition-all duration-300 cursor-pointer border-b border-gray-50 last:border-0 relative group/note bg-white hover:bg-white hover:shadow-lg hover:z-10 hover:scale-[1.02]"
@@ -642,7 +595,7 @@ export default function VendorDashboard() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50">
-                        {MOCK_PAYOUTS.map(payout => (
+                        {payouts.map(payout => (
                           <tr key={payout.id} className="hover:bg-gray-50/50 transition-colors">
                             <td className="px-6 py-4 font-bold text-sm text-gray-900">{payout.id}</td>
                             <td className="px-6 py-4 text-sm text-gray-500">{payout.date}</td>
@@ -696,20 +649,18 @@ export default function VendorDashboard() {
                   </div>
                   <div>
                     <label className="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1.5">Category</label>
-                    <input
+                    <select
                       name="category"
-                      list="category-list"
                       value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value.toLowerCase())}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
                       required
-                      placeholder="Type or select category..."
                       className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded focus:ring-2 focus:ring-gray-900 focus:bg-white outline-none font-bold text-gray-900 transition-all"
-                    />
-                    <datalist id="category-list">
-                      {availableCategories.map(cat => (
-                        <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+                    >
+                      <option value="">Select Category</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
                       ))}
-                    </datalist>
+                    </select>
                   </div>
                 </div>
 

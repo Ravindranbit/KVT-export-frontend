@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import Header from '../../components/layout/Header';
 import { useAuthStore } from '../../store/useAuthStore';
+import { apiPost } from '../../lib/api';
 
 export default function BecomeSeller() {
   const router = useRouter();
@@ -13,26 +14,35 @@ export default function BecomeSeller() {
     firstName: '',
     lastName: '',
     email: '',
+    phone: '',
     storeName: '',
     storeDescription: '',
     password: ''
   });
 
-  const handleRegister = (e: React.FormEvent) => {
+  const [message, setMessage] = useState<string | null>(null);
+
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Simulate Seller Registration
-    const newUser = {
-      id: `v-${Math.floor(Math.random() * 1000)}`,
-      name: `${formData.firstName} ${formData.lastName}`,
-      email: formData.email,
-      storeName: formData.storeName,
-      storeDescription: formData.storeDescription,
-      role: 'seller' as const
-    };
-    
-    setUser(newUser);
-    router.push('/vendor/dashboard');
+    try {
+      const response = await apiPost<{ data: { token: string; user: any } }>('/auth/register-vendor', {
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        storeName: formData.storeName,
+        storeDescription: formData.storeDescription
+      });
+
+      if (response && response.data) {
+        localStorage.setItem('userToken', response.data.token);
+        setUser(response.data.user);
+        router.push('/vendor/dashboard');
+      }
+    } catch (error: any) {
+      setMessage(error.message || 'Registration failed');
+    }
   };
 
   return (
@@ -106,6 +116,18 @@ export default function BecomeSeller() {
                   placeholder="name@yourbusiness.com" 
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-900 outline-none font-medium text-gray-900 placeholder:text-gray-400 transition-all placeholder:font-normal" 
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold text-gray-700 mb-2">Phone Number</label>
+                <input 
+                  type="tel" 
+                  required 
+                  placeholder="+91 98765 43210" 
+                  value={(formData as any).phone || ''}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value} as any)}
                   className="w-full px-5 py-4 bg-white border border-gray-300 rounded-xl focus:ring-2 focus:ring-gray-900 outline-none font-medium text-gray-900 placeholder:text-gray-400 transition-all placeholder:font-normal" 
                 />
               </div>

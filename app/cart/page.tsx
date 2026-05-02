@@ -16,14 +16,19 @@ export default function Cart() {
   const { products } = useProductStore();
   const [mounted, setMounted] = useState(false);
   const cartItems = useCartStore((state) => state.items);
+  const fetchCart = useCartStore((state) => state.fetchCart);
   const updateQuantity = useCartStore((state) => state.updateQuantity);
   const removeItem = useCartStore((state) => state.removeItem);
 
   useEffect(() => {
     setMounted(true);
-  }, []);
+    const userToken = localStorage.getItem('userToken');
+    if (userToken) {
+      void fetchCart();
+    }
+  }, [fetchCart]);
 
-  const getProductDetails = (id: number) => products.find(p => p.id === id);
+  const getProductDetails = (id: string | number) => products.find(p => String(p.id) === String(id));
 
   const total = cartItems.reduce((sum, item) => {
     const p = getProductDetails(item.id);

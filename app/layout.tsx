@@ -35,6 +35,7 @@ export const metadata: Metadata = {
 import ThemeSync from "../components/ThemeSync";
 import Footer from "../components/layout/Footer";
 import DynamicFavicon from "../components/DynamicFavicon";
+import HydrateProducts from "../components/HydrateProducts";
 
 export default function RootLayout({
   children,
@@ -47,6 +48,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${kumarOne.variable} ${arvo.variable} antialiased`}
       >
         <ThemeSync />
+        <HydrateProducts />
         <DynamicFavicon />
         {children}
         <Footer />

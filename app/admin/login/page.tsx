@@ -3,13 +3,12 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useAuthStore } from '../../../store/useAuthStore';
-import { useAdminStore } from '../../../store/useAdminStore';
 import { useRouter } from 'next/navigation';
+import { apiPost, ApiError } from '../../../lib/api';
 
 export default function AdminLogin() {
   const router = useRouter();
   const { setUser } = useAuthStore();
-  const { admins } = useAdminStore();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -41,40 +40,53 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      // Check if user is an admin
-      const foundAdmin = admins.find(a => a.email === email);
-      
-      if (!foundAdmin) {
-        setError('Admin account not found');
-        setLoading(false);
-        return;
-      }
+      const response = await apiPost<{
+        success: boolean;
+        data: {
+          token: string;
+          forcePasswordChange: boolean;
+          admin: {
+            id: string;
+            name: string;
+            email: string;
+            phone?: string;
+            role?: string;
+            createdAt?: string;
+            permissions?: {
+              dashboard: boolean;
+              products: boolean;
+              orders: boolean;
+              users: boolean;
+              vendors: boolean;
+              categories: boolean;
+              banners: boolean;
+              settings: boolean;
+              profile: boolean;
+            };
+          };
+        };
+      }>('/auth/admin/login', {
+        email,
+        password,
+      }, { auth: 'none' });
 
-      // TODO: Replace with actual API call to /auth/admin/login
-      // For now, using mock password validation
-      if (password !== 'admin123') {
-        setError('Invalid email or password');
-        setLoading(false);
-        return;
-      }
-
-      // Simulate JWT token (in real scenario, get from backend)
-      const token = `mock-admin-jwt-${Date.now()}`;
+      const { token, admin } = response.data;
       localStorage.setItem('adminToken', token);
+      localStorage.removeItem('userToken');
 
       setUser({
-        id: foundAdmin.id,
-        name: foundAdmin.name,
-        email: foundAdmin.email,
+        id: admin.id,
+        name: admin.name,
+        email: admin.email,
         role: 'admin',
-        phone: foundAdmin.phone,
-        joinedDate: foundAdmin.joinedDate,
-        permissions: foundAdmin.permissions,
+        phone: admin.phone,
+        joinedDate: admin.createdAt,
+        permissions: admin.permissions,
       });
 
       router.push('/admin');
     } catch (err) {
-      setError('An error occurred during login. Please try again.');
+      setError(err instanceof ApiError ? err.message : 'Admin login failed');
       console.error('Admin login error:', err);
     } finally {
       setLoading(false);
