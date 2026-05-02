@@ -46,6 +46,7 @@ function NavItem({ item, isActive }: { item: { label: string; href: string; icon
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, hasHydrated, logout } = useAuthStore();
   const { orders, vendors, settings } = useAdminStore();
+  const fetchAdminData = useAdminStore((s) => s.fetchAdminData);
   const { products } = useProductStore();
   const router = useRouter();
   const pathname = usePathname();
@@ -58,6 +59,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       router.push('/signin');
     }
   }, [user, hasHydrated, router]);
+
+  useEffect(() => {
+    if (!hasHydrated) return;
+    if (fetchAdminData) fetchAdminData();
+  }, [hasHydrated, fetchAdminData]);
 
   if (!hasHydrated) return <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Restoring system state...</div>;
   if (!user || user.role !== 'admin') return <div className="min-h-screen bg-white flex items-center justify-center text-gray-400">Redirecting...</div>;

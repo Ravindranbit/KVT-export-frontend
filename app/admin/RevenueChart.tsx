@@ -1,16 +1,10 @@
 'use client';
 
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useMemo } from 'react';
+import { useAdminStore } from '../../store/useAdminStore';
 
-const data = [
-  { day: 'Mon', revenue: 12400 },
-  { day: 'Tue', revenue: 8900 },
-  { day: 'Wed', revenue: 15600 },
-  { day: 'Thu', revenue: 11200 },
-  { day: 'Fri', revenue: 18400 },
-  { day: 'Sat', revenue: 22100 },
-  { day: 'Sun', revenue: 16800 },
-];
+const WEEK_ORDER = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
@@ -25,6 +19,33 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 export default function RevenueChart() {
+  const orders = useAdminStore((s) => s.orders);
+
+  const data = useMemo(() => {
+    const sums: Record<string, number> = { Mon: 0, Tue: 0, Wed: 0, Thu: 0, Fri: 0, Sat: 0, Sun: 0 };
+
+    if (Array.isArray(orders)) {
+      for (const o of orders) {
+        try {
+          const d = new Date(o.date);
+          if (!isNaN(d.getTime())) {
+            // get day index: 0=Sun,1=Mon,...
+            const idx = d.getDay();
+            const day = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][idx];
+            // ensure numeric total
+            const t = typeof o.total === 'number' ? o.total : Number(o.total || 0);
+            if (!Number.isNaN(t)) sums[day] = (sums[day] || 0) + t;
+          }
+        } catch (e) {
+          // ignore malformed dates
+        }
+      }
+    }
+
+    // return data in Mon..Sun order to match UI
+    return WEEK_ORDER.map((w) => ({ day: w, revenue: Math.round(sums[w] || 0) }));
+  }, [orders]);
+
   return (
     <ResponsiveContainer width="100%" height={220}>
       <AreaChart data={data} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>

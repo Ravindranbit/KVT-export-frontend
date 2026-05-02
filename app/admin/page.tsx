@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useAdminStore } from '../../store/useAdminStore';
 import { useProductStore } from '../../store/useProductStore';
 import Link from 'next/link';
@@ -10,8 +11,12 @@ const RevenueChart = dynamic(() => import('./RevenueChart'), { ssr: false, loadi
 const OrdersChart = dynamic(() => import('./OrdersChart'), { ssr: false, loading: () => <div className="h-[280px] bg-gray-50 rounded-lg animate-pulse" /> });
 
 export default function AdminDashboard() {
-  const { orders, users, vendors } = useAdminStore();
+  const { orders, users, vendors, fetchAdminData } = useAdminStore();
   const { products } = useProductStore();
+
+  useEffect(() => {
+    void fetchAdminData();
+  }, [fetchAdminData]);
 
   const totalRevenue = orders.filter(o => o.status !== 'cancelled').reduce((sum, o) => sum + o.total, 0);
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
