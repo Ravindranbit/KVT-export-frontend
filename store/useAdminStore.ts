@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '../lib/api';
 
 export interface AdminPermissions {
   dashboard: boolean;
@@ -18,6 +19,7 @@ export interface AdminUser {
   name: string;
   email: string;
   role: 'buyer' | 'seller' | 'admin';
+  adminLevel?: 'SUPER_ADMIN' | 'ADMIN';
   phone?: string;
   status: 'active' | 'suspended' | 'banned';
   joinedDate: string;
@@ -183,258 +185,387 @@ interface AdminState {
   subscribers: { email: string; date: string }[];
 
   // Admin CRUD
-  addAdmin: (admin: AdminUser) => void;
-  removeAdmin: (id: string) => void;
-  updateAdminPermissions: (id: string, permissions: AdminPermissions) => void;
+  addAdmin: (admin: AdminUser & { password?: string }) => Promise<void>;
+  removeAdmin: (id: string) => Promise<void>;
+  updateAdminPermissions: (id: string, permissions: AdminPermissions) => Promise<void>;
 
   // User actions
-  updateUserStatus: (id: string, status: AdminUser['status']) => void;
-  updateUserRole: (id: string, role: AdminUser['role']) => void;
-  deleteUser: (id: string) => void;
+  updateUserStatus: (id: string, status: AdminUser['status']) => Promise<void>;
+  updateUserRole: (id: string, role: AdminUser['role']) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
 
   // Order actions
-  updateOrderStatus: (id: string, status: Order['status']) => void;
+  updateOrderStatus: (id: string, status: Order['status']) => Promise<void>;
 
   // Vendor actions
-  updateVendorStatus: (id: string, status: Vendor['status']) => void;
-  updateVendorCommission: (id: string, commission: number) => void;
+  updateVendorStatus: (id: string, status: Vendor['status']) => Promise<void>;
+  updateVendorCommission: (id: string, commission: number) => Promise<void>;
 
   // Banner actions
-  addBanner: (banner: BannerSlide) => void;
-  updateBanner: (id: string, updates: Partial<BannerSlide>) => void;
-  deleteBanner: (id: string) => void;
+  addBanner: (banner: BannerSlide) => Promise<void>;
+  updateBanner: (id: string, updates: Partial<BannerSlide>) => Promise<void>;
+  deleteBanner: (id: string) => Promise<void>;
 
   // Category actions
-  addCategory: (category: Category) => void;
-  updateCategory: (id: string, updates: Partial<Category>) => void;
-  deleteCategory: (id: string) => void;
+  addCategory: (category: Category) => Promise<void>;
+  updateCategory: (id: string, updates: Partial<Category>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
 
   // Settings
-  updateSettings: (updates: Partial<SiteSettings>) => void;
+  updateSettings: (updates: Partial<SiteSettings>) => Promise<void>;
   hasHydrated: boolean;
   setHasHydrated: (h: boolean) => void;
+  fetchAdminData: () => Promise<void>;
 }
 
-const MOCK_USERS: AdminUser[] = [
-  { id: 'u1', name: 'Rahul Sharma', email: 'rahul@gmail.com', role: 'buyer', status: 'active', joinedDate: '2026-01-15', ordersCount: 12, totalSpent: 45600, phone: '+91 98765 43210' },
-  { id: 'u2', name: 'Priya Patel', email: 'priya@gmail.com', role: 'buyer', status: 'active', joinedDate: '2026-02-03', ordersCount: 8, totalSpent: 23400, phone: '+91 87654 32109' },
-  { id: 'u3', name: 'Amit Kumar', email: 'amit@gmail.com', role: 'seller', status: 'active', joinedDate: '2026-01-20', ordersCount: 0, totalSpent: 0, phone: '+91 76543 21098' },
-  { id: 'u4', name: 'Sneha Reddy', email: 'sneha@gmail.com', role: 'buyer', status: 'active', joinedDate: '2026-03-10', ordersCount: 3, totalSpent: 8900, phone: '+91 65432 10987' },
-  { id: 'u5', name: 'Vikram Singh', email: 'vikram@gmail.com', role: 'seller', status: 'suspended', joinedDate: '2026-02-28', ordersCount: 0, totalSpent: 0, phone: '+91 54321 09876' },
-  { id: 'u6', name: 'Ananya Iyer', email: 'ananya@gmail.com', role: 'buyer', status: 'active', joinedDate: '2026-03-22', ordersCount: 5, totalSpent: 15200, phone: '+91 43210 98765' },
-  { id: 'u7', name: 'Dev Mehta', email: 'dev@gmail.com', role: 'buyer', status: 'banned', joinedDate: '2026-01-05', ordersCount: 1, totalSpent: 2300, phone: '+91 32109 87654' },
-  { id: 'u8', name: 'Kavya Nair', email: 'kavya@gmail.com', role: 'seller', status: 'active', joinedDate: '2026-03-15', ordersCount: 0, totalSpent: 0, phone: '+91 21098 76543' },
-];
+interface ApiEnvelope<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+}
 
-const MOCK_ADMINS: AdminUser[] = [
-  { 
-    id: 'admin1', 
-    name: 'Super Admin', 
-    email: 'admin123@gmail.com', 
-    role: 'admin', 
-    status: 'active', 
-    joinedDate: '2025-12-01', 
-    phone: '+91 99999 00000',
-    permissions: {
-      dashboard: true,
-      products: true,
-      orders: true,
-      users: true,
-      vendors: true,
-      categories: true,
-      banners: true,
-      settings: true,
-      profile: true,
-    }
-  },
-];
+const toStatus = (value?: string): AdminUser['status'] => {
+  const normalized = String(value || '').toLowerCase();
+  if (normalized === 'active') return 'active';
+  if (normalized === 'banned') return 'banned';
+  return 'suspended';
+};
 
-const MOCK_ORDERS: Order[] = [
-  { id: 'ORD-001', customerId: 'u1', customerName: 'Rahul Sharma', customerEmail: 'rahul@gmail.com', items: [{ productId: 1, productName: 'Premium Cotton T-Shirt', quantity: 2, price: 1299, image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=80' }], total: 2598, status: 'delivered', paymentMethod: 'UPI', shippingAddress: '123, MG Road, Bangalore 560001', date: '2026-03-28' },
-  { id: 'ORD-002', customerId: 'u2', customerName: 'Priya Patel', customerEmail: 'priya@gmail.com', items: [{ productId: 5, productName: 'Wireless Headphones', quantity: 1, price: 8999, image: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=80' }], total: 8999, status: 'shipped', paymentMethod: 'Card', shippingAddress: '456, Nehru Place, Delhi 110019', date: '2026-03-30' },
-  { id: 'ORD-003', customerId: 'u4', customerName: 'Sneha Reddy', customerEmail: 'sneha@gmail.com', items: [{ productId: 3, productName: 'Running Sneakers', quantity: 1, price: 5499, image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=80' }, { productId: 12, productName: 'Yoga Mat', quantity: 1, price: 1100, image: 'https://images.unsplash.com/photo-1592432678016-e910b06b3840?w=80' }], total: 6599, status: 'processing', paymentMethod: 'COD', shippingAddress: '789, Jubilee Hills, Hyderabad 500033', date: '2026-04-01' },
-  { id: 'ORD-004', customerId: 'u6', customerName: 'Ananya Iyer', customerEmail: 'ananya@gmail.com', items: [{ productId: 6, productName: 'Smart Watch Series 5', quantity: 1, price: 14999, image: 'https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=80' }], total: 14999, status: 'pending', paymentMethod: 'UPI', shippingAddress: '321, Marine Drive, Mumbai 400020', date: '2026-04-02' },
-  { id: 'ORD-005', customerId: 'u1', customerName: 'Rahul Sharma', customerEmail: 'rahul@gmail.com', items: [{ productId: 14, productName: 'Organic Face Serum', quantity: 3, price: 850, image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=80' }], total: 2550, status: 'delivered', paymentMethod: 'Card', shippingAddress: '123, MG Road, Bangalore 560001', date: '2026-03-25' },
-  { id: 'ORD-006', customerId: 'u2', customerName: 'Priya Patel', customerEmail: 'priya@gmail.com', items: [{ productId: 9, productName: 'Ceramic Table Lamp', quantity: 2, price: 1599, image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=80' }], total: 3198, status: 'cancelled', paymentMethod: 'UPI', shippingAddress: '456, Nehru Place, Delhi 110019', date: '2026-03-20' },
-  { id: 'ORD-007', customerId: 'u4', customerName: 'Sneha Reddy', customerEmail: 'sneha@gmail.com', items: [{ productId: 2, productName: 'Classic Denim Jacket', quantity: 1, price: 3499, image: 'https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=80' }], total: 3499, status: 'shipped', paymentMethod: 'Card', shippingAddress: '789, Jubilee Hills, Hyderabad 500033', date: '2026-04-01' },
-  { id: 'ORD-008', customerId: 'u6', customerName: 'Ananya Iyer', customerEmail: 'ananya@gmail.com', items: [{ productId: 15, productName: 'Essential Oil Set', quantity: 2, price: 1250, image: 'https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=80' }], total: 2500, status: 'pending', paymentMethod: 'COD', shippingAddress: '321, Marine Drive, Mumbai 400020', date: '2026-04-03' },
-];
+const toJoinedDate = (value?: string) => {
+  if (!value) return new Date().toISOString().split('T')[0];
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toISOString().split('T')[0];
+};
 
-const MOCK_VENDORS: Vendor[] = [
-  { id: 'v1', name: 'Amit Kumar', email: 'amit@artisanthreads.com', storeName: 'Artisan Threadsco', storeDescription: 'Premium handcrafted fashion and accessories', status: 'approved', productsCount: 8, totalRevenue: 245000, commission: 10, joinedDate: '2026-01-20', phone: '+91 76543 21098' },
-  { id: 'v2', name: 'Kavya Nair', email: 'kavya@urbansole.com', storeName: 'Urban Sole', storeDescription: 'Trendy footwear and lifestyle products', status: 'approved', productsCount: 8, totalRevenue: 189000, commission: 12, joinedDate: '2026-03-15', phone: '+91 21098 76543' },
-  { id: 'v3', name: 'Vikram Singh', email: 'vikram@techgear.com', storeName: 'Tech Gear Hub', storeDescription: 'Latest electronics and gadgets', status: 'pending', productsCount: 0, totalRevenue: 0, commission: 10, joinedDate: '2026-04-01', phone: '+91 54321 09876' },
-];
+const normalizeAdmin = (row: any): AdminUser => ({
+  id: String(row.id),
+  name: row.name || 'Admin',
+  email: row.email || '',
+  role: 'admin',
+  adminLevel: row.role === 'SUPER_ADMIN' ? 'SUPER_ADMIN' : 'ADMIN',
+  phone: row.phone || '',
+  status: row.isActive === false ? 'suspended' : toStatus(row.status),
+  joinedDate: toJoinedDate(row.joinedDate || row.createdAt),
+  avatar: row.avatar || '',
+  permissions: row.permissions,
+});
 
-const MOCK_CATEGORIES: Category[] = [
-  { id: 'cat1', name: 'Electronics', slug: 'electronics', description: 'Gadgets, headphones, cameras & more', productCount: 4, visible: true, showInHeader: true, showInFilters: true, order: 1 },
-  { id: 'cat2', name: 'Fashion', slug: 'fashion', description: 'Clothing, shoes, bags & accessories', productCount: 4, visible: true, showInHeader: true, showInFilters: true, order: 2 },
-  { id: 'cat3', name: 'Home', slug: 'home', description: 'Furniture, decor, lighting & more', productCount: 3, visible: true, showInHeader: true, showInFilters: true, order: 3 },
-  { id: 'cat4', name: 'Sports', slug: 'sports', description: 'Fitness equipment & activewear', productCount: 2, visible: true, showInHeader: true, showInFilters: true, order: 4 },
-  { id: 'cat5', name: 'Beauty', slug: 'beauty', description: 'Skincare, makeup & wellness', productCount: 2, visible: true, showInHeader: true, showInFilters: true, order: 5 },
-  { id: 'cat6', name: 'Books', slug: 'books', description: 'Notebooks, novels & stationery', productCount: 1, visible: true, showInHeader: false, showInFilters: true, order: 6 },
-  { id: 'cat7', name: 'Toys', slug: 'toys', description: 'Games, puzzles & kids items', productCount: 0, visible: true, showInHeader: false, showInFilters: true, order: 7 },
-];
+const normalizeUser = (row: any): AdminUser => ({
+  id: String(row.id),
+  name: row.name || 'User',
+  email: row.email || '',
+  role: row.role === 'seller' ? 'seller' : row.role === 'admin' ? 'admin' : 'buyer',
+  adminLevel: row.role === 'admin' && row.adminLevel ? row.adminLevel : undefined,
+  phone: row.phone || '',
+  status: row.isActive === false ? 'banned' : toStatus(row.status),
+  joinedDate: toJoinedDate(row.joinedDate || row.createdAt),
+  avatar: row.avatar || '',
+  ordersCount: Number(row.ordersCount || 0),
+  totalSpent: Number(row.totalSpent || 0),
+  permissions: row.permissions,
+});
 
-const MOCK_BANNERS: BannerSlide[] = [
-  { id: 'b1', title: 'Up to 60% Off', subtitle: 'Electronics & Gadgets', desc: 'Smartphones, laptops, headphones & more — top brands at unbeatable prices.', cta: 'Shop Electronics', href: '/?category=electronics', accent: '#00d4ff', image: 'https://images.unsplash.com/photo-1468495244123-6c6c332eeece?w=600&q=80', tag: '⚡ Best Deals', active: true },
-  { id: 'b2', title: 'New Season', subtitle: 'Fashion Collection', desc: 'Discover our latest arrivals in premium fashion. Elevate your wardrobe today.', cta: 'Explore Fashion', href: '/?category=fashion', accent: '#ff6b6b', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&q=80', tag: '🔥 Flash Sale', active: true },
-  { id: 'b3', title: 'Transform Your', subtitle: 'Living Space', desc: 'Curated home decor and essentials at prices you\'ll love.', cta: 'Shop Home', href: '/?category=home', accent: '#fbbf24', image: 'https://images.unsplash.com/photo-1556228453-efd6c1ff04f6?w=600&q=80', tag: '✨ Trending', active: true },
-];
+const normalizeOrderStatus = (status?: string): Order['status'] => {
+  const value = String(status || '').toLowerCase();
+  if (value === 'confirmed') return 'processing';
+  if (value === 'pending' || value === 'processing' || value === 'shipped' || value === 'delivered' || value === 'cancelled') {
+    return value;
+  }
+  return 'pending';
+};
+
+const normalizeOrder = (row: any): Order => ({
+  id: String(row.id),
+  customerId: String(row.user?.id || row.userId || ''),
+  customerName: row.user?.name || row.customerName || 'Customer',
+  customerEmail: row.user?.email || row.customerEmail || '',
+  items: (row.orderItems || row.items || []).map((item: any) => ({
+    productId: Number(item.productId),
+    productName: item.name || item.productName || 'Product',
+    quantity: Number(item.quantity || 0),
+    price: Number(item.price || 0),
+    image: item.product?.imageUrl || item.image || '',
+  })),
+  total: Number(row.totalAmount || row.total || 0),
+  status: normalizeOrderStatus(row.status),
+  paymentMethod: row.paymentMethod || 'N/A',
+  shippingAddress: row.shippingAddress || 'N/A',
+  date: toJoinedDate(row.createdAt || row.date),
+});
+
+const normalizeVendor = (row: any): Vendor => ({
+  id: String(row.id),
+  name: row.name || '',
+  email: row.email || '',
+  storeName: row.storeName || '',
+  storeDescription: row.storeDescription || '',
+  status: row.status === 'approved' || row.status === 'suspended' ? row.status : 'pending',
+  productsCount: Number(row.productsCount || 0),
+  totalRevenue: Number(row.totalRevenue || 0),
+  commission: Number(row.commission || 0),
+  joinedDate: toJoinedDate(row.joinedDate || row.createdAt),
+  phone: row.phone || '',
+});
+
+const normalizeCategory = (row: any): Category => ({
+  id: String(row.id),
+  name: row.name || '',
+  slug: row.slug || '',
+  description: row.description || '',
+  productCount: Number(row.productCount || row._count?.products || 0),
+  visible: row.visible !== undefined ? Boolean(row.visible) : Boolean(row.isActive ?? true),
+  showInHeader: row.showInHeader !== undefined ? Boolean(row.showInHeader) : true,
+  showInFilters: row.showInFilters !== undefined ? Boolean(row.showInFilters) : true,
+  order: Number(row.order || 0),
+});
 
 export const useAdminStore = create<AdminState>()(
   persist(
-    (set) => ({
-      admins: MOCK_ADMINS,
-      users: MOCK_USERS,
-      orders: MOCK_ORDERS,
-      vendors: MOCK_VENDORS,
-      banners: MOCK_BANNERS,
-      categories: MOCK_CATEGORIES,
-      subscribers: [
-        { email: 'rahul@gmail.com', date: '2026-03-15' },
-        { email: 'priya@gmail.com', date: '2026-03-18' },
-        { email: 'sneha@gmail.com', date: '2026-03-20' },
-        { email: 'ananya@gmail.com', date: '2026-03-25' },
-      ],
+    (set, get) => ({
+      admins: [],
+      users: [],
+      orders: [],
+      vendors: [],
+      banners: [],
+      categories: [],
+      subscribers: [],
       settings: {
-        // GENERAL
-        siteName: 'KVT exports',
-        tagline: 'Premium Export Quality Products',
+        siteName: '',
+        tagline: '',
         logoUrl: '',
         faviconUrl: '',
         defaultLanguage: 'en',
         defaultCurrency: 'USD',
         timeFormat: '12h',
-        dateFormat: 'MM/DD/YYYY',
-        storeEnabled: true,
-        maintenanceMessage: 'We will be right back.',
+        dateFormat: 'YYYY-MM-DD',
+        storeEnabled: false,
+        maintenanceMessage: '',
 
-        // CONTACT
-        contactEmail: 'support@kvtexports.com',
-        contactPhone: '+91 96 716 6879',
-        whatsappNumber: '+91 96 716 6879',
-        contactAddress: '8th floor, 379 Hudson St, New York, NY 10018',
+        contactEmail: '',
+        contactPhone: '',
+        whatsappNumber: '',
+        contactAddress: '',
         googleMapsLink: '',
-        businessHours: 'Mon - Fri: 9AM - 6PM',
-        supportUrl: 'https://help.kvtexports.com',
-        liveChatEnabled: true,
-        contactFormEmail: 'queries@kvtexports.com',
+        businessHours: '',
+        supportUrl: '',
+        liveChatEnabled: false,
+        contactFormEmail: '',
         multipleLocations: false,
-        socialLinks: { facebook: '#', instagram: '#', twitter: '#' },
-        
-        // SEO
-        metaTitle: 'KVT Exports - Premium Marketplace',
-        metaDescription: 'Shop premium export-quality products at KVT Exports.',
-        metaKeywords: 'export, premium, clothing, electronics',
-        ogTitle: 'KVT Exports',
-        ogDescription: 'Shop premium export-quality products.',
+        socialLinks: { facebook: '', instagram: '', twitter: '' },
+
+        metaTitle: '',
+        metaDescription: '',
+        metaKeywords: '',
+        ogTitle: '',
+        ogDescription: '',
         ogImage: '',
-        twitterCard: 'summary_large_image',
-        sitemapEnabled: true,
-        robotsTxt: 'User-agent: *\nAllow: /',
-        canonicalUrl: 'https://kvtexports.com',
-        googleAnalyticsId: 'G-XXXXXXXXXX',
+        twitterCard: '',
+        sitemapEnabled: false,
+        robotsTxt: '',
+        canonicalUrl: '',
+        googleAnalyticsId: '',
         searchConsoleId: '',
         facebookPixelId: '',
 
-        // PRICING & SHIPPING
-        currency: '₹',
-        currencyFormat: '₹ {amount}',
-        globalCommission: 10,
-        taxRate: 18,
+        currency: '',
+        currencyFormat: '',
+        globalCommission: 0,
+        taxRate: 0,
         taxType: 'exclusive',
         multipleTaxRates: false,
-        shippingZones: 'India, International',
-        shippingMethods: 'Flat rate, Weight-based',
-        shippingRate: 99,
-        codCharges: 50,
-        deliveryTimeEstimate: '3-5 Business Days',
-        freeShippingThreshold: 2000,
-        discountRules: 'None',
+        shippingZones: '',
+        shippingMethods: '',
+        shippingRate: 0,
+        codCharges: 0,
+        deliveryTimeEstimate: '',
+        freeShippingThreshold: 0,
+        discountRules: '',
 
-        // NOTIFICATIONS
-        emailNotifications: true,
+        emailNotifications: false,
         smsNotifications: false,
         whatsappNotifications: false,
-        pushNotifications: true,
-        adminAlerts: true,
-        orderUpdates: true,
-        emailTemplates: { orderPlaced: 'Default', orderShipped: 'Default', orderDelivered: 'Default' },
+        pushNotifications: false,
+        adminAlerts: false,
+        orderUpdates: false,
+        emailTemplates: { orderPlaced: '', orderShipped: '', orderDelivered: '' },
         notificationFrequency: 'instant',
-        adminChannels: 'email',
+        adminChannels: '',
 
-        // SECURITY
         sessionTimeout: 24,
         require2FA: false,
-        passwordRules: 'strong',
+        passwordRules: '',
         loginAttemptLimit: 5,
         ipWhitelist: '',
         ipBlacklist: '',
-        sessionDeviceManagement: true,
+        sessionDeviceManagement: false,
         passwordExpiryDays: 90,
-        auditLogsEnabled: true,
+        auditLogsEnabled: false,
         captchaEnabled: false,
-        emailVerificationRequired: true,
-        rbacEnabled: true,
+        emailVerificationRequired: false,
+        rbacEnabled: false,
 
-        // SYSTEM
         maintenanceMode: false,
-        timezone: 'Asia/Kolkata',
-        autoBackup: 'weekly',
+        timezone: 'UTC',
+        autoBackup: 'none',
         storageProvider: 'local',
         apiKeys: '',
-        environmentMode: 'production',
+        environmentMode: 'development',
 
-        // Branding
-        themeColor: '#e60000',
+        themeColor: '#000000',
       },
 
-      addAdmin: (admin) => set((s) => ({ admins: [...s.admins, admin] })),
-      removeAdmin: (id) => set((s) => ({ admins: s.admins.filter(a => a.id !== id) })),
-      updateAdminPermissions: (id, permissions) => set((s) => ({
-        admins: s.admins.map(a => a.id === id ? { ...a, permissions } : a)
-      })),
+      addAdmin: async (admin) => {
+        const response = await apiPost<ApiEnvelope<any>>('/admin/create', {
+          name: admin.name,
+          email: admin.email,
+          role: admin.adminLevel || 'ADMIN',
+          temporaryPassword: admin.password || 'Admin@123',
+          phone: admin.phone || '',
+          permissions: admin.permissions || {},
+        }, { auth: 'admin' });
 
-      updateUserStatus: (id, status) => set((s) => ({
-        users: s.users.map(u => u.id === id ? { ...u, status } : u),
-      })),
-      updateUserRole: (id, role) => set((s) => ({
-        users: s.users.map(u => u.id === id ? { ...u, role } : u),
-      })),
-      deleteUser: (id) => set((s) => ({ users: s.users.filter(u => u.id !== id) })),
+        set((s) => ({ admins: [normalizeAdmin(response.data), ...s.admins] }));
+      },
+      removeAdmin: async (id) => {
+        await apiDelete<ApiEnvelope<any>>(`/admin/${id}`, { auth: 'admin' });
+        set((s) => ({ admins: s.admins.filter(a => a.id !== id) }));
+      },
+      updateAdminPermissions: async (id, permissions) => {
+        await apiPatch<ApiEnvelope<any>>(`/admin/${id}/permissions`, { permissions }, { auth: 'admin' });
+        set((s) => ({
+          admins: s.admins.map(a => a.id === id ? { ...a, permissions } : a)
+        }));
+      },
 
-      updateOrderStatus: (id, status) => set((s) => ({
-        orders: s.orders.map(o => o.id === id ? { ...o, status } : o),
-      })),
+      updateUserStatus: async (id, status) => {
+        await apiPatch<ApiEnvelope<any>>(`/admin/users/${id}/status`, { status }, { auth: 'admin' });
+        set((s) => ({
+          users: s.users.map(u => u.id === id ? { ...u, status } : u),
+          admins: s.admins.map(a => a.id === id ? { ...a, status: status === 'banned' ? 'suspended' : status } : a),
+        }));
+      },
+      updateUserRole: async (id, role) => {
+        await apiPatch<ApiEnvelope<any>>(`/admin/users/${id}/role`, { role }, { auth: 'admin' });
+        set((s) => ({
+          users: s.users.map(u => u.id === id ? { ...u, role } : u),
+        }));
+      },
+      deleteUser: async (id) => {
+        await apiDelete<ApiEnvelope<any>>(`/admin/users/${id}`, { auth: 'admin' });
+        set((s) => ({ users: s.users.filter(u => u.id !== id) }));
+      },
 
-      updateVendorStatus: (id, status) => set((s) => ({
-        vendors: s.vendors.map(v => v.id === id ? { ...v, status } : v),
-      })),
-      updateVendorCommission: (id, commission) => set((s) => ({
-        vendors: s.vendors.map(v => v.id === id ? { ...v, commission } : v),
-      })),
+      updateOrderStatus: async (id, status) => {
+        await apiPatch<ApiEnvelope<any>>(`/orders/${id}/status`, { status: status.toUpperCase() }, { auth: 'admin' });
+        set((s) => ({
+          orders: s.orders.map(o => o.id === id ? { ...o, status } : o),
+        }));
+      },
 
-      addBanner: (banner) => set((s) => ({ banners: [...s.banners, banner] })),
-      updateBanner: (id, updates) => set((s) => ({
-        banners: s.banners.map(b => b.id === id ? { ...b, ...updates } : b),
-      })),
-      deleteBanner: (id) => set((s) => ({ banners: s.banners.filter(b => b.id !== id) })),
+      updateVendorStatus: async (id, status) => {
+        const response = await apiPatch<ApiEnvelope<any>>(`/admin/vendors/${id}/status`, { status }, { auth: 'admin' });
+        set((s) => ({
+          vendors: s.vendors.map(v => v.id === id ? normalizeVendor(response.data) : v),
+        }));
+      },
+      updateVendorCommission: async (id, commission) => {
+        const response = await apiPatch<ApiEnvelope<any>>(`/admin/vendors/${id}/commission`, { commission }, { auth: 'admin' });
+        set((s) => ({
+          vendors: s.vendors.map(v => v.id === id ? normalizeVendor(response.data) : v),
+        }));
+      },
 
-      addCategory: (category) => set((s) => ({ categories: [...s.categories, category] })),
-      updateCategory: (id, updates) => set((s) => ({
-        categories: s.categories.map(c => c.id === id ? { ...c, ...updates } : c),
-      })),
-      deleteCategory: (id) => set((s) => ({ categories: s.categories.filter(c => c.id !== id) })),
+      addBanner: async (banner) => {
+        const response = await apiPost<ApiEnvelope<BannerSlide>>('/admin/banners', banner, { auth: 'admin' });
+        set((s) => ({ banners: [response.data, ...s.banners] }));
+      },
+      updateBanner: async (id, updates) => {
+        const response = await apiPatch<ApiEnvelope<BannerSlide>>(`/admin/banners/${id}`, updates, { auth: 'admin' });
+        set((s) => ({
+          banners: s.banners.map(b => b.id === id ? response.data : b),
+        }));
+      },
+      deleteBanner: async (id) => {
+        await apiDelete<ApiEnvelope<any>>(`/admin/banners/${id}`, { auth: 'admin' });
+        set((s) => ({ banners: s.banners.filter(b => b.id !== id) }));
+      },
 
-      updateSettings: (updates) => set((s) => ({
-        settings: { ...s.settings, ...updates },
-      })),
+      addCategory: async (category) => {
+        const response = await apiPost<ApiEnvelope<any>>('/categories', {
+          name: category.name,
+          description: category.description,
+        }, { auth: 'admin' });
+        set((s) => ({ categories: [normalizeCategory(response.data), ...s.categories] }));
+      },
+      updateCategory: async (id, updates) => {
+        const response = await apiPut<ApiEnvelope<any>>(`/categories/${id}`, {
+          name: updates.name,
+          description: updates.description,
+          isActive: updates.visible,
+        }, { auth: 'admin' });
+        set((s) => ({
+          categories: s.categories.map(c => c.id === id ? normalizeCategory({ ...c, ...response.data }) : c),
+        }));
+      },
+      deleteCategory: async (id) => {
+        try {
+          // Changed from soft delete (PATCH) to hard delete (DELETE) as per user request
+          await apiDelete<ApiEnvelope<any>>(`/categories/${id}`, { auth: 'admin' });
+          set((s) => ({ categories: s.categories.filter(c => c.id !== id) }));
+        } catch (error) {
+          console.error('Failed to delete category permanently', error);
+          throw error;
+        }
+      },
+
+      updateSettings: async (updates) => {
+        const response = await apiPut<ApiEnvelope<SiteSettings>>('/admin/settings', updates, { auth: 'admin' });
+        set(() => ({ settings: response.data }));
+      },
       hasHydrated: false,
       setHasHydrated: (h) => set({ hasHydrated: h }),
+      fetchAdminData: async () => {
+        try {
+          const [usersResponse, adminsResponse, ordersResponse, vendorsResponse, categoriesResponse, bannersResponse, settingsResponse] = await Promise.all([
+            apiGet<ApiEnvelope<any[]>>('/admin/users', { auth: 'admin' }).catch(() => ({ success: false, data: [] })),
+            apiGet<ApiEnvelope<any[]>>('/admin/all', { auth: 'admin' }).catch(() => ({ success: false, data: [] })),
+            apiGet<ApiEnvelope<any[]>>('/orders', { auth: 'admin' }).catch(() => ({ success: false, data: [] })),
+            apiGet<ApiEnvelope<any[]>>('/admin/vendors', { auth: 'admin' }).catch(() => ({ success: false, data: [] })),
+            apiGet<ApiEnvelope<any[]>>('/categories/admin/all', { auth: 'admin' }).catch(() => ({ success: false, data: [] })),
+            apiGet<ApiEnvelope<BannerSlide[]>>('/admin/banners', { auth: 'admin' }).catch(() => ({ success: false, data: [] })),
+            apiGet<ApiEnvelope<SiteSettings>>('/admin/settings', { auth: 'admin' }).catch(() => ({ success: false, data: null as any })),
+          ]);
+
+          const combinedUsers = Array.isArray(usersResponse.data) ? usersResponse.data : [];
+          const users = combinedUsers.filter((row) => row.role !== 'admin').map(normalizeUser);
+          const adminsFromUsers = combinedUsers.filter((row) => row.role === 'admin').map((row) => normalizeAdmin({ ...row, role: row.adminLevel || 'ADMIN' }));
+          const adminsFromAll = (Array.isArray(adminsResponse.data) ? adminsResponse.data : []).map(normalizeAdmin);
+          const mergedAdmins = [...adminsFromAll, ...adminsFromUsers].reduce<AdminUser[]>((acc, current) => {
+            if (!acc.find((item) => item.id === current.id)) acc.push(current);
+            return acc;
+          }, []);
+
+          const orders = (Array.isArray(ordersResponse.data) ? ordersResponse.data : []).map(normalizeOrder);
+          const vendors = (Array.isArray(vendorsResponse.data) ? vendorsResponse.data : []).map(normalizeVendor);
+          const categories = (Array.isArray(categoriesResponse.data) ? categoriesResponse.data : []).map(normalizeCategory);
+          const banners = Array.isArray(bannersResponse.data) ? bannersResponse.data : [];
+
+          set({
+            users,
+            admins: mergedAdmins,
+            orders,
+            vendors,
+            categories,
+            banners,
+            settings: settingsResponse.data || get().settings,
+          });
+        } catch (err) {
+          console.warn('Failed to fetch admin data', err);
+        }
+      },
     }),
     { 
-      name: 'admin-storage',
+      name: 'admin-storage-v2',
       onRehydrateStorage: () => (state) => {
         state?.setHasHydrated(true);
       }
