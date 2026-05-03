@@ -14,6 +14,7 @@ export default function ProductDetail() {
   const params = useParams();
   const productId = String(params.id);
   const { products, fetchProductById, fetchReviews } = useProductStore();
+  const addToCart = useCartStore((state) => state.addItem);
   const product = products.find(p => String(p.id) === productId);
   const [quantity, setQuantity] = useState(1);
   const [cartMessage, setCartMessage] = useState('');
@@ -64,7 +65,6 @@ export default function ProductDetail() {
     );
   }
 
-  const addToCart = useCartStore((state) => state.addItem);
 
   const handleAddToCart = () => {
     const numericId = Number(product.id);
