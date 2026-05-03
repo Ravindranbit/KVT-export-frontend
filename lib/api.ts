@@ -57,7 +57,7 @@ export const getStoredToken = (auth: ApiAuthMode = 'any') => {
   }
 
   if (auth === 'user') {
-    return localStorage.getItem('userToken');
+    return localStorage.getItem('userToken') || localStorage.getItem('adminToken');
   }
 
   if (auth === 'admin') {
