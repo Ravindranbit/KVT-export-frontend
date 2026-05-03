@@ -114,10 +114,10 @@ export default function Dashboard() {
   const [message, setMessage] = useState<string | null>(null);
   const wishlistIds = useWishlistStore((state) => state.items);
   const fetchWishlist = useWishlistStore((state) => state.fetchWishlist);
-  const toggleWishlistItem = useWishlistStore((state) => state.toggleItem);
+  const toggleWishlist = useWishlistStore((state) => state.toggleItem);
   const { products } = useProductStore();
   const addToCartStore = useCartStore((state) => state.addItem);
-  const getProductDetails = (id: number) => products.find(p => p.id === id);
+  const getProductDetails = (id: string | number) => products.find(p => String(p.id) === String(id));
   const [editingAddrId, setEditingAddrId] = useState<string | null>(null);
   const [showAddAddr, setShowAddAddr] = useState(false);
   const [showAddCard, setShowAddCard] = useState(false);
@@ -169,7 +169,6 @@ export default function Dashboard() {
         const profile = profileResponse.data;
         const addressesData = addressResponse.data || [];
         const paymentMethodsData = paymentResponse.data || [];
-        const wishlistData = wishlistResponse.data || [];
 
         setUser({
           ...user,
@@ -191,10 +190,6 @@ export default function Dashboard() {
 
         setAddresses(addressesData);
         setCards(paymentMethodsData);
-        const mappedWishlistIds = wishlistData.map((item) => Number(item.id)).filter((value) => Number.isFinite(value));
-        if (mappedWishlistIds.length > 0) {
-          setWishlistItems(mappedWishlistIds);
-        }
       } catch (error) {
         if (!isMounted) {
           return;
@@ -211,7 +206,7 @@ export default function Dashboard() {
     return () => {
       isMounted = false;
     };
-  }, [setUser, show, updateProfile, user, setWishlistItems]);
+  }, [setUser, show, updateProfile, user]);
 
   const handleLogout = () => { logout(); router.push('/'); };
 
@@ -273,30 +268,7 @@ export default function Dashboard() {
     }
   };
 
-  const toggleWishlistItem = async (productId: number) => {
-    const exists = wishlistIds.includes(productId);
 
-    try {
-      if (exists) {
-        await apiDelete(`/users/me/wishlist/${productId}`, { auth: 'user' });
-        setWishlistItems(wishlistIds.filter((id) => id !== productId));
-        show('Removed from wishlist');
-      } else {
-        await apiPost(`/users/me/wishlist/${productId}`, {}, { auth: 'user' });
-        setWishlistItems([...wishlistIds, productId]);
-        show('Added to wishlist');
-      }
-    } catch (error) {
-      if (exists) {
-        setWishlistItems(wishlistIds.filter((id) => id !== productId));
-        show('Removed from wishlist');
-        return;
-      }
-
-      setWishlistItems([...wishlistIds, productId]);
-      show('Added to wishlist');
-    }
-  };
 
   const userName = user?.name || 'User';
 
@@ -515,13 +487,10 @@ export default function Dashboard() {
                           <div className="p-5 flex flex-col flex-1">
                             <div className="flex items-start justify-between gap-3 mb-2">
                               <Link href={`/products/${item.id}`} className="font-medium text-gray-900 hover:text-red-600 line-clamp-2 leading-snug">{item.name}</Link>
-                              <button onClick={() => {
-                                const productId = Number(item.id);
-                                if (!Number.isFinite(productId)) {
-                                  show('Invalid product id');
-                                  return;
-                                }
-                                await toggleWishlistItem(productId);
+                              <button onClick={async () => {
+                                const productId = String(item.id);
+                                await toggleWishlist(productId);
+                                show(wishlistIds.includes(productId) ? 'Removed from wishlist' : 'Added to wishlist');
                               }} className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1.5 rounded-full transition-colors -mr-1.5 -mt-1.5 flex-shrink-0" title="Remove from wishlist">
                                 <svg className="w-5 h-5" fill="currentColor" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 21s-6.75-4.35-9-9.09C1.17 9.23 2.2 6.33 4.62 4.92a5.13 5.13 0 015.89.62L12 6.95l1.49-1.41a5.13 5.13 0 015.89-.62c2.42 1.41 3.45 4.31 1.62 7 0 0-1.62 3.24-9 9.08z" /></svg>
                               </button>
@@ -529,12 +498,7 @@ export default function Dashboard() {
                             <div className="mt-auto pt-4 flex items-center justify-between">
                               <span className="font-semibold text-gray-900">₹{item.price.toFixed(2)}</span>
                               <button onClick={() => {
-                                const productId = Number(item.id);
-                                if (!Number.isFinite(productId)) {
-                                  show('Invalid product id');
-                                  return;
-                                }
-                                addToCartStore(productId);
+                                addToCartStore(String(item.id));
                                 show('Added to cart!');
                               }} className="text-xs font-semibold bg-gray-900 hover:bg-black text-white px-3 py-1.5 rounded-lg transition-colors">Add to Cart</button>
                             </div>
