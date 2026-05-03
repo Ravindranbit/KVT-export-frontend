@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState, useEffect, useRef } from 'react';
 import { useWishlistStore } from '../../store/useWishlistStore';
@@ -97,11 +98,7 @@ export default function Header() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-0.5 flex-shrink-0" style={{ fontFamily: 'var(--font-arvo)' }}>
           {settings.logoUrl ? (
-            <img 
-              src={settings.logoUrl} 
-              alt={settings.siteName} 
-              className="h-10 w-auto object-contain max-w-[200px]" 
-            />
+            <Image src={settings.logoUrl} alt={settings.siteName} width={180} height={40} unoptimized className="h-10 w-auto object-contain max-w-[200px]" />
           ) : (
             <div className="flex items-baseline gap-0.5 select-none">
               <span className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">{firstPart}</span>
@@ -135,7 +132,7 @@ export default function Header() {
                 {filtered.length > 0 ? filtered.map(p => (
                   <button key={p.id} onClick={() => navigateToProduct(p.id)} className="w-full flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors text-left cursor-pointer">
                     <div className="w-12 h-12 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
-                      <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                      <Image src={p.image} alt={p.name} width={48} height={48} unoptimized className="w-full h-full object-cover" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-bold text-gray-900 truncate">{p.name}</p>
@@ -238,7 +235,7 @@ export default function Header() {
               {filtered.length > 0 ? filtered.map(p => (
                 <button key={p.id} onClick={() => navigateToProduct(p.id)} className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors text-left">
                   <div className="w-10 h-10 bg-gray-100 rounded-lg flex-shrink-0 overflow-hidden">
-                    <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                    <Image src={p.image} alt={p.name} width={40} height={40} unoptimized className="w-full h-full object-cover" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-bold text-gray-900 truncate">{p.name}</p>

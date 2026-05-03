@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import { useAdminStore } from '../../../store/useAdminStore';
 import { useProductStore } from '../../../store/useProductStore';
@@ -128,8 +129,8 @@ export default function AdminBanners() {
               
               {/* Image with fancy hover effect */}
               {b.image && (
-                <div className="absolute -right-4 -bottom-4 w-32 h-36 z-10 rotate-[-5deg] group-hover:rotate-0 group-hover:scale-105 transition-all duration-500 drop-shadow-2xl">
-                  <img src={b.image} alt="" className="w-full h-full object-cover rounded-xl border-4 border-white/10" />
+                <div className="absolute -right-4 -bottom-4 w-32 h-36 z-10 rotate-[-5deg] group-hover:rotate-0 group-hover:scale-105 transition-all duration-500 drop-shadow-2xl relative">
+                  <Image src={b.image} alt="" fill unoptimized sizes="128px" className="object-cover rounded-xl border-4 border-white/10" />
                 </div>
               )}
             </div>
@@ -191,8 +192,8 @@ export default function AdminBanners() {
                     
                     if (previewImage) {
                       return (
-                        <div className="absolute -right-4 -bottom-4 w-32 h-36 z-10 rotate-[-5deg] group-hover:rotate-0 group-hover:scale-105 transition-all duration-500 drop-shadow-2xl">
-                          <img src={previewImage} alt="" className="w-full h-full object-cover rounded-xl border-4 border-white/10 p-1 bg-white/50 backdrop-blur-sm" />
+                        <div className="absolute -right-4 -bottom-4 w-32 h-36 z-10 rotate-[-5deg] group-hover:rotate-0 group-hover:scale-105 transition-all duration-500 drop-shadow-2xl relative">
+                          <Image src={previewImage} alt="" fill unoptimized sizes="128px" className="object-cover rounded-xl border-4 border-white/10 p-1 bg-white/50 backdrop-blur-sm" />
                         </div>
                       );
                     }
@@ -230,7 +231,9 @@ export default function AdminBanners() {
                            if (linkedProd) {
                              return (
                                <div className="flex items-center gap-3">
-                                 <img src={linkedProd.image} className="w-6 h-6 rounded-md object-cover bg-gray-50 border border-gray-100" />
+                                   <div className="relative w-6 h-6 overflow-hidden rounded-md bg-gray-50 border border-gray-100">
+                                     <Image src={linkedProd.image} alt="" fill unoptimized sizes="24px" className="object-cover" />
+                                   </div>
                                  <span className="text-sm font-medium text-gray-900 truncate max-w-[120px]">{linkedProd.name}</span>
                                </div>
                              );
@@ -252,7 +255,9 @@ export default function AdminBanners() {
                               onClick={() => { setForm({...form, href: `/product/${p.id}`}); setShowProductSelect(false); }} 
                               className="p-2.5 rounded-xl hover:bg-gray-50 flex items-center gap-3 cursor-pointer transition-colors"
                             >
-                               <img src={p.image} className="w-10 h-10 rounded-lg object-cover border border-gray-100 bg-gray-50" />
+                               <div className="relative w-10 h-10 overflow-hidden rounded-lg border border-gray-100 bg-gray-50 shrink-0">
+                                 <Image src={p.image} alt="" fill unoptimized sizes="40px" className="object-cover" />
+                               </div>
                                <div>
                                  <p className="text-sm font-bold text-gray-900 line-clamp-1">{p.name}</p>
                                  <p className="text-xs text-gray-500 font-medium mt-0.5">₹{p.price.toLocaleString()}</p>

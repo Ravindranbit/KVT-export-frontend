@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -209,11 +210,7 @@ export default function MegaMenu() {
                   
                   <div className="w-[250px] shrink-0">
                     <div className="relative h-full min-h-[200px] rounded-lg overflow-hidden bg-gray-100 group/image">
-                      <img 
-                        src={cat.featuredImage} 
-                        alt={`${cat.name} collection`}
-                        className="absolute inset-0 w-full h-full object-cover group-hover/image:scale-110 transition duration-700"
-                      />
+                      <Image src={cat.featuredImage} alt={`${cat.name} collection`} fill unoptimized sizes="250px" className="object-cover group-hover/image:scale-110 transition duration-700" />
                       <div className="absolute inset-0 bg-black/20 flex justify-center items-end pb-6">
                         <Link href={`/?category=${cat.name.split(' ')[0].toLowerCase()}`} className="bg-white/90 backdrop-blur-sm text-gray-900 font-bold px-6 py-2.5 rounded shadow-lg hover:bg-white transition text-sm">
                           Shop {cat.name}

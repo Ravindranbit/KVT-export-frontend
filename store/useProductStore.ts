@@ -33,6 +33,7 @@ export interface Product {
 }
 
 interface ProductState {
+  products: Product[];
   categories: { id: string; name: string }[];
   fetchProducts: (params?: { search?: string; vendorId?: string; categoryId?: string }) => Promise<void>;
   fetchCategories: () => Promise<void>;

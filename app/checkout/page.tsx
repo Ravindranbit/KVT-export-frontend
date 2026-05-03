@@ -35,7 +35,7 @@ export default function Checkout() {
     zip: '',
   });
 
-  const getProductDetails = (id: number) => products.find(p => p.id === id);
+  const getProductDetails = (id: string | number) => products.find(p => String(p.id) === String(id));
   const total = cartItems.reduce((sum, item) => sum + ((getProductDetails(item.id)?.price || 0) * item.quantity), 0);
 
   const handleNext = (e: React.FormEvent) => { 

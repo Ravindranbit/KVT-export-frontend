@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAdminStore } from '../../store/useAdminStore';
@@ -96,7 +97,7 @@ export default function BannerCarousel() {
               {b.image && (
                 <div className="relative w-[420px] shrink-0 flex-col items-center justify-center hidden md:flex">
                   <div className="w-[380px] h-[340px] rounded-2xl overflow-hidden shadow-2xl border-4 border-white/10">
-                    <img src={b.image} alt={b.subtitle} className="w-full h-full object-cover object-top" />
+                    <Image src={b.image} alt={b.subtitle} fill unoptimized sizes="380px" className="object-cover object-top" />
                   </div>
                 </div>
               )}

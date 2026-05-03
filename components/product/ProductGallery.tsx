@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -17,17 +18,16 @@ export default function ProductGallery({ images }: ProductGalleryProps) {
       {/* Main Image */}
       <div className="relative flex items-center justify-center overflow-hidden rounded-xl border border-gray-100 bg-white w-full group aspect-square">
         <AnimatePresence mode="wait">
-          <motion.img
+          <motion.div
             key={currentIndex}
-            src={images[currentIndex]}
-            alt="Product visual"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-110"
-            style={{ cursor: 'zoom-in' }}
-          />
+            className="absolute inset-0"
+          >
+            <Image src={images[currentIndex]} alt="Product visual" fill unoptimized sizes="(max-width: 768px) 100vw, 50vw" className="object-contain transition-transform duration-500 group-hover:scale-110" style={{ cursor: 'zoom-in' }} />
+          </motion.div>
         </AnimatePresence>
 
         {/* Left Arrow */}
@@ -68,7 +68,9 @@ export default function ProductGallery({ images }: ProductGalleryProps) {
                 : 'border-gray-200 opacity-60 hover:opacity-100 hover:border-gray-400 hover:scale-105'
             }`}
           >
-            <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+            <div className="relative w-full h-full">
+              <Image src={img} alt={`Thumbnail ${idx}`} fill unoptimized sizes="100px" className="object-cover" />
+            </div>
           </button>
         ))}
       </div>

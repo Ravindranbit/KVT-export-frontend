@@ -254,7 +254,7 @@ export default function ProductReviewForm({ productId }: ProductReviewFormProps)
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                <p className="text-gray-600 leading-relaxed text-base italic flex-1">&quot;{f.comment}&quot;</p>
+                <p className="text-gray-600 leading-relaxed text-base italic flex-1">&ldquo;{f.comment}&rdquo;</p>
                 {user && user.name === f.userName && (
                   <div className="flex gap-2 shrink-0">
                     <button onClick={() => handleEdit(f)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all" title="Edit Review">

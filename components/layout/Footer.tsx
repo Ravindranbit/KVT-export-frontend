@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useAdminStore } from '../../store/useAdminStore';
 import { useProductStore } from '../../store/useProductStore';
@@ -23,7 +24,7 @@ export default function Footer() {
         <div className="mb-12 border-b border-white/5 pb-12">
           <Link href="/" className="inline-block transform hover:scale-105 transition-transform duration-300" style={{ fontFamily: 'var(--font-arvo)' }}>
             {settings.logoUrl ? (
-              <img src={settings.logoUrl} alt={settings.siteName} className="h-12 w-auto object-contain brightness-0 invert" />
+              <Image src={settings.logoUrl} alt={settings.siteName} width={160} height={48} unoptimized className="h-12 w-auto object-contain brightness-0 invert" />
             ) : (
               <div className="flex items-baseline gap-0.5 select-none">
                 <span className="text-3xl font-bold text-white tracking-tight">{settings.siteName ? settings.siteName.split(' ')[0] : 'KVT'}</span>
