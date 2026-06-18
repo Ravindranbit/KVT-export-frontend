@@ -138,3 +138,12 @@ export const apiPut = <T = unknown>(path: string, body?: unknown, options: Omit<
 
 export const apiDelete = <T = unknown>(path: string, options: Omit<ApiRequestOptions, 'method' | 'body'> = {}) =>
   apiRequest<T>(path, { ...options, method: 'DELETE' });
+
+export const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};

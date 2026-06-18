@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { useProductStore, Product } from '../../../store/useProductStore';
 import { useAdminStore } from '../../../store/useAdminStore';
+import { fileToBase64 } from '../../../lib/api';
 
 export default function AdminProducts() {
-  const { products, addProduct, removeProduct, fetchProducts } = useProductStore();
+  const { products, addProduct, removeProduct, fetchProducts, updateProduct } = useProductStore();
   const { categories: adminCategories } = useAdminStore();
   const [search, setSearch] = useState('');
   const [filterCategory, setFilterCategory] = useState('all');
@@ -15,6 +16,23 @@ export default function AdminProducts() {
   const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState<{name: string, price: string, category: string, description: string, images: string[], vendorId: string, stock: string, sku: string, brand: string}>({ name: '', price: '', category: '', description: '', images: [], vendorId: 'admin', stock: '100', sku: '', brand: '' });
+  const [editForm, setEditForm] = useState<{name: string, price: string, category: string, description: string, images: string[], vendorId: string, stock: string, sku: string, brand: string}>({ name: '', price: '', category: '', description: '', images: [], vendorId: 'admin', stock: '100', sku: '', brand: '' });
+
+  const handleStartEdit = (p: Product) => {
+    const categoryId = adminCategories.find(c => c.name.toLowerCase() === p.category.toLowerCase())?.id || p.category;
+    setEditForm({
+      name: p.name,
+      price: p.price.toString(),
+      category: categoryId,
+      description: p.description || '',
+      images: p.images || [p.image],
+      vendorId: p.vendorId || 'admin',
+      stock: p.stock?.toString() || '100',
+      sku: '',
+      brand: ''
+    });
+    setEditProduct(p);
+  };
 
   // Use categories from admin store if available, otherwise fallback to product categories
   const categoriesList = adminCategories.length > 0 
@@ -47,6 +65,31 @@ export default function AdminProducts() {
     } catch (err) {
       console.error('Add product error', err);
       alert('Failed to add product');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditSave = async () => {
+    if (!editProduct) return;
+    setLoading(true);
+    try {
+      await updateProduct(editProduct.id, {
+        name: editForm.name,
+        price: parseFloat(editForm.price),
+        category: editForm.category,
+        description: editForm.description,
+        image: editForm.images[0] || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80',
+        images: editForm.images,
+        vendorId: editForm.vendorId,
+        stock: parseInt(editForm.stock),
+      });
+      setEditProduct(null);
+      // Re-fetch products to be sure
+      fetchProducts();
+    } catch (err) {
+      console.error('Update product error', err);
+      alert('Failed to update product');
     } finally {
       setLoading(false);
     }
@@ -135,7 +178,7 @@ export default function AdminProducts() {
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-center gap-2">
                     <button 
-                      onClick={() => setEditProduct(p)} 
+                      onClick={() => handleStartEdit(p)} 
                       className="text-[10px] font-black uppercase tracking-wider text-white bg-[#1976d2] px-4 py-2 rounded-lg hover:bg-blue-700 transition-all shadow-sm"
                     >
                       Edit
@@ -231,8 +274,10 @@ export default function AdminProducts() {
                       <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
                       <input type="file" accept="image/*" multiple onChange={(e) => {
                         const files = Array.from(e.target.files || []);
-                        const newImages = files.slice(0, 6 - form.images.length).map(f => URL.createObjectURL(f));
-                        setForm({...form, images: [...form.images, ...newImages]});
+                        const convertPromises = files.slice(0, 6 - form.images.length).map(f => fileToBase64(f));
+                        Promise.all(convertPromises).then(base64Images => {
+                          setForm(prev => ({...prev, images: [...prev.images, ...base64Images]}));
+                        }).catch(err => console.error(err));
                       }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                     </div>
                   )}
@@ -268,13 +313,90 @@ export default function AdminProducts() {
 
       {/* Edit Product Modal */}
       {editProduct && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setEditProduct(null)}>
-          <div className="bg-white rounded-2xl w-full max-w-lg p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-lg font-black text-gray-900 mb-4">Edit Product</h3>
-            <p className="text-sm text-gray-500 mb-4">Editing: <span className="font-bold text-gray-900">{editProduct.name}</span></p>
-            <p className="text-xs text-gray-400 bg-gray-50 p-3 rounded-lg">Full edit functionality will be available with backend integration. For now, you can delete and re-add with updated details.</p>
-            <div className="mt-4 flex justify-end">
-              <button onClick={() => setEditProduct(null)} className="px-5 py-2.5 bg-gray-900 text-white rounded-lg text-sm font-bold hover:bg-gray-800 transition-colors">Close</button>
+        <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={() => setEditProduct(null)}>
+          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between">
+              <h3 className="text-xl font-black text-gray-900 tracking-tight">Edit Product</h3>
+              <button onClick={() => setEditProduct(null)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+            
+            <div className="p-8 overflow-y-auto space-y-6 flex-1">
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Product Name *</label>
+                <input value={editForm.name} onChange={(e) => setEditForm({...editForm, name: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" placeholder="e.g. Premium Cotton T-Shirt" />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Price (₹) *</label>
+                  <input type="number" value={editForm.price} onChange={(e) => setEditForm({...editForm, price: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" placeholder="1299" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Category *</label>
+                  <select value={editForm.category} onChange={(e) => setEditForm({...editForm, category: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors bg-white">
+                    <option value="">Select Category</option>
+                    {categoriesList.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Description</label>
+                <textarea value={editForm.description} onChange={(e) => setEditForm({...editForm, description: e.target.value})} rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors resize-none" placeholder="Product description..." />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Stock</label>
+                  <input type="number" value={editForm.stock} onChange={(e) => setEditForm({...editForm, stock: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">SKU</label>
+                  <input value={editForm.sku} onChange={(e) => setEditForm({...editForm, sku: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" placeholder="SKU-001" />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Brand</label>
+                  <input value={editForm.brand} onChange={(e) => setEditForm({...editForm, brand: e.target.value})} className="w-full border border-gray-200 rounded-xl px-4 py-3.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors" placeholder="KVT" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Upload Product Images (up to 6)</label>
+                <div className="flex flex-wrap gap-4 mb-4">
+                  {editForm.images.map((img, i) => (
+                    <div key={i} className="relative group">
+                      <img src={img} alt="" className="w-16 h-16 rounded-xl object-cover shadow-md bg-white border border-gray-200" />
+                      <button 
+                        type="button"
+                        onClick={() => setEditForm({...editForm, images: editForm.images.filter((_, index) => index !== i)})}
+                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    </div>
+                  ))}
+                  {editForm.images.length < 6 && (
+                    <div className="relative group w-16 h-16 border-2 border-dashed border-gray-300 hover:border-primary rounded-xl bg-gray-50 hover:bg-primary/5 transition-colors flex items-center justify-center">
+                      <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4v16m8-8H4" /></svg>
+                      <input type="file" accept="image/*" multiple onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        const convertPromises = files.slice(0, 6 - editForm.images.length).map(f => fileToBase64(f));
+                        Promise.all(convertPromises).then(base64Images => {
+                          setEditForm(prev => ({...prev, images: [...prev.images, ...base64Images]}));
+                        }).catch(err => console.error(err));
+                      }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500">SVG, PNG, JPG or WEBP (max. 5MB per image). First image will be the cover.</p>
+              </div>
+            </div>
+            
+            <div className="px-8 py-5 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-3 shrink-0">
+              <button onClick={() => setEditProduct(null)} className="px-6 py-3 border border-gray-200 bg-white rounded-xl text-sm font-bold text-gray-600 hover:bg-gray-50 transition-colors shadow-sm">Cancel</button>
+              <button onClick={handleEditSave} disabled={!editForm.name || !editForm.price || loading} className="px-6 py-3 bg-primary text-white hover:opacity-90 rounded-xl text-sm font-bold disabled:opacity-50 transition-all shadow-lg shadow-primary/10 border-none">{loading ? 'Saving...' : 'Save Changes'}</button>
             </div>
           </div>
         </div>

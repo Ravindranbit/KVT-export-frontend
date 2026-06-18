@@ -8,6 +8,7 @@ import { useAuthStore } from '../../../store/useAuthStore';
 import { useProductStore } from '../../../store/useProductStore';
 import { useOrderStore } from '../../../store/useOrderStore';
 import { useAdminStore } from '../../../store/useAdminStore';
+import { fileToBase64 } from '../../../lib/api';
 
 // Removed inline mocks — use backend data or empty lists until hydrated
 const payouts: any[] = [];
@@ -53,8 +54,9 @@ export default function VendorDashboard() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setImagePreview(url);
+      fileToBase64(file).then(base64 => {
+        setImagePreview(base64);
+      }).catch(err => console.error(err));
     }
   };
 
@@ -92,7 +94,7 @@ export default function VendorDashboard() {
     const categoryId = formData.get('category') as string;
     const stock = parseInt(formData.get('stock') as string) || 0;
     const sku = formData.get('sku') as string;
-    const imageUrl = editingProduct?.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800';
+    const imageUrl = imagePreview || editingProduct?.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800';
 
     const productData: any = {
       name,
@@ -102,6 +104,7 @@ export default function VendorDashboard() {
       stock,
       sku,
       image: imageUrl,
+      images: [imageUrl],
     };
 
     try {

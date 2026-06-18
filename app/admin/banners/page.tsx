@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { useAdminStore } from '../../../store/useAdminStore';
 import { useProductStore } from '../../../store/useProductStore';
 import { ChevronDown } from 'lucide-react';
+import { fileToBase64 } from '../../../lib/api';
 
 export default function AdminBanners() {
   const { products, fetchProducts } = useProductStore();
@@ -299,7 +300,9 @@ export default function AdminBanners() {
                   <input type="file" accept="image/*" onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
-                      setForm({...form, image: URL.createObjectURL(file)});
+                      fileToBase64(file).then(base64 => {
+                        setForm(prev => ({...prev, image: base64}));
+                      }).catch(err => console.error(err));
                     }
                   }} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
                   <div>
