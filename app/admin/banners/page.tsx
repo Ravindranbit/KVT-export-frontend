@@ -1,14 +1,19 @@
 'use client';
 
 import Image from 'next/image';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAdminStore } from '../../../store/useAdminStore';
 import { useProductStore } from '../../../store/useProductStore';
 import { ChevronDown } from 'lucide-react';
 
 export default function AdminBanners() {
-  const { products } = useProductStore();
+  const { products, fetchProducts } = useProductStore();
   const { banners, addBanner, updateBanner, deleteBanner } = useAdminStore();
+  
+  useEffect(() => {
+    void fetchProducts();
+  }, [fetchProducts]);
+
   const [showAdd, setShowAdd] = useState(false);
   const [showProductSelect, setShowProductSelect] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
