@@ -21,8 +21,8 @@ export default function Home() {
 }
 
 function HomeContent() {
-  const { products, fetchProducts } = useProductStore();
-  const { fetchAdminData } = useAdminStore();
+  const { products, categories: storeCategories, fetchProducts, fetchCategories } = useProductStore();
+  const { fetchAdminData, categories: adminCategories } = useAdminStore();
   const searchParams = useSearchParams();
   const catParam = searchParams.get('category');
   
@@ -35,14 +35,17 @@ function HomeContent() {
   const [cartMessage, setCartMessage] = useState<string | null>(null);
   const [isChangingCategory, setIsChangingCategory] = useState(false);
 
-  const { categories: adminCategories } = useAdminStore();
-
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
     fetchAdminData();
-  }, [fetchProducts, fetchAdminData]);
+  }, [fetchProducts, fetchCategories, fetchAdminData]);
 
-  const categories = ['all', ...adminCategories.filter(c => c.visible && (c.showInFilters !== false)).map(c => c.name.toLowerCase())];
+  const categories = ['all', ...(
+    storeCategories.length > 0
+      ? storeCategories.filter(c => c.visible && (c.showInFilters !== false)).map(c => c.name.toLowerCase())
+      : adminCategories.filter(c => c.visible && (c.showInFilters !== false)).map(c => c.name.toLowerCase())
+  )];
   // If no admin categories are marked for filters, fallback to product categories
   const finalCategories = categories.length > 1 ? categories : ['all', ...Array.from(new Set(products.map(p => p.category.toLowerCase())))];
 

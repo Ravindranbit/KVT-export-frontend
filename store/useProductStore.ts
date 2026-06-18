@@ -34,7 +34,7 @@ export interface Product {
 
 interface ProductState {
   products: Product[];
-  categories: { id: string; name: string }[];
+  categories: { id: string; name: string; visible: boolean; showInHeader: boolean; showInFilters: boolean }[];
   fetchProducts: (params?: { search?: string; vendorId?: string; categoryId?: string }) => Promise<void>;
   fetchCategories: () => Promise<void>;
   addProduct: (product: Partial<Product>) => Promise<void>;
@@ -82,7 +82,15 @@ export const useProductStore = create<ProductState>()(
         try {
           const response = await apiGet<{ success: boolean; data: any[] }>('/categories');
           if (response && response.data) {
-            set({ categories: response.data.map((c: any) => ({ id: c.id, name: c.name })) });
+            set({
+              categories: response.data.map((c: any) => ({
+                id: c.id,
+                name: c.name,
+                visible: c.isActive !== false,
+                showInHeader: c.showInHeader !== false,
+                showInFilters: c.showInFilters !== false,
+              }))
+            });
           }
         } catch (err) {
           console.error('Failed to fetch categories', err);

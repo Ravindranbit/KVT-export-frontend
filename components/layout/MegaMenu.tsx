@@ -131,11 +131,13 @@ const CATEGORIES = [
 ];
 
 export default function MegaMenu() {
-  const { products } = useProductStore();
+  const { products, categories: storeCategories } = useProductStore();
   const { categories: adminCategories } = useAdminStore();
   
   // Strictly follow Admin categories for Header display if they exist, otherwise fallback to product categories
-  const categoriesForHeader = adminCategories.length > 0 
+  const categoriesForHeader = storeCategories.length > 0
+    ? storeCategories.filter(c => c.visible && (c.showInHeader !== false)).map(c => c.name.toLowerCase())
+    : adminCategories.length > 0 
     ? adminCategories.filter(c => c.visible && (c.showInHeader !== false)).map(c => c.name.toLowerCase())
     : Array.from(new Set(products.map(p => p.category.toLowerCase())));
   

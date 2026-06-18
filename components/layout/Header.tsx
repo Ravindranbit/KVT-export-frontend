@@ -43,7 +43,7 @@ export default function Header() {
 
   const productCategories = Array.from(new Set(products.map(p => p.category.toLowerCase())));
   const categories = storeCategories.length > 0 
-    ? storeCategories.map(c => c.name.toLowerCase())
+    ? storeCategories.filter(c => c.visible && (c.showInHeader !== false)).map(c => c.name.toLowerCase())
     : adminCategories.filter(c => c.visible && (c.showInHeader !== false)).map(c => c.name.toLowerCase());
   
   // Merge categories if needed, but primarily follow Admin
