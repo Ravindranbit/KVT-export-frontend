@@ -494,6 +494,8 @@ export const useAdminStore = create<AdminState>()(
         const response = await apiPost<ApiEnvelope<any>>('/categories', {
           name: category.name,
           description: category.description,
+          showInHeader: category.showInHeader,
+          showInFilters: category.showInFilters,
         }, { auth: 'admin' });
         set((s) => ({ categories: [normalizeCategory(response.data), ...s.categories] }));
       },
@@ -502,6 +504,8 @@ export const useAdminStore = create<AdminState>()(
           name: updates.name,
           description: updates.description,
           isActive: updates.visible,
+          showInHeader: updates.showInHeader,
+          showInFilters: updates.showInFilters,
         }, { auth: 'admin' });
         set((s) => ({
           categories: s.categories.map(c => c.id === id ? normalizeCategory({ ...c, ...response.data }) : c),
