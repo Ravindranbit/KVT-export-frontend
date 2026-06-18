@@ -134,7 +134,7 @@ export default function AdminBanners() {
               
               {/* Image with fancy hover effect */}
               {b.image && (
-                <div className="absolute -right-4 -bottom-4 w-32 h-36 z-10 rotate-[-5deg] group-hover:rotate-0 group-hover:scale-105 transition-all duration-500 drop-shadow-2xl relative">
+                <div className="absolute -right-4 -bottom-4 w-32 h-36 z-10 rotate-[-5deg] group-hover:rotate-0 group-hover:scale-105 transition-all duration-500 drop-shadow-2xl">
                   <Image src={b.image} alt="" fill unoptimized sizes="128px" className="object-cover rounded-xl border-4 border-white/10" />
                 </div>
               )}
@@ -197,7 +197,7 @@ export default function AdminBanners() {
                     
                     if (previewImage) {
                       return (
-                        <div className="absolute -right-4 -bottom-4 w-32 h-36 z-10 rotate-[-5deg] group-hover:rotate-0 group-hover:scale-105 transition-all duration-500 drop-shadow-2xl relative">
+                        <div className="absolute -right-4 -bottom-4 w-32 h-36 z-10 rotate-[-5deg] group-hover:rotate-0 group-hover:scale-105 transition-all duration-500 drop-shadow-2xl">
                           <Image src={previewImage} alt="" fill unoptimized sizes="128px" className="object-cover rounded-xl border-4 border-white/10 p-1 bg-white/50 backdrop-blur-sm" />
                         </div>
                       );
